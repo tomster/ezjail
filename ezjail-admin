@@ -1,0 +1,55 @@
+#!/bin/sh
+
+# ugly: this variable is set during port install time
+ezjail_prefix=EZJAIL_PREFIX
+
+if [ "0" != "`id -u`" ]; then
+  echo "Retry as root"; exit 1;
+fi
+
+exit
+if [ -f ${ezjail_prefix}/etc/ezjail.conf ]; then
+  . ${ezjail_prefix}/etc/ezjail.conf;
+fi
+
+if [ -z "$1" ];
+  then echo "Syntax: $0 [create|delete|list|update] {params}"; exit;
+fi
+
+case "$1" in
+create)
+  mkdir ${newjail_root} && cd ${ezjail_jailtemplate} \
+        && find * | cpio -p -v ${newjail_root}
+  ;;
+delete)
+
+  ;;
+list)
+
+  ;;
+update)
+
+  if [ ! -d ${ezjail_sourcetree} ]; then
+    echo "Cannot find your copy of the FreeBSD source tree in $ezjail_sourcetree."; exit 1;
+  fi
+
+  cd ${ezjail_sourcetree}
+  rm -r ${ezjail_jailfull}; mkdir -p ${ezjail_jailfull}
+  make world DESTDIR=${ezjail_jailfull}
+  make distribution DESTDIR=${ezjail_jailfull}
+
+  cd ${ezjail_jailfull}
+  mkdir -p ${ezjail_jailbase}
+  for a in bin sbin usr/bin usr/include usr/lib usr/libexec usr/sbin usr/src usr/share; do
+    find ${a} | cpio -d -p -v ${ezjail_jailbase};
+    chflags -R noschg ${a}; rm -r ${a}; ln -s /basejail/${a} ${a}
+  done
+  mkdir basejail
+
+  if [ -d ${ezjail_jailtemplate} ]; then
+    mv ${ezjail_jailtemplate} ${ezjail_jailtemplate}_old
+  fi
+  mv ${ezjail_jailfull} ${ezjail_jailtemplate}
+
+  ;;
+esac

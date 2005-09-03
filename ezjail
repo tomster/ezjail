@@ -1,0 +1,42 @@
+#/bin/sh
+
+# $FreeBSD$
+#
+# PROVIDE: ezjail
+#
+# Note: Add the following lines to $PREFIX/etc/rc.conf to enable ezjail,
+#
+#ezjail_enable="YES"
+#
+# Please do not change this file, configure in $PREFIX/etc/ezjail.conf
+
+# ugly: this variable will be set on port install time
+ezjail_prefix=EZJAIL_PREFIX
+
+. /etc/rc.subr
+
+name=ezjail
+ezjail_enable=${ezjail_enable:-"NO"}
+rcvar=`set_rcvar`
+
+start_cmd="do_start"
+stop_cmd="do_stop"
+
+do_start()
+{
+  jail_enable=${ezjail_enable}
+  jail_list=`ls ${ezjail_prefix}/etc/ezjail/`
+  for jail in $jail_list; do . ${ezjail_prefix}/etc/ezjail/${jail}; done
+  sh /etc/rc.d/jail start $*
+}
+
+do_stop()
+{
+  jail_enable=${ezjail_enable}
+  jail_list=`ls ${ezjail_prefix}/etc/ezjail/`
+  for jail in $jail_list; do . ${ezjail_prefix}/etc/ezjail/${jail}; done
+  sh /etc/rc.d/jail stop $*
+}
+
+load_rc_config $name
+run_rc_command $*
