@@ -1,0 +1,96 @@
+.TH ezjail.conf 5
+.SH NAME
+ezjail.conf \- configuration file for ezjail script
+.SH DESCRIPTION
+The file
+.B ezjail.conf
+contains setting that control the operation of the ezjail rc script. It is 
+also read by the
+.B ezjail-admin
+utility to figure out where it should perform its actions.
+.SH PATH OPTIONS
+.TP
+.B ezjail_jaildir (str)
+Location of jail root directories
+.br
+.I default: /usr/jails
+.TP
+.B ezjail_jailtemplate (str)
+Location of template jail used to create a new jail
+.br
+.I default: /usr/jails/newjail
+.TP
+.B ezjail_jailbase (str)
+Location of base jail, the one that is mounted to all jails
+.br
+.I default: /usr/jails/basejail
+.TP
+.B ezjail_sourcetree (str)
+Location of your copy of FreeBSD's source tree (refer to the
+.B ezjail-admin(1)
+utility for more information)
+.br
+.I default: /usr/src
+.SH JAIL CREATION OPTIONS
+Default options for newly created jails. Used by the
+.B ezjail-admin(1)
+utility. Be careful about disabling ezjail_mount_enable. (Refer to
+.B ezjail-admin(1)
+for more information).
+.TP
+.B ezjail_mount_enable (bool)
+Controls, wheter /etc/fstab.JAILNAME should be executed at jail startup 
+time.
+.br
+.I default: "YES"
+.TP
+.B ezjail_devfs_enable (bool)
+Controls, wheter newly created jails will be given a working
+.I /dev
+directory. (Refer to
+.B devfs(5)
+and
+.B jail(8)
+for more information).
+.br
+.I default: "YES"
+.TP
+.B ezjail_devfs_ruleset (str)
+Specifies, which devfs ruleset should apply for newly created jails. 
+(Refer to
+.B devfs(5)
+and
+.N jail(8)
+for more information).
+.br
+.I default: "devfsrules_jail"
+.TP
+.B ezjail_procfs_enable (bool)
+Controls, wheter newly created jails will be given a working
+.I /proc
+directory. (Refer to
+.B procfs(5)
+and
+.B jail(8)
+for more information).
+.br
+.I default: "YES"
+.TP
+.B ezjail_fdescfs_enable (bool)
+Controls, wheter newly created jails will be given a working
+.I /dev/fd/
+directory. (Refer to
+.B fdescfs(5)
+and
+.B jail(8)
+for more information).
+.br
+.I default: "YES"
+.SH FILES
+.TP
+/usr/local/etc/ezjail.conf
+/usr/local/etc/rc.d/ezjail
+.SH "SEE ALSO"
+ezjail-admin(1), ezjail(5), jail(8), devfs(5), fdescfs(5), procfs(5)
+.SH AUTHOR
+Dirk Engling <erdgeist@erdgeist.org>

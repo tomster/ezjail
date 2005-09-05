@@ -1,0 +1,81 @@
+.TH ezjail\-admin 1
+.SH NAME
+ezjail-admin \- Administrate ezjail
+.SH SYNOPSIS
+.T
+.B ezjail-admin create
+[-r jailroot] [-x]
+.I hostname jailip
+
+.T
+.B ezjail-admin delete
+[-w]
+.I hostname
+
+.T
+.B ezjail-admin list
+
+.T
+.B ezjail-admin update
+[-s sourcetree]
+.SH DESCRIPTION
+The
+.B ezjail-admin
+tool is used to manage jails inside the ezjail scope. It is not used 
+to start or stop ezjails jails. Refer to ezjail(5) for more details. 
+.SH ezjail-admin create
+makes a copy of the ezjail template jail to the standard jail directory,
+using either the name specified with the -r option or a name derived from 
+the given hostname.
+
+If the jailroot does not start with a /, it is 
+interpreted relative to ezjails root dir. If the given jailroot lies 
+outside ezjails root dir, a soft link is created inside ezjails root dir 
+pointing to the newly created jails location.
+
+The first step is skipped, if the -x (jail exists) option is given, useful 
+in situations where you just want to alter some of a jail properties and 
+called ezjail-admin delete without the -w option before. However, sanity 
+checks are being performed.
+
+It then creates an entry in its /etc/ezjail directory allowing the 
+jail to be brought up after next reboot.
+
+If the ezjail_mount_enable option is set, a /etc/fstab.hostname is 
+generated, allowing the basejail to be auto-mounted when the jail starts 
+up.
+
+Options for newly created jails are read from ezjail.conf, refer to 
+ezjail.conf(5) for more information.
+.SH ezjail-admin delete
+removes a jail from ezjails /etc/ezjail resource directory thus preventing 
+it from being brought up on next reboot.
+
+It then removes the /etc/fstab.hostname entry, if it exists.
+
+If the -w (wipe) option is given, the directory pointed to by the jail 
+root entry is removed as well as the soft link, if necessary.
+.SH ezjail-admin list
+lists all jails inside ezjails scope, together with some information on 
+them.
+.SH ezjail-admin update
+tries to build and install a FreeBSD system from the source tree either 
+specified in the ezjail.conf config file or via the -s option. Build 
+destination is a temporary directory inside ezjails jail root.
+
+It then fills the basejail from that temporary directory (leaving all 
+older version installed libraries intact, if it already existed). All 
+copied directories are removed and replaced by soft links to what later is 
+mounted into the jail.
+
+Finally it removes the old template jail and renames the 
+temporary directory as the new template jail.
+.SH FILES
+.T4
+/usr/local/etc/ezjail.conf
+.br
+/usr/local/etc/rc.d/ezjail
+.SH "SEE ALSO"
+ezjail(5), ezjail.conf(5), jail(8), devfs(5), fdescfs(5), procfs(5)
+.SH AUTHOR
+Dirk Engling <erdgeist@erdgeist.org>
