@@ -1,0 +1,26 @@
+.TH ezjail 5
+.SH NAME
+ezjail \- A simple jail setup framework
+.SH SYNOPSIS
+/usr/local/etc/rc.d/ezjail
+.SH DESCRIPTION
+The ezjail framework provides a simple way to create many virtual FreeBSD 
+servers by using FreeBSD's jail system. It requires little administration 
+effort and aims for minimum system resource usage.
+
+If you are not familiar with the FreeBSD jail concept, refer to jail(8).
+.SH OVERVIEW
+One
+.I base jail
+is filled with most userland binaries and libraries and then mounted 
+readonly into a number of stripped down jails via
+.B mount_nullfs(8)
+, thus saving lots of inodes and memory resources.
+.SH FILES
+/usr/local/etc/ezjail.conf
+.br
+/usr/local/etc/rc.d/ezjail
+.SH "SEE ALSO"
+ezjail-admin(1), ezjail.conf(5), jail(8), mount_nullfs(8)
+.SH AUTHOR
+Dirk Engling <erdgeist@erdgeist.org>
