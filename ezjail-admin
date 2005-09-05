@@ -7,13 +7,12 @@ if [ "0" != "`id -u`" ]; then
   echo "Retry as root"; exit 1;
 fi
 
-exit
 if [ -f ${ezjail_prefix}/etc/ezjail.conf ]; then
   . ${ezjail_prefix}/etc/ezjail.conf;
 fi
 
 if [ -z "$1" ];
-  then echo "Syntax: $0 [create|delete|list|update] {params}"; exit;
+  then echo "Syntax: `basename $0` [create|delete|list|update] {params}"; exit;
 fi
 
 case "$1" in
@@ -51,5 +50,8 @@ update)
   fi
   mv ${ezjail_jailfull} ${ezjail_jailtemplate}
 
+  ;;
+*)
+  echo "Syntax: `basename $0` [create|delete|list|update] {params}"; exit;
   ;;
 esac
