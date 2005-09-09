@@ -70,6 +70,14 @@ mounted into the jail.
 
 Finally it removes the old template jail and renames the 
 temporary directory as the new template jail.
+.SH NOTES
+When using the
+.B ezjail-admin update
+option, be careful to use the same FreeBSD source tree used to build the 
+host systems world, or at least its kernel. Combining a make world in the 
+host system with
+.B ezjail-admin update
+is considered a good idea.
 .SH FILES
 .T4
 /usr/local/etc/ezjail.conf
