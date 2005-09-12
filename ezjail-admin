@@ -11,12 +11,51 @@ if [ -f ${ezjail_prefix}/etc/ezjail.conf ]; then
   . ${ezjail_prefix}/etc/ezjail.conf;
 fi
 
+# set defaults
+ezjail_jaildir=${ezjail_jaildir:-"/usr/jails"}
+ezjail_jailtemplate=${ezjail_jailtemplate:-"$ezjail_jaildir/newjail"}
+ezjail_jailbase=${ezjail_jailbase:-"$ezjail_jaildir/basejail"}
+ezjail_sourcetree=${ezjail_sourcetree:-"/usr/src"}
+
+ezjail_mount_enable=${ezjail_mount_enable:-"YES"}
+ezjail_devfs_enable=${ezjail_devfs_enable:-"YES"}
+ezjail_devfs_ruleset=${ezjail_devfs_ruleset:-"devfsrules_jail"}
+ezjail_procfs_enable=${ezjail_procfs_enable:-"YES"}
+ezjail_fdescfs_enable=${ezjail_fdescfs_enable:-"YES"}
+
+# check for command
 if [ -z "$1" ];
-  then echo "Syntax: `basename $0` [create|delete|list|update] {params}"; exit;
+  then echo "Usage: `basename $0` [create|delete|list|update] {params}"; exit;
 fi
 
 case "$1" in
 create)
+  shift
+  args=`getopt xr: $*`
+  if [ $? != 0 ]; then
+    echo 'Usage: ezjail create [-r jailroot] [-x] jailname jailip'; exit 1;
+  fi
+
+  newjail_root=
+  newjail_fill="YES"
+
+  for arg in args; do
+    case $arg in
+      -x) newjail_fill="NO"; shift;;
+      -r) newjail_root="$2"; shift 2;;
+      --) shift; break;;
+    esac
+  done;
+  newjail_name=$1;  newjail_ip=$2;  shift 2;
+
+  if [ -z "$newjail_name" -o -z "$newjail_ip" -o $# != 0 ]; then
+    echo 'Usage: ezjail create [-r jailroot] [-x] jailname jailip'; exit 1;
+  fi
+
+  echo running CREATE $newjail_name $newjail_ip $newjail_fill
+
+  exit
+
   mkdir ${newjail_root} && cd ${ezjail_jailtemplate} \
         && find * | cpio -p -v ${newjail_root}
   ;;
@@ -52,6 +91,6 @@ update)
 
   ;;
 *)
-  echo "Syntax: `basename $0` [create|delete|list|update] {params}"; exit;
+  echo "Usage: `basename $0` [create|delete|list|update] {params}"; exit;
   ;;
 esac
