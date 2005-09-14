@@ -2,6 +2,7 @@
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
+ezjail_jailcfgs=${ezjail_prefix}/etc/ezjail
 
 if [ "0" != "`id -u`" ]; then
   echo "Retry as root"; exit 1;
@@ -24,8 +25,9 @@ ezjail_procfs_enable=${ezjail_procfs_enable:-"YES"}
 ezjail_fdescfs_enable=${ezjail_fdescfs_enable:-"YES"}
 
 # check for command
-if [ -z "$1" ];
-  then echo "Usage: `basename $0` [create|delete|list|update] {params}"; exit;
+if [ -z "$1" ]; then
+  echo "Usage: `basename $0` [create|delete|list|update] {params}";
+  exit 1;
 fi
 
 case "$1" in
@@ -33,10 +35,12 @@ create)
   shift
   args=`getopt xr: $*`
   if [ $? != 0 ]; then
-    echo 'Usage: ezjail create [-r jailroot] [-x] jailname jailip'; exit 1;
+    echo 'Usage: ezjail create [-r jailroot] [-x] jailname jailip';
+    exit 1;
   fi
 
   newjail_root=
+  newjail_softlink=
   newjail_fill="YES"
 
   for arg in args; do
@@ -48,16 +52,72 @@ create)
   done;
   newjail_name=$1;  newjail_ip=$2;  shift 2;
 
+  # wee need at least a name and an ip for new jail
   if [ -z "$newjail_name" -o -z "$newjail_ip" -o $# != 0 ]; then
     echo 'Usage: ezjail create [-r jailroot] [-x] jailname jailip'; exit 1;
   fi
 
-  echo running CREATE $newjail_name $newjail_ip $newjail_fill
+  # relative paths don't make sense in rc.scripts
+  if [ ${ezjail_jaildir:1:1} != / ]; then
+    echo Error: Need an absolute path in ezjail_jaildir, it is currently set to: $ezjail_jaildir
+    exit 1;
+  fi
 
-  exit
+  # jail names must not have names that irritate file systems,
+  # excluding dots from this list was done intentionally to
+  # allow foo.com style directory names, however, the jail
+  # name will be foo_com in most scripts
+  newjail_name=`echo $newjail_name | tr /~ __`;
+  newjail_root=${newjail_root:-"$ezjail_jaildir/$newjail_name"}
+  newjail_nname=`echo $newjail_name | tr . _`;
 
-  mkdir ${newjail_root} && cd ${ezjail_jailtemplate} \
-        && find * | cpio -p -v ${newjail_root}
+  # if jail root specified on command line is not absolute,
+  # make it absolute inside our jail directory
+  if [ ${newjail_root:1:1} != / ]; then
+    newjail_root=$ezjail_jaildir/$newjail_root
+  fi
+
+  # if jail root specified on command line does not lie
+  # within our jail directory, we need to create a softlink
+  if [ ${newjail_root##${ezjail_jaildir}} = $newjail_root ]; then
+    newjail_softlink=$ezjail_jaildir/`basename $newjail_root`
+      if [ -e $newjail_softlink -a $newjail_fill = "YES" ]; then
+        echo Error: an ezjail already exists at $newjail_softlink
+        exit 1;
+      fi
+    fi
+  fi
+
+  # now take a copy of our template jail
+  if [ $newjail_fill = "YES" ]; then
+    mkdir -p ${newjail_root} && cd ${ezjail_jailtemplate} \
+          && find * | cpio -p -v ${newjail_root}
+  fi
+
+  # if a soft link is necessary, create it now
+  if [ $newjail_softlink ]; then
+    ln -s $newjail_root $newjail_softlink
+  fi
+
+  # if the automount feature is not disabled, create an
+  # fstab entry for new jail
+  echo $ezjail_jailbase	$newjail_root/basejail	nullfs	ro	0	0 > /etc/fstab.$newjail_name
+
+  # now, where everything seems to have gone right,
+  # create control file in ezjails config dir
+  mkdir -p $ezjail_jailcfgs
+  echo \
+  jail_${newjail_nname}_hostname=\"${newjail_name}\" \n \
+  jail_${newjail_nname}_ip=\"${newjail_ip}\" \n \
+  jail_${newjail_nname}_rootdir=\"${newjail_root}\" \n \
+  jail_${newjail_nname}_exec=\"/bin/sh /etc/rc\"
+  jail_${newjail_nname}_mount_enable=\"${ezjail_mount_enable}\" \n \
+  jail_${newjail_nname}_devfs_enable=\"${ezjail_devfs_enable}\" \n \
+  jail_${newjail_nname}_devfs_ruleset="devfsrules_jail"
+  jail_${newjail_nname}_procfs_enable=\"${ezjail_procfs_enable}\" \n \
+  jail_${newjail_nname}_fdescfs_enable=\"${ezjail_fdescfs_enable}\" \n \
+  > ${ezail_jailcfgs}/newjail_nname
+
   ;;
 delete)
 
