@@ -17,7 +17,7 @@ ezjail-admin \- Administrate ezjail
 
 .T
 .B ezjail-admin update
-[-s sourcetree]
+[-s sourcetree] [-i]
 .SH DESCRIPTION
 The
 .B ezjail-admin
@@ -59,14 +59,24 @@ root entry is removed as well as the soft link, if necessary.
 lists all jails inside ezjails scope, together with some information on 
 them.
 .SH ezjail-admin update
-tries to build and install a FreeBSD system from the source tree either 
-specified in the ezjail.conf config file or via the -s option. Build 
-destination is a temporary directory inside ezjails jail root.
+installs a FreeBSD system from the source tree to a location either
+provided in the
+.B ezjail.conf
+config file or via the -s option.
+
+Install destination is a temporary directory inside ezjails jail root. If 
+the -i (install only) option is given,
+.B ezjail-admin update
+only performes a
+.I make installworld,
+otherwise
+.I make world
+is invoked.
 
 It then fills the basejail from that temporary directory (leaving intact 
-all installed libraries, if the base jail already existed). All copied 
-directories are removed and replaced by soft links to what later is 
-mounted into the jail.
+all installed libraries, if the base jail already existed). All
+directories copied are removed and replaced by soft links into the 
+base jail tree that later will be mounted into the jail.
 
 Finally it removes the old template jail and renames the 
 temporary directory as the new template jail.
