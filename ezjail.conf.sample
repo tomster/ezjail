@@ -6,7 +6,7 @@
 
 # Location of jail root directories
 #
-# Note: If you habe spread your jails to multiple locations, use softlinks 
+# Note: If you have spread your jails to multiple locations, use softlinks 
 # to collect them in this directory
 ezjail_jaildir=/usr/jails/
 
