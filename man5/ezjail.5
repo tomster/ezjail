@@ -8,14 +8,32 @@ The ezjail framework provides a simple way to create many virtual FreeBSD
 servers by using FreeBSD's jail system. It requires little administration 
 effort and aims for minimum system resource usage.
 
-If you are not familiar with the FreeBSD jail concept, refer to jail(8).
+If you are not familiar with the FreeBSD jail concept, please refer to 
+jail(8) before continuing.
 .SH OVERVIEW
 One
 .I base jail
 is filled with most userland binaries and libraries and then mounted 
-readonly into a number of stripped down jails via
+read only into a number of stripped down jails via
 .B mount_nullfs(8)
-, thus saving lots of inodes and memory resources.
+- thus saving lots of inodes and memory resources.
+
+The ezjail rc script examines its config directory, sets variables
+.I jail_list
+and the corresponding config variables for each jail before passing all
+commands on to the
+.B /etc/rc.d/jail
+script.
+.B ezjail
+sets the
+.I jail_enable
+variable to the content of
+.I ezjail_enable
+before calling
+.B /etc/rc.d/jail,
+so it is not necessary to enable jails in the
+.B /etc/rc.conf
+config file.
 .SH FILES
 /usr/local/etc/ezjail.conf
 .br
