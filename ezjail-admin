@@ -126,6 +126,22 @@ list)
 
   ;;
 update)
+  shift
+  args=`getopt is: $*`
+  if [ $? != 0 ]; then
+    echo 'Usage: ezjail update [-s sourcetree] [-i]';
+    exit 1;
+  fi
+
+  updatejail_installaction=world
+
+  for arg in args; do
+    case $arg in
+      -i) updatejail_installaction=installworld; shift;;
+      -s) ezjail_sourcetree="$2"; shift 2;;
+      --) shift; break;;
+    esac
+  done;
 
   if [ ! -d ${ezjail_sourcetree} ]; then
     echo "Cannot find your copy of the FreeBSD source tree in $ezjail_sourcetree."; exit 1;
@@ -133,7 +149,7 @@ update)
 
   cd ${ezjail_sourcetree}
   rm -r ${ezjail_jailfull}; mkdir -p ${ezjail_jailfull}
-  make world DESTDIR=${ezjail_jailfull}
+  make ${updatejail_installaction} DESTDIR=${ezjail_jailfull}
   make distribution DESTDIR=${ezjail_jailfull}
 
   cd ${ezjail_jailfull}
