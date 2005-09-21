@@ -58,7 +58,7 @@ create)
   fi
 
   # relative paths don't make sense in rc.scripts
-  if [ ${ezjail_jaildir:1:1} != / ]; then
+  if [ "${ezjail_jaildir:0:1}" != "/" ]; then
     echo Error: Need an absolute path in ezjail_jaildir, it is currently set to: $ezjail_jaildir
     exit 1;
   fi
