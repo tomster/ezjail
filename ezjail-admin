@@ -58,7 +58,7 @@ create)
   fi
 
   # relative paths don't make sense in rc.scripts
-  if [ "${ezjail_jaildir:0:1}" != "/" ]; then
+  if [ "${ezjail_jaildir#/}" == "${ezjail_jaildir}" ]; then
     echo Error: Need an absolute path in ezjail_jaildir, it is currently set to: $ezjail_jaildir
     exit 1;
   fi
@@ -73,7 +73,7 @@ create)
 
   # if jail root specified on command line is not absolute,
   # make it absolute inside our jail directory
-  if [ ${newjail_root:1:1} != / ]; then
+  if [ "${newjail_root#/}" = "${newjail_root}" ]; then
     newjail_root=$ezjail_jaildir/$newjail_root
   fi
 
@@ -81,10 +81,9 @@ create)
   # within our jail directory, we need to create a softlink
   if [ ${newjail_root##${ezjail_jaildir}} = $newjail_root ]; then
     newjail_softlink=$ezjail_jaildir/`basename $newjail_root`
-      if [ -e $newjail_softlink -a $newjail_fill = "YES" ]; then
-        echo Error: an ezjail already exists at $newjail_softlink
-        exit 1;
-      fi
+    if [ -e $newjail_softlink -a $newjail_fill = "YES" ]; then
+      echo Error: an ezjail already exists at $newjail_softlink
+      exit 1;
     fi
   fi
 
@@ -148,7 +147,7 @@ update)
   fi
 
   cd ${ezjail_sourcetree}
-  rm -r ${ezjail_jailfull}; mkdir -p ${ezjail_jailfull}
+  rm -rf ${ezjail_jailfull}; mkdir -p ${ezjail_jailfull}
   make ${updatejail_installaction} DESTDIR=${ezjail_jailfull}
   make distribution DESTDIR=${ezjail_jailfull}
 
