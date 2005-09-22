@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # ugly: this variable is set during port install time
-ezjail_prefix=EZJAIL_PREFIX
+ezjail_prefix=/usr/local
 ezjail_jailcfgs=${ezjail_prefix}/etc/ezjail
 
 if [ "0" != "`id -u`" ]; then
@@ -121,7 +121,12 @@ delete)
 
   ;;
 list)
-
+  jail_list=`ls $ezjail_jailcfgs`
+  for jail in $jail_list; do
+    . ${ezjail_jailcfgs}/$jail
+    eval jail_ip=\"\$jail_${jail}_ip\"; echo -n "$jail_ip	"
+    eval jail_hostname=\"\$jail_${jail}_hostname\"; echo $jail_hostname
+  done
   ;;
 update)
   shift
