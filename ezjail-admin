@@ -43,7 +43,8 @@ create)
   newjail_softlink=
   newjail_fill="YES"
 
-  for arg in args; do
+  set -- $args
+  for arg do
     case $arg in
       -x) newjail_fill="NO"; shift;;
       -r) newjail_root="$2"; shift 2;;
@@ -58,7 +59,7 @@ create)
   fi
 
   # relative paths don't make sense in rc.scripts
-  if [ "${ezjail_jaildir#/}" == "${ezjail_jaildir}" ]; then
+  if [ ${ezjail_jaildir#/} = ${ezjail_jaildir} ]; then
     echo Error: Need an absolute path in ezjail_jaildir, it is currently set to: $ezjail_jaildir
     exit 1;
   fi
@@ -73,7 +74,7 @@ create)
 
   # if jail root specified on command line is not absolute,
   # make it absolute inside our jail directory
-  if [ "${newjail_root#/}" = "${newjail_root}" ]; then
+  if [ ${newjail_root#/} = ${newjail_root} ]; then
     newjail_root=$ezjail_jaildir/$newjail_root
   fi
 
@@ -100,22 +101,20 @@ create)
 
   # if the automount feature is not disabled, create an
   # fstab entry for new jail
-  echo $ezjail_jailbase	$newjail_root/basejail	nullfs	ro	0	0 > /etc/fstab.$newjail_name
+  echo $ezjail_jailbase	$newjail_root/basejail	nullfs	ro	0	0 > /etc/fstab.$newjail_nname
 
   # now, where everything seems to have gone right,
   # create control file in ezjails config dir
   mkdir -p $ezjail_jailcfgs
-  echo \
-  jail_${newjail_nname}_hostname=\"${newjail_name}\" \n \
-  jail_${newjail_nname}_ip=\"${newjail_ip}\" \n \
-  jail_${newjail_nname}_rootdir=\"${newjail_root}\" \n \
-  jail_${newjail_nname}_exec=\"/bin/sh /etc/rc\"
-  jail_${newjail_nname}_mount_enable=\"${ezjail_mount_enable}\" \n \
-  jail_${newjail_nname}_devfs_enable=\"${ezjail_devfs_enable}\" \n \
-  jail_${newjail_nname}_devfs_ruleset="devfsrules_jail"
-  jail_${newjail_nname}_procfs_enable=\"${ezjail_procfs_enable}\" \n \
-  jail_${newjail_nname}_fdescfs_enable=\"${ezjail_fdescfs_enable}\" \n \
-  > ${ezail_jailcfgs}/newjail_nname
+  echo export jail_${newjail_nname}_hostname=\"${newjail_name}\"                >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_ip=\"${newjail_ip}\"                        >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_rootdir=\"${newjail_root}\"                 >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_exec=\"/bin/sh /etc/rc\"                    >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_mount_enable=\"${ezjail_mount_enable}\"     >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_devfs_enable=\"${ezjail_devfs_enable}\"     >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_devfs_ruleset=\"devfsrules_jail\"           >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_procfs_enable=\"${ezjail_procfs_enable}\"   >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_fdescfs_enable=\"${ezjail_fdescfs_enable}\" >> ${ezjail_jailcfgs}/${newjail_nname}
 
   ;;
 delete)
@@ -132,11 +131,12 @@ update)
     exit 1;
   fi
 
-  updatejail_installaction=world
+  updatejail_installaction="world"
 
-  for arg in args; do
+  set -- $args
+  for arg do
     case $arg in
-      -i) updatejail_installaction=installworld; shift;;
+      -i) updatejail_installaction="installworld"; shift;;
       -s) ezjail_sourcetree="$2"; shift 2;;
       --) shift; break;;
     esac
@@ -158,8 +158,10 @@ update)
     chflags -R noschg ${a}; rm -r ${a}; ln -s /basejail/${a} ${a}
   done
   mkdir basejail
+  ln -s /basejail/usr/ports usr/ports
 
   if [ -d ${ezjail_jailtemplate} ]; then
+    rm -rf ${ezjail_jailtemplate}_old
     mv ${ezjail_jailtemplate} ${ezjail_jailtemplate}_old
   fi
   mv ${ezjail_jailfull} ${ezjail_jailtemplate}

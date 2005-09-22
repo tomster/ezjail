@@ -8,7 +8,7 @@
 #
 # Note: If you have spread your jails to multiple locations, use softlinks 
 # to collect them in this directory
-ezjail_jaildir=/usr/jails/
+ezjail_jaildir=/usr/jails
 
 # Location of the tiny skeleton jail template
 ezjail_jailtemplate=$ezjail_jaildir/newjail
