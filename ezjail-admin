@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # ugly: this variable is set during port install time
-ezjail_prefix=/usr/local
+ezjail_prefix=EZJAIL_PREFIX
 ezjail_jailcfgs=${ezjail_prefix}/etc/ezjail
 
 if [ "0" != "`id -u`" ]; then
