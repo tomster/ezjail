@@ -53,7 +53,7 @@ create)
   done;
   newjail_name=$1;  newjail_ip=$2;  shift 2;
 
-  # wee need at least a name and an ip for new jail
+  # we need at least a name and an ip for new jail
   if [ -z "$newjail_name" -o -z "$newjail_ip" -o $# != 0 ]; then
     echo 'Usage: ezjail create [-r jailroot] [-x] jailname jailip'; exit 1;
   fi
@@ -118,6 +118,36 @@ create)
 
   ;;
 delete)
+  shift
+  args=`getopt w $*`
+  if [ $? != 0 ]; then
+    echo 'Usage: ezjail delete [-w] jailname';
+    exit 1;
+  fi
+  
+  oldjail_wipe="NO"
+  
+  set -- $args
+  for arg do
+    case $arg in
+      -w) oldjail_wipe="YES"; shift;;
+      --) shift; break;;
+    esac
+  done;
+  oldjail_name=$1; shift;
+
+  # we only need name of jail to vanish
+  if [ -z "$oldjail_name" -o $# != 0 ]; then
+    echo 'Usage: ezjail delete [-w] jailname'; exit 1;
+  fi
+
+  # check for existence of jail in our records
+  if [ ! -f ${ezjail_jailcfgs}/${oldjail_name} ]; then
+    echo 'Error: Nothing known about jail $oldjail_name'; exit 1
+  fi
+
+  . ${ezjail_jailcfgs}/${oldjail_name}
+  eval jail_root=\"\$jail_${jail}_root\"
 
   ;;
 list)
