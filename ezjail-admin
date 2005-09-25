@@ -4,10 +4,6 @@
 ezjail_prefix=EZJAIL_PREFIX
 ezjail_jailcfgs=${ezjail_prefix}/etc/ezjail
 
-if [ "0" != "`id -u`" ]; then
-  echo "Retry as root"; exit 1;
-fi
-
 if [ -f ${ezjail_prefix}/etc/ezjail.conf ]; then
   . ${ezjail_prefix}/etc/ezjail.conf;
 fi
@@ -71,7 +67,7 @@ create)
   # name will be foo_com in most scripts
   newjail_name=`echo $newjail_name | tr /~ __`;
   newjail_root=${newjail_root:-"$ezjail_jaildir/$newjail_name"}
-  newjail_nname=`echo $newjail_name | tr . _`;
+  newjail_nname=`echo $newjail_nname | tr . _`;
 
   # if jail root specified on command line is not absolute,
   # make it absolute inside our jail directory
@@ -142,17 +138,41 @@ delete)
     echo 'Usage: ezjail delete [-w] jailname'; exit 1;
   fi
 
+  # tidy up jail name the ezjail way
+  oldjail_nname=`echo $oldjail_name | tr /~. ___`;
+
   # check for existence of jail in our records
-  if [ ! -f ${ezjail_jailcfgs}/${oldjail_name} ]; then
+  if [ ! -f ${ezjail_jailcfgs}/${oldjail_nname} ]; then
     echo 'Error: Nothing known about jail $oldjail_name'; exit 1
   fi
 
-  . ${ezjail_jailcfgs}/${oldjail_name}
-  eval jail_root=\"\$jail_${jail}_root\"
+  # fetch information about the jail to be gone
+  # by parsing our records
+  . ${ezjail_jailcfgs}/${oldjail_nname}
+  eval oldjail_root=\"\$jail_${oldjail_nname}_root\"
+
+  # now we know everything we need to let the jail be gone
+  # remove entry from ezjail resource structure
+  echo rm -f ${ezjail_jailcfgs}/${oldjail_nname}
+
+  # delete fstab.JAILNAME
+  echo rm -f /etc/fstab.$oldjail_nname
+
+  # if there is a soft link pointing to the jail root, remove it
+  oldjail_softlink=$ezjail_jaildir/`basename $oldjail_root`
+  if [ -L $oldjail_softlink ]; then
+    echo rm $oldjail_softlink
+  fi
+
+  # if wiping the jail was requested, remove it
+  if [ $oldjail_wipe = "YES" ]; then
+    echo rm -rf $oldjail_root
+  fi
 
   ;;
 list)
   jail_list=`ls $ezjail_jailcfgs`
+echo $jail_list
   for jail in $jail_list; do
     . ${ezjail_jailcfgs}/$jail
     eval jail_ip=\"\$jail_${jail}_ip\"; echo -n "$jail_ip	"
