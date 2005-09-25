@@ -48,16 +48,22 @@ create)
       --) shift; break;;
     esac
   done;
-  newjail_name=$1;  newjail_ip=$2;  shift 2;
+  newjail_name=$1;  newjail_ip=$2;
 
   # we need at least a name and an ip for new jail
-  if [ -z "$newjail_name" -o -z "$newjail_ip" -o $# != 0 ]; then
+  if [ -z "$newjail_name" -o -z "$newjail_ip" -o $# != 2 ]; then
     echo 'Usage: ezjail create [-r jailroot] [-x] jailname jailip'; exit 1;
+  fi
+
+  # check, whether IP is configured on a local interface, warn if it isnt
+  ping -c 1 -m 1 -t 1 -q $newjail_ip > /dev/null
+  if [ $? != 0 ]; then
+    echo "Warning: IP $newjail_ip not configured on a local interface"
   fi
 
   # relative paths don't make sense in rc.scripts
   if [ ${ezjail_jaildir#/} = ${ezjail_jaildir} ]; then
-    echo Error: Need an absolute path in ezjail_jaildir, it is currently set to: $ezjail_jaildir
+    echo "Error: Need an absolute path in ezjail_jaildir, it is currently  set to: $ezjail_jaildir"
     exit 1;
   fi
 
@@ -131,10 +137,10 @@ delete)
       --) shift; break;;
     esac
   done;
-  oldjail_name=$1; shift;
+  oldjail_name=$1;
 
   # we only need name of jail to vanish
-  if [ -z "$oldjail_name" -o $# != 0 ]; then
+  if [ -z "$oldjail_name" -o $# != 1 ]; then
     echo 'Usage: ezjail delete [-w] jailname'; exit 1;
   fi
 
@@ -143,7 +149,7 @@ delete)
 
   # check for existence of jail in our records
   if [ ! -f ${ezjail_jailcfgs}/${oldjail_nname} ]; then
-    echo 'Error: Nothing known about jail $oldjail_name'; exit 1
+    echo "Error: Nothing known about jail $oldjail_name"; exit 1
   fi
 
   # fetch information about the jail to be gone
@@ -172,7 +178,6 @@ delete)
   ;;
 list)
   jail_list=`ls $ezjail_jailcfgs`
-echo $jail_list
   for jail in $jail_list; do
     . ${ezjail_jailcfgs}/$jail
     eval jail_ip=\"\$jail_${jail}_ip\"; echo -n "$jail_ip	"
