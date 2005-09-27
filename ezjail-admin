@@ -180,8 +180,10 @@ list)
   jail_list=`ls $ezjail_jailcfgs`
   for jail in $jail_list; do
     . ${ezjail_jailcfgs}/$jail
-    eval jail_ip=\"\$jail_${jail}_ip\"; echo -n "$jail_ip	"
-    eval jail_hostname=\"\$jail_${jail}_hostname\"; echo $jail_hostname
+    eval jail_ip=\"\$jail_${jail}_ip\"
+    eval jail_hostname=\"\$jail_${jail}_hostname\"
+    eval jail_rootdir=\"\$jail_${jail}_rootdir\"
+    printf "%-15s %-28s %s\\n" $jail_ip $jail_hostname $jail_rootdir
   done
   ;;
 update)
