@@ -18,20 +18,34 @@ read only into a number of stripped down jails via
 .B mount_nullfs(8)
 - thus saving lots of inodes and memory resources.
 
-The ezjail rc script examines its config directory, sets variables
-.I jail_list
-and the corresponding config variables for each jail before passing all
-commands on to the
+.SH INVOCATION
+The ezjail script
+.B EZJAIL_PREFIX/etc/rc.d/ezjail.sh
+takes parameters
+.I start, restart
+and
+.I stop.
+It may be passed an additional list of jails. If no jail name is 
+specified (usually when the script is being called by rc.local at  boot 
+and shutdown time), all jails in ezjails config directory are being
+started/stopped.
+
+The script then examines its config directory, sets config variables 
+for each jail in the jail_list before passing its command on to the
 .B /etc/rc.d/jail
 script.
+.SH NOTES
 .B ezjail
-sets the
-.I jail_enable
-variable to the content of
-.I ezjail_enable
-before calling
+enforces the execution of
 .B /etc/rc.d/jail,
-so it is not necessary to enable jails in the
+by adding the option
+.I one
+to the start, restart and stop commands
+so it is
+.B NOT NECESSARY
+to set
+.I jail_enable
+in the
 .B /etc/rc.conf
 config file.
 .SH FILES
