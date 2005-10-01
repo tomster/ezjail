@@ -26,7 +26,7 @@ takes parameters
 and
 .I stop.
 It may be passed an additional list of jails. If no jail name is 
-specified (usually when the script is being called by rc.local at  boot 
+specified (usually when the script is being called by rc.local at boot 
 and shutdown time), all jails in ezjails config directory are being
 started/stopped.
 
@@ -35,13 +35,12 @@ for each jail in the jail_list before passing its command on to the
 .B /etc/rc.d/jail
 script.
 .SH NOTES
-.B ezjail
+.B ezjail.sh
 enforces the execution of
 .B /etc/rc.d/jail,
-by adding the option
-.I one
-to the start, restart and stop commands
-so it is
+by prepending
+.I "one"
+to the start, restart and stop commands so it is
 .B NOT NECESSARY
 to set
 .I jail_enable

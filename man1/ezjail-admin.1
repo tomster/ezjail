@@ -59,7 +59,7 @@ root entry is removed as well as the soft link, if necessary.
 lists all jails inside ezjails scope, together with some information on 
 them.
 .SH ezjail-admin update
-installs a FreeBSD system from the source tree to a location either
+installs a FreeBSD system from the source tree whose location is either
 provided in the
 .B ezjail.conf
 config file or via the -s option.
@@ -74,8 +74,8 @@ otherwise
 is invoked.
 
 It then fills the basejail from that temporary directory (leaving intact 
-all installed libraries, if the base jail already existed). All
-directories copied are removed and replaced by soft links into the 
+all installed libraries, if the base jail already exists). All
+copied directories are then removed and replaced by soft links into the 
 base jail tree that later will be mounted into the jail.
 
 Finally it removes the old template jail and renames the 
