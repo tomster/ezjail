@@ -4,13 +4,13 @@
 #
 # PROVIDE: ezjail
 #
-# Note: Add the following lines to $PREFIX/etc/rc.conf to enable ezjail,
+# Note: Add the following lines to /etc/rc.conf to enable ezjail,
 #
 #ezjail_enable="YES"
 #
-# Please do not change this file, configure in $PREFIX/etc/ezjail.conf
+# Please do not change this file, configure in EZJAIL_PREFIX/etc/ezjail.conf
 
-# ugly: this variable will be set on port install time
+# ugly: this variable is set on port install time
 ezjail_prefix=EZJAIL_PREFIX
 
 . /etc/rc.subr

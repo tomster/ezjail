@@ -1,7 +1,7 @@
-# ezjail.conf - Example file, see ezjail(x)
+# ezjail.conf - Example file, see ezjail.conf(5)
 #
 # Note: If you alter some of those variables AFTER creating your first
-# jail, you may have to adapt /etc/fstab.* and ${PREFIX}/etc/ezjail/* by
+# jail, you may have to adapt /etc/fstab.* and EZJAIL_PREFIX/etc/ezjail/* by
 # hand
 
 # Location of jail root directories

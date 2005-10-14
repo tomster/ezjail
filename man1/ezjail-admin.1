@@ -38,23 +38,24 @@ in situations where you just want to alter some of a jail properties and
 called ezjail-admin delete without the -w option before. However, sanity 
 checks are being performed.
 
-It then creates an entry in its /etc/ezjail directory allowing the 
-jail to be brought up after next reboot.
+It then creates an entry in its etc/ezjail/ resource directory allowing 
+the jail to be brought up after next reboot.
 
 If the ezjail_mount_enable option is set, a /etc/fstab.hostname is 
 generated, allowing the basejail to be auto-mounted when the jail starts 
 up.
 
-Options for newly created jails are read from ezjail.conf, refer to 
-ezjail.conf(5) for more information.
+Options for newly created jails are read from
+.B ezjail.conf,
+refer to ezjail.conf(5) for more information.
 .SH ezjail-admin delete
-removes a jail from ezjails /etc/ezjail resource directory thus preventing 
+removes a jail from ezjails etc/ezjail/ resource directory thus preventing 
 it from being brought up on next reboot.
 
 It then removes the /etc/fstab.hostname entry, if it exists.
 
 If the -w (wipe) option is given, the directory pointed to by the jail 
-root entry is removed as well as the soft link, if necessary.
+root entry is removed as well as the soft link in ezjails root dir.
 .SH ezjail-admin list
 lists all jails inside ezjails scope, together with some information on 
 them.
