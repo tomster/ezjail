@@ -109,7 +109,7 @@ create)
   # now, where everything seems to have gone right,
   # create control file in ezjails config dir
   mkdir -p $ezjail_jailcfgs
-  echo export jail_${newjail_nname}_hostname=\"${newjail_name}\"                >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_hostname=\"${newjail_name}\"                 > ${ezjail_jailcfgs}/${newjail_nname}
   echo export jail_${newjail_nname}_ip=\"${newjail_ip}\"                        >> ${ezjail_jailcfgs}/${newjail_nname}
   echo export jail_${newjail_nname}_rootdir=\"${newjail_root}\"                 >> ${ezjail_jailcfgs}/${newjail_nname}
   echo export jail_${newjail_nname}_exec=\"/bin/sh /etc/rc\"                    >> ${ezjail_jailcfgs}/${newjail_nname}
