@@ -1,5 +1,5 @@
-#/bin/sh
-
+#!/bin/sh
+#
 # $FreeBSD$
 #
 # PROVIDE: ezjail
