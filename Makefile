@@ -1,7 +1,7 @@
 all:
 
 install:
-	mkdir -p ${PREFIX}/etc/ezjail/ ${PREFIX}/man/man1 ${PREFIX}/man/man5
+	mkdir -p ${PREFIX}/etc/ezjail/ ${PREFIX}/man/man1/ ${PREFIX}/man/man5/ ${PREFIX}/etc/rc.d/ ${PREFIX}/bin/
 	cp -p ezjail.conf.sample ${PREFIX}/etc/
 	sed s:EZJAIL_PREFIX:${PREFIX}: ezjail.sh > ${PREFIX}/etc/rc.d/ezjail.sh
 	sed s:EZJAIL_PREFIX:${PREFIX}: ezjail-admin > ${PREFIX}/bin/ezjail-admin
