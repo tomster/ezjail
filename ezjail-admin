@@ -61,6 +61,13 @@ create)
     echo "Warning: IP $newjail_ip not configured on a local interface"
   fi
 
+  # check, whether ezjail-update has been called. existence of
+  # ezjail_jailbase is our indicator
+  if [ ! -d $ezjail_jailbase ]; then
+    echo "Error: base jail does not exist. Please run 'ezjail-admin update' first"
+    exit 1;
+  fi
+
   # relative paths don't make sense in rc.scripts
   if [ ${ezjail_jaildir#/} = ${ezjail_jaildir} ]; then
     echo "Error: Need an absolute path in ezjail_jaildir, it is currently  set to: $ezjail_jaildir"
