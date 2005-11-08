@@ -1,0 +1,36 @@
+# ezjail template example
+# refer to ezjail(5) for more information
+#
+# ezjails jail init script tries to create the following users. Format is 
+# as follows:
+#
+# username:<uid>:group[,group,...]:<gid[,gid,...]>:cryptpw:[-]homedir:shell
+# 
+# Example:
+#
+# ezjail_template_users=\
+# "admin::wheel::$1$p75bbfK.$Kz3dwkoVlgZrfLZdAXQt91:/home/admin:/bin/sh \
+#  pgsql:1002:pgsql:1002:*:-/usr/local/psql:/bin/nologin \
+#  ::heroes:1003::::"
+
+# ezjails init script tries to install all files listed here from the path 
+# specified in the ezjail_template_root variable root to the corresponding 
+# location inside the jail. Directories are being copied recursive. Format 
+# is as follows:
+#
+# user:group:file(s)
+#
+# Example:
+#
+# ezjail_template_root=/basejail/config/_JAILNAME_
+# ezjail_template_files=\
+# "root:wheel:/etc/{resolv,rc,make}.conf \
+#  admin:wheel:/home/admin/"
+
+# ezjails jail init script tries to install packages specified in the
+# ezjail_template_packages variable. All packages without an absolute
+# path are assumed to be located in /basejail/config/pkg
+#
+# Example:
+#
+# ezjail_template_packages="sudo-1.6.8.9.tbz pico-4.64.tbz"
