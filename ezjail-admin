@@ -164,6 +164,13 @@ delete)
   . ${ezjail_jailcfgs}/${oldjail_nname}
   eval oldjail_rootdir=\"\$jail_${oldjail_nname}_rootdir\"
 
+  # if jail is still running, refuse to go any further
+  if [ -f /var/run/jail_${oldjail_nname}.id ]; then
+    echo "Error: Jail appears to be still running, stop it first"
+    echo "(/var/run/jail_${oldjail_nname}.id exists)"
+    exit 1;
+  fi
+
   # now we know everything we need to let the jail be gone
   # remove entry from ezjail resource structure
   rm -f ${ezjail_jailcfgs}/${oldjail_nname}
