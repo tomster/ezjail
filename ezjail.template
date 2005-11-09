@@ -8,24 +8,23 @@
 # 
 # Example:
 #
-# ezjail_template_users=\
-# "admin::wheel::$1$p75bbfK.$Kz3dwkoVlgZrfLZdAXQt91:/home/admin:/bin/sh \
-#  pgsql:1002:pgsql:1002:*:-/usr/local/psql:/bin/nologin \
-#  ::heroes:1003::::"
+# ezjail_template_users='::heroes:1003::: \
+# admin::wheel::$1$p75bbfK.$Kz3dwkoVlgZrfLZdAXQt91:/home/admin:/bin/sh \
+# pgsql:1002:pgsql:1002::-/usr/local/psql:/bin/nologin'
 
 # ezjails init script tries to install all files listed here from the path 
 # specified in the ezjail_template_root variable root to the corresponding 
-# location inside the jail. Directories are being copied recursive. Format 
-# is as follows:
+# location inside the jail. Directories are being copied recursively. 
+# Format is as follows:
 #
 # user:group:file(s)
 #
 # Example:
 #
-# ezjail_template_root=/basejail/config/_JAILNAME_
-# ezjail_template_files=\
-# "root:wheel:/etc/{resolv,rc,make}.conf \
-#  admin:wheel:/home/admin/"
+# ezjail_template_root='/basejail/config/_JAILFLAVOUR_'
+# ezjail_template_files='root:wheel:/etc/{resolv,rc,make}.conf \
+#  admin:wheel:/usr/local/bin/jailping \
+#  admin:wheel:/home/admin/'
 
 # ezjails jail init script tries to install packages specified in the
 # ezjail_template_packages variable. All packages without an absolute
@@ -33,4 +32,4 @@
 #
 # Example:
 #
-# ezjail_template_packages="sudo-1.6.8.9.tbz pico-4.64.tbz"
+# ezjail_template_packages='sudo-1.6.8.9.tbz pico-4.64.tbz'
