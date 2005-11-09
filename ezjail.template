@@ -4,13 +4,14 @@
 # ezjails jail init script tries to create the following users. Format is 
 # as follows:
 #
-# username:uid:group[,group,..]:gid[,gid,..]:fullname:cryptpw:[-]homedir:shell
-# 
+# username:uid:group[,group,..]:gid[,gid,..]:comment:cryptpw:[-]homedir:shell
+# underscores in comment will be converted to spaces
+#
 # Example:
 #
 # ezjail_template_users='::heroes:1003:::: \
-# admin::wheel::"Admin User":$1$p75bbfK.$Kz3dwkoVlgZrfLZdAXQt91:/home/admin:/bin/sh \
-# pgsql:1002:pgsql:1002:"PostGres"::-/usr/local/psql:/bin/nologin'
+# admin::wheel::Admin_User:$1$p75bbfK.$Kz3dwkoVlgZrfLZdAXQt91:/home/admin:/bin/sh \
+# pgsql:1002:pgsql:1002:Post_Gres::-/usr/local/psql:/bin/nologin'
 
 # ezjails init script tries to install all files listed here from the path 
 # specified in the ezjail_template_root variable root to the corresponding 
