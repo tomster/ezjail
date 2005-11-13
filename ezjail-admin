@@ -200,7 +200,7 @@ list)
     printf "%-15s %-28s %s\\n" $jail_ip $jail_hostname $jail_rootdir
   done
   ;;
-update)
+setup|update)
   shift
   args=`getopt is: $*`
   if [ $? != 0 ]; then
