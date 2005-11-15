@@ -22,7 +22,7 @@ ezjail_devfs_ruleset=${ezjail_devfs_ruleset:-"devfsrules_jail"}
 ezjail_procfs_enable=${ezjail_procfs_enable:-"YES"}
 ezjail_fdescfs_enable=${ezjail_fdescfs_enable:-"YES"}
 
-function exerr () { echo $*; exit 1; }
+exerr () { echo $*; exit 1; }
 
 # check for command
 [ "$1" ] || exerr "Usage: `basename $0` [create|delete|list|update] {params}"
