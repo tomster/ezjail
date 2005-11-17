@@ -71,12 +71,12 @@ create)
   # allow foo.com style directory names, however, the jail
   # name will be foo_com in most scripts
   newjail_name=`echo $newjail_name | tr /~ __`;
-  newjail_root=${newjail_root:-"$ezjail_jaildir/$newjail_name"}
+  newjail_root=${newjail_root:-"${ezjail_jaildir}/${newjail_name}"}
   newjail_nname=`echo $newjail_name | tr . _`;
 
   # if jail root specified on command line is not absolute,
   # make it absolute inside our jail directory
-  [ ${newjail_root#/} = ${newjail_root} ] || newjail_root=$ezjail_jaildir/$newjail_root
+  [ ${newjail_root#/} = ${newjail_root} ] && newjail_root=$ezjail_jaildir/$newjail_root
 
   # if jail root specified on command line does not lie
   # within our jail directory, we need to create a softlink
@@ -140,7 +140,7 @@ delete)
 ######################## ezjail-admin DELETE ########################
   shift
   args=`getopt w $*`
-  [ $? = 0 ] || exerr 'Usage: ezjail delete [-w] jailname'; exit 1;
+  [ $? = 0 ] || exerr 'Usage: ezjail delete [-w] jailname';
   
   oldjail_wipe="NO"
   
@@ -253,6 +253,6 @@ setup|update)
 
   ;;
 *)
-  echo "Usage: `basename $0` [create|delete|list|update] {params}"; exit;
+  exerr "Usage: `basename $0` [create|delete|list|update] {params}"
   ;;
 esac
