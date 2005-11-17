@@ -22,7 +22,7 @@
 #
 # Example:
 #
-# ezjail_flavour_root='/basejail/config/_JAILFLAVOUR_'
+# ezjail_flavour_root='/basejail/config/default'
 # ezjail_flavour_files='root:wheel:/etc/{resolv,rc,make}.conf \
 #  admin:wheel:/usr/local/bin/jailping \
 #  admin:wheel:/home/admin/'
