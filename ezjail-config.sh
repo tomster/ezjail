@@ -52,7 +52,7 @@ for file in $ezjail_flavour_files; do
   if [ $# -eq 3 -a "$3" ]; then
     owner=$1; [ $2 ] && owner="$1:$2"
     for file in $3; do
-      find ${file#/} | cpio -p -d /
+      find ${file#/} | cpio -p -l -d /
       chown -R $owner $file
     done
   fi
