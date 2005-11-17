@@ -130,7 +130,7 @@ create)
 
   # Final steps for flavour installation
   if [ "${newjail_flav}" ]; then
-    install -o root -g wheel -m 0755 ${newjail_flav} ${newjail_root}/ezjail.flavour
+    install -o root -g wheel -m 0755 ${newjail_flav} ${newjail_root}/etc/ezjail.flavour
     install -o root -g wheel -m 0755 ${ezjail_share}/ezjail-config.sh ${newjail_root}/etc/rc.d/ezjail-config.sh
     echo "Shell scripts installed, flavourizing on jails first startup"
   fi
