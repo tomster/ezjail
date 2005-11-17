@@ -3,6 +3,7 @@
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
 ezjail_etc=${ezjail_prefix}/etc
+ezjail_share=${ezjail_prefix}/share
 ezjail_jailcfgs=${ezjail_etc}/ezjail
 
 if [ -f ${ezjail_etc}/ezjail.conf ]; then
@@ -95,9 +96,12 @@ create)
     # if flavour contains a '/', it aint a short name
     if [  ${newjail_flavour} = ${newjail_flavour%/*} -a \
        -f ${ezjail_etc}/ezjail.flavour.${newjail_flavour} ]; then
-        [ $newjail_flav ] && exerr "Note: flavour ${newjail_flavour} conflicts with file ./${newjail_flavour}"
+        [ "$newjail_flav" ] && exerr "Error: flavour ${newjail_flavour} conflicts with file ./${newjail_flavour}"
         $newjail_flav=${ezjail_etc}/ezjail.flavour.${newjail_flavour}
     fi
+
+    # Flavour not found
+    [ "$newjail_flav" ] || exerr "Error: Flavour file $newjail_flavour not found"
   fi
 
   # now take a copy of our template jail
@@ -125,6 +129,13 @@ create)
   echo export jail_${newjail_nname}_devfs_ruleset=\"devfsrules_jail\"           >> ${ezjail_jailcfgs}/${newjail_nname}
   echo export jail_${newjail_nname}_procfs_enable=\"${ezjail_procfs_enable}\"   >> ${ezjail_jailcfgs}/${newjail_nname}
   echo export jail_${newjail_nname}_fdescfs_enable=\"${ezjail_fdescfs_enable}\" >> ${ezjail_jailcfgs}/${newjail_nname}
+
+  # Final steps for flavour installation
+  if [ "${newjail_flav}" ]; then
+    install -o root -g wheel -m 0755 ${newjail_flav} ${newjail_root}/ezjail.flavour
+    install -o root -g wheel -m 0755 ${ezjail_share}/ezjail-config.sh ${newjail_root}/etc/rc.d/ezjail-config.sh
+    echo "Shell scripts installed, flavourizing on jails first startup"
+  fi
 
   ;;
 delete)
@@ -190,6 +201,7 @@ list)
     eval jail_rootdir=\"\$jail_${jail}_rootdir\"
     printf "%-15s %-28s %s\\n" $jail_ip $jail_hostname $jail_rootdir
   done
+
   ;;
 setup|update)
 ######################## ezjail-admin UPDATE ########################

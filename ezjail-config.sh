@@ -2,21 +2,21 @@
 #
 # BEFORE: rcconf
 
-if [ -f /etc/ezjail.template ]; then
-  . /etc/ezjail.template
+if [ -f /etc/ezjail.flavour ]; then
+  . /etc/ezjail.flavour
 
   # we do need to install only once
-  # rm -f /etc/ezjail.template
+  # rm -f /etc/ezjail.flavour
 fi
 
 # set defaults
-ezjail_template_root=${ezjail_template_root:-"/basejail/config/default"}
-ezjail_template_files=${ezjail_template_files:-""}
-ezjail_template_users=${ezjail_template_users:-""}
-ezjail_template_packages=${ezjail_template_packages:-""}
+ezjail_flavour_root=${ezjail_flavour_root:-"/basejail/config/default"}
+ezjail_flavour_files=${ezjail_flavour_files:-""}
+ezjail_flavour_users=${ezjail_flavour_users:-""}
+ezjail_flavour_packages=${ezjail_flavour_packages:-""}
 
 # try to create users
-for user in $ezjail_template_users; do
+for user in $ezjail_flavour_users; do
   TIFS=$IFS; IFS=:; set -- $user; IFS=$TIFS
 
   if [ $# -eq 8 ]; then
@@ -45,8 +45,8 @@ for user in $ezjail_template_users; do
 done
 
 # try to install files
-cd $ezjail_template_root
-for file in $ezjail_template_files; do
+cd $ezjail_flavour_root
+for file in $ezjail_flavour_files; do
   TIFS=$IFS; IFS=:; set -- $file; IFS=$TIFS
 
   if [ $# -eq 3 -a "$3" ]; then
@@ -60,7 +60,7 @@ done
 
 # finally install packages
 [ -d /basejail/config/pkg ] && cd /basejail/config/pkg
-[ $ezjail_template_packages ] && pkg_add $ezjail_template_packages
+[ $ezjail_flavour_packages ] && pkg_add $ezjail_flavour_packages
 
 # Get rid off ourself
 rm -f /etc/rc.d/ezjail-config.sh
