@@ -6,7 +6,7 @@ if [ -f /etc/ezjail.flavour ]; then
   . /etc/ezjail.flavour
 
   # we do need to install only once
-  # rm -f /etc/ezjail.flavour
+  rm -f /etc/ezjail.flavour
 fi
 
 # set defaults
@@ -60,7 +60,7 @@ done
 
 # finally install packages
 [ -d /basejail/config/pkg ] && cd /basejail/config/pkg
-[ $ezjail_flavour_packages ] && pkg_add $ezjail_flavour_packages
+[ "${ezjail_flavour_packages}" ] && pkg_add ${ezjail_flavour_packages}
 
 # Get rid off ourself
 rm -f /etc/rc.d/ezjail-config.sh
