@@ -3,7 +3,7 @@
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
 ezjail_etc=${ezjail_prefix}/etc
-ezjail_share=${ezjail_prefix}/share
+ezjail_share=${ezjail_prefix}/share/ezjail
 ezjail_jailcfgs=${ezjail_etc}/ezjail
 
 if [ -f ${ezjail_etc}/ezjail.conf ]; then
@@ -92,16 +92,14 @@ create)
     # but /ezjail_etc/ezjail.flavour.httpd, whatever ./httpd would be
     # For now exit with error, maybe just warn later.
     [ -f "$newjail_flavour" ] && newjail_flav=${newjail_flavour}
-
     # if flavour contains a '/', it aint a short name
     if [  ${newjail_flavour} = ${newjail_flavour%/*} -a \
        -f ${ezjail_etc}/ezjail.flavour.${newjail_flavour} ]; then
         [ "$newjail_flav" ] && exerr "Error: flavour ${newjail_flavour} conflicts with file ./${newjail_flavour}"
-        $newjail_flav=${ezjail_etc}/ezjail.flavour.${newjail_flavour}
+        newjail_flav=${ezjail_etc}/ezjail.flavour.${newjail_flavour}
     fi
-
     # Flavour not found
-    [ "$newjail_flav" ] || exerr "Error: Flavour file $newjail_flavour not found"
+    [ "$newjail_flav" ] || exerr "Error: Flavour file ${newjail_flavour} not found"
   fi
 
   # now take a copy of our template jail
