@@ -5,13 +5,17 @@
 # as follows:
 #
 # username:uid:group[,group,..]:gid[,gid,..]:comment:cryptpw:[-]homedir:shell
-# underscores in comment will be converted to spaces
+#
+# Note: Since ' ' (space) does not survive shell expansion, still often is
+# useful in the comment field, '=' will be converted to ' '.
+#
+# Note: Always use ''' (single ticks) to provide variables containing '$'s
 #
 # Example:
 #
 # ezjail_flavour_users='::heroes:1003:::: \
-# admin::wheel::Admin_User:$1$p75bbfK.$Kz3dwkoVlgZrfLZdAXQt91:/home/admin:/bin/sh \
-# pgsql:1002:pgsql:1002:Post_Gres::-/usr/local/psql:/bin/nologin'
+# admin::wheel::Admin=User:$1$p75bbfK.$Kz3dwkoVlgZrfLZdAXQt91:/home/admin:/bin/sh \
+# pgsql:1002:pgsql:1002:Post=Gres::-/usr/local/psql:/bin/nologin'
 
 # ezjails init script tries to install all files listed here from the path 
 # specified in the ezjail_flavour_root variable root to the corresponding 
@@ -23,8 +27,8 @@
 # Example:
 #
 # ezjail_flavour_root='/basejail/config/default'
-# ezjail_flavour_files='root:wheel:/etc/{resolv,rc,make}.conf \
-#  admin:wheel:/usr/local/bin/jailping \
+# ezjail_flavour_files='root:wheel:/etc/*.conf \
+#  root:wheel:/etc/localtime \
 #  admin:wheel:/home/admin/'
 
 # ezjails jail init script tries to install packages specified in the
