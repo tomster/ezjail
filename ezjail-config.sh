@@ -2,6 +2,7 @@
 #
 # BEFORE: rcconf
 
+set -o noglob
 if [ -f /etc/ezjail.flavour ]; then
   . /etc/ezjail.flavour
 
@@ -18,12 +19,11 @@ ezjail_flavour_packages=${ezjail_flavour_packages:-""}
 # try to create users
 for user in $ezjail_flavour_users; do
   TIFS=$IFS; IFS=:; set -- $user; IFS=$TIFS
-
   if [ $# -eq 8 ]; then
     gc=1; name=$1; grouplist=$3; gidlist=$4; home=$7
 
     [ $2 ] && uid="-u $2"       || uid=""
-    [ $5 ] && comment="-c \"`echo $5 | tr _ ' '`\""   || comment=""
+    [ $5 ] && comment="-c$5"    || comment=""
     [ $6 ] && pass="$6"         || pass="*"
     [ $8 ] && shell="-s $8"     || shell=""
 
@@ -40,7 +40,7 @@ for user in $ezjail_flavour_users; do
     fi
     # create user
     [ $grouplist ] && grouplist="-G $grouplist"
-    [ $name ] && echo "$pass" | pw useradd -n $name $uid $shell $mkhome $home $grouplist $comment -H 0
+    [ $name ] && echo "$pass" | pw useradd -n $name $uid $shell $mkhome $home $grouplist "`echo $comment | tr = ' '`" -H 0
   fi
 done
 
@@ -48,18 +48,20 @@ done
 cd $ezjail_flavour_root
 for file in $ezjail_flavour_files; do
   TIFS=$IFS; IFS=:; set -- $file; IFS=$TIFS
-
+  set +o noglob
   if [ $# -eq 3 -a "$3" ]; then
     owner=$1; [ $2 ] && owner="$1:$2"
-    for file in $3; do
-      find ${file#/} | cpio -p -l -d /
-      chown -R $owner $file
+    for file in ./$3; do
+      find ${file} | cpio -p -d /
+      chown -R $owner /$file
     done
   fi
+  set -o noglob
 done
 
 # finally install packages
 [ -d /basejail/config/pkg ] && cd /basejail/config/pkg
+set +o noglob
 [ "${ezjail_flavour_packages}" ] && pkg_add ${ezjail_flavour_packages}
 
 # Get rid off ourself
