@@ -4,7 +4,7 @@ ezjail-admin \- Administrate ezjail
 .SH SYNOPSIS
 .T
 .B ezjail-admin create
-[-r jailroot] [-x]
+[-f flavour] [-r jailroot] [-x]
 .I hostname jailip
 
 .T
@@ -38,21 +38,36 @@ in situations where you just want to alter some of a jail properties and
 called ezjail-admin delete without the -w option before. However, sanity 
 checks are being performed.
 
-It then creates an entry in its etc/ezjail/ resource directory allowing 
-the jail to be brought up after next reboot.
+It then creates an entry in its
+.I EZJAIL_PREFIX/etc/ezjail/
+resource directory allowing the jail to be brought up after next reboot.
 
-If the ezjail_mount_enable option is set, a /etc/fstab.hostname is 
-generated, allowing the basejail to be auto-mounted when the jail starts 
+If the ezjail_mount_enable option is set, a
+.I /etc/fstab.hostname
+is generated, allowing the basejail to be auto-mounted when the jail starts 
 up.
+
+The newly created Jail can perform some initializiation actions, if the
+-f <flavour> option is given, where flavour is a path to a flavour configuration
+file or a short name expanding to
+.I EZJAIL_PREFIX/etc/ezjail.flavour.<flavour> .
+
+See section
+.B FLAVOURS
+below for more details.
 
 Options for newly created jails are read from
 .B ezjail.conf,
 refer to ezjail.conf(5) for more information.
 .SH ezjail-admin delete
-removes a jail from ezjails etc/ezjail/ resource directory thus preventing 
+removes a jail from ezjails
+.I EZJAIL_PREFIX/etc/ezjail/
+resource directory thus preventing 
 it from being brought up on next reboot.
 
-It then removes the /etc/fstab.hostname entry, if it exists.
+It then removes the
+.I /etc/fstab.hostname
+entry, if it exists.
 
 If the -w (wipe) option is given, the directory pointed to by the jail 
 root entry is removed as well as the soft link in ezjails root dir.
@@ -89,11 +104,49 @@ host systems world, or at least its kernel. Combining a make world in the
 host system with
 .B ezjail-admin update
 is considered a good idea.
+.SH FLAVOURS
+.B ezjail-admin
+provides an easy way to create many Jails with similar or identical
+properties. Currently it supports creating users, installing files and
+installing packages.
+
+A sample flavour config file resides under
+.I EZJAIL_PREFIX/share/examples/ezjail/ezjail.flavour.default,
+the corresponding root is at
+.I EZJAIL_PREFIX/share/examples/ezjail/default/.
+Some typical Jail initialization actions are demonstrated and you are
+encouraged to use it as a template for your flavour configs.
+
+If a flavour is selected on Jail creation, the Jail executes a config
+script on its first startup. This looks for packages under
+.I /basejail/config/pkg.
+Usually it copies files from
+.I /basejail/config/<flavour>,
+you can specify the path in your flavour config file.
+.SH EXAMPLES
+ezjail-admin update
+.br
+ezjail-admin create -f httpd -r /jails/web12 web12.test.org 10.0.1.12
+.br
+EZJAIL_PREFIX/etc/rc.d/ezjail.sh start web12.test.org
+.br
+EZJAIL_PREFIX/etc/rc.d/ezjail.sh stop ns.test.org
+.br
+ezjail-admin delete ns.test.org
+.br
+ezjail-admin create -x -r /jails/ns ns.test.org 10.0.2.1
+.SH BUGS
+.B ezjail-admin
+does not perform paranoid checks on its variables.
 .SH FILES
 .T4
 EZJAIL_PREFIX/etc/ezjail.conf
 .br
 EZJAIL_PREFIX/etc/rc.d/ezjail.sh
+.br
+EZJAIL_PREFIX/share/examples/ezjail/
+.br
+EZJAIL_PREFIX/etc/ezjail.flavour.*
 .SH "SEE ALSO"
 ezjail(5), ezjail.conf(5), jail(8), devfs(5), fdescfs(5), procfs(5)
 .SH AUTHOR
