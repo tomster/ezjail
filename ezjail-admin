@@ -60,7 +60,7 @@ create)
   [ -d $ezjail_jailbase ] || exerr "Error: base jail does not exist. Please run 'ezjail-admin update' first"
 
   # relative paths don't make sense in rc.scripts
-  [ ${ezjail_jaildir#/} = ${ezjail_jaildir} ] && exerr "Error: Need an absolute path in ezjail_jaildir, it is currently  set to: $ezjail_jaildir"
+  [ ${ezjail_jaildir#/} = ${ezjail_jaildir} ] && exerr "Error: Need an absolute path in ezjail_jaildir, it currently is set to: $ezjail_jaildir"
 
   # jail names must not have names that irritate file systems,
   # excluding dots from this list was done intentionally to
@@ -95,13 +95,13 @@ create)
         newjail_flav=${ezjail_etc}/ezjail.flavour.${newjail_flavour}
     fi
     # Flavour not found
-    [ "$newjail_flav" ] || exerr "Error: Flavour file ${newjail_flavour} not found"
+    [ "$newjail_flav" ] || exerr "Error: Flavour config file ${newjail_flavour} not found"
   fi
 
   # now take a copy of our template jail
   if [ "$newjail_fill" = "YES" ]; then
     mkdir -p ${newjail_root} && cd ${ezjail_jailtemplate} && \
-    find * | cpio -p -v ${newjail_root}
+    find * | cpio -p -v ${newjail_root} > /dev/null
   fi
 
   # if a soft link is necessary, create it now
