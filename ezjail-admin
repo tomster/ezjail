@@ -256,7 +256,7 @@ setup|update)
   cd ${ezjail_jailfull}
   # Fill basejail from installed world
   mkdir -p ${ezjail_jailbase}/usr ${ezjail_jailbase}/config/pkg
-  for a in bin sbin usr/bin usr/include usr/lib usr/libexec usr/sbin usr/src usr/share; do
+  for a in bin lib libexec sbin usr/bin usr/include usr/lib usr/libexec usr/sbin usr/src usr/share; do
     find ${a} | cpio -d -p -v ${ezjail_jailbase};
     chflags -R noschg ${a}; rm -r ${a}; ln -s /basejail/${a} ${a}
   done
