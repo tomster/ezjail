@@ -3,18 +3,16 @@
 # BEFORE: rcconf
 
 set -o noglob
-if [ -f /etc/ezjail.flavour ]; then
-  . /etc/ezjail.flavour
+if [ -f /config/ezjail.flavour ]; then
+  . /config/ezjail.flavour
 
   # we do need to install only once
-  rm -f /etc/ezjail.flavour
+  rm -f /config/ezjail.flavour
 fi
 
 # set defaults
-ezjail_flavour_root=${ezjail_flavour_root:-"/basejail/config/default"}
 ezjail_flavour_files=${ezjail_flavour_files:-""}
 ezjail_flavour_users=${ezjail_flavour_users:-""}
-ezjail_flavour_packages=${ezjail_flavour_packages:-""}
 
 # try to create users
 for user in $ezjail_flavour_users; do
@@ -45,7 +43,7 @@ for user in $ezjail_flavour_users; do
 done
 
 # try to install files
-cd $ezjail_flavour_root
+cd /config
 for file in $ezjail_flavour_files; do
   TIFS=$IFS; IFS=:; set -- $file; IFS=$TIFS
   set +o noglob
@@ -60,9 +58,8 @@ for file in $ezjail_flavour_files; do
 done
 
 # finally install packages
-[ -d /basejail/config/pkg ] && cd /basejail/config/pkg
-set +o noglob
-[ "${ezjail_flavour_packages}" ] && pkg_add ${ezjail_flavour_packages}
+set -o noglob
+[ -d /config/pkg ] && cd /config/pkg && pkg_add *
 
 # Get rid off ourself
 rm -f /etc/rc.d/ezjail-config.sh

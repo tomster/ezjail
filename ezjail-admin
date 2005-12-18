@@ -4,6 +4,7 @@
 ezjail_prefix=EZJAIL_PREFIX
 ezjail_etc=${ezjail_prefix}/etc
 ezjail_share=${ezjail_prefix}/share/ezjail
+ezjail_examples=${ezjail_prefix}/share/examples/ezjail
 ezjail_jailcfgs=${ezjail_etc}/ezjail
 
 if [ -f ${ezjail_etc}/ezjail.conf ]; then
@@ -15,6 +16,7 @@ ezjail_jaildir=${ezjail_jaildir:-"/usr/jails"}
 ezjail_jailtemplate=${ezjail_jailtemplate:-"$ezjail_jaildir/newjail"}
 ezjail_jailbase=${ezjail_jailbase:-"$ezjail_jaildir/basejail"}
 ezjail_jailfull=${ezjail_jailfull:-"$ezjail_jaildir/fulljail"}
+ezjail_flavours=${ezjail_flavours:-"$ezjail_jaildir/flavours"}
 ezjail_sourcetree=${ezjail_sourcetree:-"/usr/src"}
 
 ezjail_mount_enable=${ezjail_mount_enable:-"YES"}
@@ -37,7 +39,6 @@ create)
 
   newjail_root=
   newjail_flavour=
-  newjail_flav=
   newjail_softlink=
   newjail_fill="YES"
 
@@ -82,20 +83,9 @@ create)
   fi
 
   # do some sanity checks on the selected flavour (if any)
-  if [ "$newjail_flavour" ]; then
-    # simple case wins, most often you won't have a ezjail.flavour.FLAV
-    # AND a ./FLAV lying around. If you do, you won't need "./httpd"
-    # but /ezjail_etc/ezjail.flavour.httpd, whatever ./httpd would be
-    # For now exit with error, maybe just warn later.
-    [ -f "$newjail_flavour" ] && newjail_flav=${newjail_flavour}
-    # if flavour contains a '/', it aint a short name
-    if [  ${newjail_flavour} = ${newjail_flavour%/*} -a \
-       -f ${ezjail_etc}/ezjail.flavour.${newjail_flavour} ]; then
-        [ "$newjail_flav" ] && exerr "Error: flavour ${newjail_flavour} conflicts with file ./${newjail_flavour}"
-        newjail_flav=${ezjail_etc}/ezjail.flavour.${newjail_flavour}
-    fi
-    # Flavour not found
-    [ "$newjail_flav" ] || exerr "Error: Flavour config file ${newjail_flavour} not found"
+  if [ "${newjail_flavour}" ]; then
+    [ -d ${ezjail_flavours}/${newjail_flavour}/ ] || exerr "Error: Flavour config directory ${ezjail_flavours}/${newjail_flavour} not found"
+    [ -d ${ezjail_flavours}/${newjail_flavour}/ezjail.flavour ] || exerr "Error: Flavour config ${ezjail_flavours}/${newjail_flavour}/ezjail.flavour not found"
   fi
 
   # now take a copy of our template jail
@@ -109,19 +99,19 @@ create)
 
   # if the automount feature is not disabled, create an
   # fstab entry for new jail
-  echo $ezjail_jailbase	$newjail_root/basejail	nullfs	ro	0	0 > /etc/fstab.$newjail_nname
+  echo $ezjail_jailbase $newjail_root/basejail nullfs ro 0 0 > /etc/fstab.$newjail_nname
 
   # now, where everything seems to have gone right,
   # create control file in ezjails config dir
   mkdir -p $ezjail_jailcfgs
-  echo export jail_${newjail_nname}_hostname=\"${newjail_name}\"                 > ${ezjail_jailcfgs}/${newjail_nname}
-  echo export jail_${newjail_nname}_ip=\"${newjail_ip}\"                        >> ${ezjail_jailcfgs}/${newjail_nname}
-  echo export jail_${newjail_nname}_rootdir=\"${newjail_root}\"                 >> ${ezjail_jailcfgs}/${newjail_nname}
-  echo export jail_${newjail_nname}_exec=\"/bin/sh /etc/rc\"                    >> ${ezjail_jailcfgs}/${newjail_nname}
-  echo export jail_${newjail_nname}_mount_enable=\"${ezjail_mount_enable}\"     >> ${ezjail_jailcfgs}/${newjail_nname}
-  echo export jail_${newjail_nname}_devfs_enable=\"${ezjail_devfs_enable}\"     >> ${ezjail_jailcfgs}/${newjail_nname}
-  echo export jail_${newjail_nname}_devfs_ruleset=\"devfsrules_jail\"           >> ${ezjail_jailcfgs}/${newjail_nname}
-  echo export jail_${newjail_nname}_procfs_enable=\"${ezjail_procfs_enable}\"   >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_hostname=\"${newjail_name}\"  > ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_ip=\"${newjail_ip}\"  >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_rootdir=\"${newjail_root}\"  >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_exec=\"/bin/sh /etc/rc\"  >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_mount_enable=\"${ezjail_mount_enable}\"  >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_devfs_enable=\"${ezjail_devfs_enable}\"  >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_devfs_ruleset=\"devfsrules_jail\"  >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_procfs_enable=\"${ezjail_procfs_enable}\"  >> ${ezjail_jailcfgs}/${newjail_nname}
   echo export jail_${newjail_nname}_fdescfs_enable=\"${ezjail_fdescfs_enable}\" >> ${ezjail_jailcfgs}/${newjail_nname}
 
   # check, whether IP is configured on a local interface, warn if it isnt
@@ -133,29 +123,29 @@ create)
   newjail_listener=`sockstat -4 -l | grep $newjail_ip:[[:digit:]]`
   if [ $? = 0 ]; then
     echo "Warning: Some services already seem to be listening on IP $newjail_ip"
-    echo "         This may cause some confusion, here they are:"
+    echo "  This may cause some confusion, here they are:"
     echo $newjail_listener
   fi
 
   newjail_listener=`sockstat -4 -l | grep \*:[[:digit:]]`
   if [ $? = 0 ]; then
     echo "Warning: Some services already seem to be listening on all IPs"
-    echo "         (including $newjail_ip)"
-    echo "         This may cause some confusion, here they are:"
+    echo "  (including $newjail_ip)"
+    echo "  This may cause some confusion, here they are:"
     echo $newjail_listener
   fi
   IFS=$TIFS
 
   # Final steps for flavour installation
-  if [ "${newjail_flav}" ]; then
-    install -o root -g wheel -m 0755 ${newjail_flav} ${newjail_root}/etc/ezjail.flavour
+  if [ "${newjail_flavour}" ]; then
+    cp -r -p ${ezjail_jaildir}/${newjail_flavour} ${newjail_root}/config
     install -o root -g wheel -m 0755 ${ezjail_share}/ezjail-config.sh ${newjail_root}/etc/rc.d/ezjail-config.sh
     echo "Note: Shell scripts installed, flavourizing on jails first startup"
   fi
 
   ;;
-delete)
 ######################## ezjail-admin DELETE ########################
+delete)
   shift
   args=`getopt w $*`
   [ $? = 0 ] || exerr 'Usage: ezjail delete [-w] jailname';
@@ -207,8 +197,8 @@ delete)
   [ $oldjail_wipe = "YES" ] && rm -rf $oldjail_rootdir
 
   ;;
-list)
 ######################## ezjail-admin LIST ########################
+  list)
   jail_list=`ls $ezjail_jailcfgs`
   for jail in $jail_list; do
     . ${ezjail_jailcfgs}/$jail
@@ -219,8 +209,8 @@ list)
   done
 
   ;;
-setup|update)
 ######################## ezjail-admin UPDATE ########################
+setup|update)
   shift
   args=`getopt is: $*`
   [ $? = 0 ] || exerr 'Usage: ezjail update [-s sourcetree] [-i]'
@@ -268,6 +258,9 @@ setup|update)
     mv ${ezjail_jailtemplate} ${ezjail_jailtemplate}_old
   fi
   mv ${ezjail_jailfull} ${ezjail_jailtemplate}
+
+  # If the default flavour example has not yet been copied, do it now
+  [ -d ${ezjail_flavours}/default ] || cp -p -r ${ezjail_examples}/default ${ezjail_flavours}
 
   ;;
 *)
