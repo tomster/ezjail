@@ -1,5 +1,5 @@
 # ezjail flavour example
-# refer to ezjail(5) for more information
+# refer to ezjail-admin(1) for more information
 #
 # ezjails jail init script tries to create the following users. Format is 
 # as follows:
