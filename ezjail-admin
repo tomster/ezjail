@@ -263,7 +263,7 @@ setup|update)
   mv ${ezjail_jailfull} ${ezjail_jailtemplate}
 
   # If the default flavour example has not yet been copied, do it now
-  [ -d ${ezjail_flavours}/default ] || cp -p -r ${ezjail_examples}/default ${ezjail_flavours}
+  [ -d ${ezjail_flavours}/default ] || cp -p -r ${ezjail_examples}/default ${ezjail_flavours}/
 
   ;;
 *)
