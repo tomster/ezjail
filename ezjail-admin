@@ -85,7 +85,6 @@ create)
   # do some sanity checks on the selected flavour (if any)
   if [ "${newjail_flavour}" ]; then
     [ -d ${ezjail_flavours}/${newjail_flavour}/ ] || exerr "Error: Flavour config directory ${ezjail_flavours}/${newjail_flavour} not found"
-    [ -d ${ezjail_flavours}/${newjail_flavour}/ezjail.flavour ] || exerr "Error: Flavour config ${ezjail_flavours}/${newjail_flavour}/ezjail.flavour not found"
   fi
 
   # now take a copy of our template jail
@@ -138,7 +137,11 @@ create)
 
   # Final steps for flavour installation
   if [ "${newjail_flavour}" ]; then
-    cp -r -p ${ezjail_jaildir}/${newjail_flavour} ${newjail_root}/config
+    # install files, packages and config to new jail
+    # user creating, chown and package installation on jails startup
+    cd ${ezjail_jaildir}/${newjail_flavour}
+    find * | cpio -p -v ${newjail_root} > /dev/null
+
     install -o root -g wheel -m 0755 ${ezjail_share}/ezjail-config.sh ${newjail_root}/etc/rc.d/ezjail-config.sh
     echo "Note: Shell scripts installed, flavourizing on jails first startup"
   fi

@@ -1,18 +1,17 @@
 #!/bin/sh
-#
-# BEFORE: rcconf
 
 set -o noglob
-if [ -f /config/ezjail.flavour ]; then
-  . /config/ezjail.flavour
+if [ -f /ezjail.flavour ]; then
+  . /ezjail.flavour
 
-  # we do need to install only once
-  rm -f /config/ezjail.flavour
+  # we do need to install only once delete here to avoid errors
+  # in this script to prevent jail startup forever
+  rm -f /ezjail.flavour
 fi
 
 # set defaults
-ezjail_flavour_files=${ezjail_flavour_files:-""}
 ezjail_flavour_users=${ezjail_flavour_users:-""}
+ezjail_flavour_files=${ezjail_flavour_files:-""}
 
 # try to create users
 for user in $ezjail_flavour_users; do
@@ -42,24 +41,25 @@ for user in $ezjail_flavour_users; do
   fi
 done
 
-# try to install files
-cd /config
+# chmod all files not belonging to root
 for file in $ezjail_flavour_files; do
   TIFS=$IFS; IFS=:; set -- $file; IFS=$TIFS
   set +o noglob
   if [ $# -eq 3 -a "$3" ]; then
     owner=$1; [ $2 ] && owner="$1:$2"
     for file in ./$3; do
-      find ${file} | cpio -p -d /
       chown -R $owner /$file
     done
   fi
   set -o noglob
 done
 
-# finally install packages
+# install packages
 set -o noglob
-[ -d /config/pkg ] && cd /config/pkg && pkg_add *
+[ -d /pkg ] && cd /pkg && pkg_add *
+
+# source post install script
+[ -d /ezjail.postinstall ] && . /ezjail.postinstall
 
 # Get rid off ourself
-rm -f /etc/rc.d/ezjail-config.sh
+rm -rf /pkg /etc/rc.d/ezjail-config.sh /ezjail.postinstall
