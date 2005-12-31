@@ -110,19 +110,29 @@ provides an easy way to create many Jails with similar or identical
 properties. Currently it supports creating users, installing files and
 installing packages.
 
-A sample flavour config file resides under
-.I EZJAIL_PREFIX/share/examples/ezjail/ezjail.flavour.default,
-the corresponding root is at
+A sample flavour config directory resides under
 .I EZJAIL_PREFIX/share/examples/ezjail/default/.
 Some typical Jail initialization actions are demonstrated and you are
-encouraged to use it as a template for your flavour configs.
+encouraged to use it as a template for your flavours.
 
-If a flavour is selected on Jail creation, the Jail executes a config
-script on its first startup. This looks for packages under
-.I /basejail/config/pkg.
-Usually it copies files from
-.I /basejail/config/<flavour>,
-you can specify the path in your flavour config file.
+If a flavour is selected on Jail creation, the flavour root is being
+copied to the new Jails root, mostly containing an
+.I /ezjail.flavour .
+If the Jail starts up for the first time it runs a setup script found
+at
+.I /etc/rc.d/ezjail-config.sh.
+
+This script will create some users specified in the flavour config.
+It will then chown files specified in the flavour config. (This is to allow
+giving file to users that didn't exist on Jail creation time.) All
+packages residing under
+.I /pkg
+will be installed. Finally the script
+.I /ezjail.postinstall
+is being sourced, if it exists.
+
+.I ezjail-config.sh
+then removes all traces, including itself.
 .SH EXAMPLES
 ezjail-admin update
 .br
@@ -145,8 +155,6 @@ EZJAIL_PREFIX/etc/ezjail.conf
 EZJAIL_PREFIX/etc/rc.d/ezjail.sh
 .br
 EZJAIL_PREFIX/share/examples/ezjail/
-.br
-EZJAIL_PREFIX/etc/ezjail.flavour.*
 .SH "SEE ALSO"
 ezjail(5), ezjail.conf(5), jail(8), devfs(5), fdescfs(5), procfs(5)
 .SH AUTHOR
