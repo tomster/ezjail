@@ -55,8 +55,8 @@ for file in $ezjail_flavour_files; do
 done
 
 # install packages
-set -o noglob
-[ -d /pkg ] && cd /pkg && pkg_add *
+set +o noglob
+[ -d /pkg ] && pkg_add /pkg/*
 
 # source post install script
 [ -d /ezjail.postinstall ] && . /ezjail.postinstall
