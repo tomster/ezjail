@@ -18,6 +18,7 @@ ezjail_jailbase=${ezjail_jailbase:-"$ezjail_jaildir/basejail"}
 ezjail_jailfull=${ezjail_jailfull:-"$ezjail_jaildir/fulljail"}
 ezjail_flavours=${ezjail_flavours:-"$ezjail_jaildir/flavours"}
 ezjail_sourcetree=${ezjail_sourcetree:-"/usr/src"}
+ezjail_portscvsroot=${ezjail_portscvsroot:-":pserver:anoncvs@anoncvs.at.FreeBSD.org:/home/ncvs"}
 
 ezjail_mount_enable=${ezjail_mount_enable:-"YES"}
 ezjail_devfs_enable=${ezjail_devfs_enable:-"YES"}
@@ -54,11 +55,11 @@ create)
   newjail_name=$1; newjail_ip=$2;
 
   # we need at least a name and an ip for new jail
-  [ "$newjail_name" -a "$newjail_ip" -a $# = 2 ] || exerr 'Usage: ezjail create [-f flavour] [-r jailroot] [-x] jailname jailip'
+  [ "${newjail_name}" -a "${newjail_ip}" -a $# = 2 ] || exerr 'Usage: ezjail create [-f flavour] [-r jailroot] [-x] jailname jailip'
 
   # check, whether ezjail-update has been called. existence of
   # ezjail_jailbase is our indicator
-  [ -d $ezjail_jailbase ] || exerr "Error: base jail does not exist. Please run 'ezjail-admin update' first"
+  [ -d ${ezjail_jailbase} ] || exerr "Error: base jail does not exist. Please run 'ezjail-admin update' first"
 
   # relative paths don't make sense in rc.scripts
   [ ${ezjail_jaildir#/} = ${ezjail_jaildir} ] && exerr "Error: Need an absolute path in ezjail_jaildir, it currently is set to: $ezjail_jaildir"
@@ -215,56 +216,92 @@ delete)
 ######################## ezjail-admin UPDATE ########################
 setup|update)
   shift
-  args=`getopt is: $*`
-  [ $? = 0 ] || exerr 'Usage: ezjail update [-s sourcetree] [-i]'
+  args=`getopt ipPs: $*`
+  [ $? = 0 ] || exerr 'Usage: ezjail update [-s sourcetree] [-i] [-pP]'
 
   updatejail_installaction="world"
+  updatejail_provideports=
 
   set -- $args
   for arg do
     case $arg in
       -i) updatejail_installaction="installworld"; shift;;
       -s) ezjail_sourcetree="$2"; shift 2;;
+      -p) updatejail_provideports="YES"; shift;;
+      -P) updatejail_provideports="YES"; updatejail_installaction="none"; shift;;
       --) shift; break;;
     esac
   done;
 
-  # Bump the user for some of the most common errors
-  [ -d ${ezjail_sourcetree} ] || exerr "Cannot find your copy of the FreeBSD source tree in $ezjail_sourcetree."
-  [ -f ${ezjail_sourcetree}/Makefile ] || exerr "Your source tree in $ezjail_sourcetree seems to be incomplete (Makefile missing)."
+  if [ $updatejail_installaction = "none" ]; then
+    # check, whether ezjail-update has been called. existence of
+    # ezjail_jailbase is our indicator
+    [ -d ${ezjail_jailbase} ] || exerr "Error: base jail does not exist. You cannot fill base jails ports tree before creating it. Please run 'ezjail-admin update' first"
+  else
+    # Bump the user for some of the most common errors
+    [ -d ${ezjail_sourcetree} ] || exerr "Cannot find your copy of the FreeBSD source tree in $ezjail_sourcetree."
+    [ -f ${ezjail_sourcetree}/Makefile ] || exerr "Your source tree in $ezjail_sourcetree seems to be incomplete (Makefile missing)."
 
-  cd ${ezjail_sourcetree}
-  # Normally fulljail should be renamed by past ezjail-admin commands
-  # However those may have failed
-  rm -rf ${ezjail_jailfull}; mkdir -p ${ezjail_jailfull}
+    cd ${ezjail_sourcetree}
+    # Normally fulljail should be renamed by past ezjail-admin commands
+    # However those may have failed
+    rm -rf ${ezjail_jailfull}; mkdir -p ${ezjail_jailfull}
 
-  # make our world
-  make ${updatejail_installaction} DESTDIR=${ezjail_jailfull}
-  [ $? = 0 ] || exerr "make ${updatejail_installaction} failed"
+    # make our world
+    make ${updatejail_installaction} DESTDIR=${ezjail_jailfull}
+    [ $? = 0 ] || exerr "make ${updatejail_installaction} failed"
 
-  # setup world
-  make distribution DESTDIR=${ezjail_jailfull}
-  [ $? = 0 ] || exerr "make distribution failed"
+    # setup world
+    make distribution DESTDIR=${ezjail_jailfull}
+    [ $? = 0 ] || exerr "make distribution failed"
 
-  cd ${ezjail_jailfull}
-  # Fill basejail from installed world
-  mkdir -p ${ezjail_jailbase}/usr ${ezjail_jailbase}/config/pkg
-  for a in bin lib libexec sbin usr/bin usr/include usr/lib usr/libexec usr/sbin usr/src usr/share; do
-    find ${a} | cpio -d -p -v ${ezjail_jailbase};
-    chflags -R noschg ${a}; rm -r ${a}; ln -s /basejail/${a} ${a}
-  done
-  mkdir basejail
-  ln -s /basejail/usr/ports usr/ports
+    cd ${ezjail_jailfull}
+    # Fill basejail from installed world
+    mkdir -p ${ezjail_jailbase}/usr ${ezjail_jailbase}/config/pkg
+    for a in bin lib libexec sbin usr/bin usr/include usr/lib usr/libexec usr/sbin usr/src usr/share; do
+      find ${a} | cpio -d -p -v ${ezjail_jailbase};
+      chflags -R noschg ${a}; rm -r ${a}; ln -s /basejail/${a} ${a}
+    done
+    mkdir basejail
 
-  if [ -d ${ezjail_jailtemplate} ]; then
-    chflags -R noschg ${ezjail_jailtemplate}_old
-    rm -rf ${ezjail_jailtemplate}_old
-    mv ${ezjail_jailtemplate} ${ezjail_jailtemplate}_old
+    if [ -d ${ezjail_jailtemplate} ]; then
+      chflags -R noschg ${ezjail_jailtemplate}_old
+      rm -rf ${ezjail_jailtemplate}_old
+      mv ${ezjail_jailtemplate} ${ezjail_jailtemplate}_old
+    fi
+    mv ${ezjail_jailfull} ${ezjail_jailtemplate}
+
+    # If the default flavour example has not yet been copied, do it now
+    [ -d ${ezjail_flavours}/default ] || cp -p -r ${ezjail_examples}/default ${ezjail_flavours}/
+
+  fi # installaction="none"
+
+  # The user may want to have a ports tree in basejail
+  if [ "$updatejail_provideports" ]; then
+    # if /usr/ports/CVS exists, assume cvs up is safe
+    if [ -f ${ezjail_jailbase}/usr/ports/CVS/Root ]; then
+      echo -n "Updating ports from "; cat ${ezjail_jailbase}/usr/ports/CVS/Root
+      echo "Gathering local information may take a while."
+      cd ${ezjail_jailbase}/usr/ports/; cvs up -APd
+    else
+      echo "Checking out ports from ${ezjail_portscvsroot}"
+      mkdir -p ${ezjail_jailbase}/usr/ports/
+      cd ${ezjail_jailbase}/usr/; cvs -d ${ezjail_portscvsroot} co ports
+    fi
+
+    [ $? = 0 ] || exerr "Updating ports failed."
+    [ -f ${ezjail_jailtmeplate}/usr/ports ] || ln -s /basejail/usr/ports ${ezjail_jailtemplate}/usr/ports
+
   fi
-  mv ${ezjail_jailfull} ${ezjail_jailtemplate}
 
-  # If the default flavour example has not yet been copied, do it now
-  [ -d ${ezjail_flavours}/default ] || cp -p -r ${ezjail_examples}/default ${ezjail_flavours}/
+  # A ports collection inside jails is hardly useful w/o an appropriate /etc/make.conf
+  # if we find basejail/usr/ports/Makefile, assume that the admin wants a working make.conf in new jails
+  if [ -f ${ezjail_jailbase}/usr/ports/Makefile -a -f ${ezjail_examples}/default/etc/make.conf -a \
+     ! -f ${ezjail_jailtemplate}/etc/make.conf ]; then
+    cp -p ${ezjail_examples}/default/etc/make.conf ${ezjail_jailtemplate}/etc/
+    echo Note: a non-standard /etc/make.conf was copied to the template jail
+    echo       in order to get the ports collection running inside jails
+  fi
 
   ;;
 *)
