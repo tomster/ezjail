@@ -17,7 +17,7 @@ ezjail-admin \- Administrate ezjail
 
 .T
 .B ezjail-admin update
-[-s sourcetree] [-i]
+[-s sourcetree] [-i] [-pP]
 .SH DESCRIPTION
 The
 .B ezjail-admin
@@ -78,7 +78,10 @@ them.
 installs a FreeBSD system from the source tree whose location is either
 provided in the
 .B ezjail.conf
-config file or via the -s option.
+config file or via the -s option. It will check out or update a fresh ports
+tree to the base jail, if the -p or -P option is given. In fact, if the -P
+option is given,
+.B only the ports tree will be updated.
 
 Install destination is a temporary directory inside ezjails jail root. If 
 the -i (install only) option is given,
@@ -104,6 +107,9 @@ host systems world, or at least its kernel. Combining a make world in the
 host system with
 .B ezjail-admin update
 is considered a good idea.
+
+When a ports tree exists in base jail, a make.conf containing reasonable
+values for having ports in jails is created in the template jail.
 .SH FLAVOURS
 .B ezjail-admin
 provides an easy way to create many Jails with similar or identical
