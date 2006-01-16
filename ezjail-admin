@@ -282,15 +282,15 @@ setup|update)
     if [ -f ${ezjail_jailbase}/usr/ports/CVS/Root ]; then
       echo -n "Updating ports from "; cat ${ezjail_jailbase}/usr/ports/CVS/Root
       echo "Gathering local information may take a while."
-      cd ${ezjail_jailbase}/usr/ports/; cvs up -Pd
+      cd ${ezjail_jailbase}/usr/ports/; cvs up -Pd;
     else
       echo "Checking out ports from ${ezjail_portscvsroot}"
       mkdir -p ${ezjail_jailbase}/usr/ports/
-      cd ${ezjail_jailbase}/usr/; cvs -d ${ezjail_portscvsroot} co ports
+      cd ${ezjail_jailbase}/usr/; cvs -d ${ezjail_portscvsroot} co ports;
     fi
 
     [ $? = 0 ] || exerr "Updating ports failed."
-    [ -f ${ezjail_jailtmeplate}/usr/ports ] || ln -s /basejail/usr/ports ${ezjail_jailtemplate}/usr/ports
+    [ -e ${ezjail_jailtemplate}/usr/ports ] || ln -s /basejail/usr/ports ${ezjail_jailtemplate}/usr/ports
 
   fi
 
