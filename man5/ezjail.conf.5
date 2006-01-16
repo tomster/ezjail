@@ -31,6 +31,11 @@ Location of your copy of FreeBSD's source tree (refer to the
 utility for more information)
 .br
 .I default: /usr/src
+.TP
+.B ezjail_portscvsroot (str)
+Cvs root to use when checking out or updating the ports tree in base jail
+.br
+.I default: :pserver:anoncvs@anoncvs.at.FreeBSD.org:/home/ncvs
 .SH JAIL CREATION OPTIONS
 Default options for newly created jails. Used by the
 .B ezjail-admin(1)
