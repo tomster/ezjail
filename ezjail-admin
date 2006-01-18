@@ -260,6 +260,7 @@ setup|update)
     mkdir -p ${ezjail_jailbase}/usr ${ezjail_jailbase}/config/pkg
     for a in bin lib libexec sbin usr/bin usr/include usr/lib usr/libexec usr/sbin usr/src usr/share; do
       find ${a} | cpio -d -p -v ${ezjail_jailbase};
+      [ $? = 0 ] || exerr "Installation of ${a} failed."
       chflags -R noschg ${a}; rm -r ${a}; ln -s /basejail/${a} ${a}
     done
     mkdir basejail
