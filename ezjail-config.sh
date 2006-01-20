@@ -56,7 +56,7 @@ done
 
 # install packages
 set +o noglob
-[ -d /pkg ] && pkg_add /pkg/*
+[ -d /pkg ] && PACKAGESITE=file:// pkg_add -r /pkg/*
 
 # source post install script
 [ -d /ezjail.postinstall ] && . /ezjail.postinstall
