@@ -7,9 +7,8 @@ ezjail_share=${ezjail_prefix}/share/ezjail
 ezjail_examples=${ezjail_prefix}/share/examples/ezjail
 ezjail_jailcfgs=${ezjail_etc}/ezjail
 
-if [ -f ${ezjail_etc}/ezjail.conf ]; then
-  . ${ezjail_etc}/ezjail.conf;
-fi
+# read user config
+[ -f ${ezjail_etc}/ezjail.conf ] && . ${ezjail_etc}/ezjail.conf
 
 # set defaults
 ezjail_jaildir=${ezjail_jaildir:-"/usr/jails"}
@@ -26,6 +25,7 @@ ezjail_devfs_ruleset=${ezjail_devfs_ruleset:-"devfsrules_jail"}
 ezjail_procfs_enable=${ezjail_procfs_enable:-"YES"}
 ezjail_fdescfs_enable=${ezjail_fdescfs_enable:-"YES"}
 
+# define our bail out shortcut
 exerr () { echo $*; exit 1; }
 
 # check for command
@@ -36,7 +36,7 @@ case "$1" in
 create)
   shift
   args=`getopt xf:r: $*`
-  [ $? = 0 ] || exerr 'Usage: ezjail create [-f flavour] [-r jailroot] [-x] jailname jailip';
+  [ $? = 0 ] || exerr 'Usage: ezjail create [-f flavour] [-r jailroot] [-x] jailname jailip'
 
   newjail_root=
   newjail_flavour=
@@ -52,58 +52,62 @@ create)
       --) shift; break;;
     esac
   done;
-  newjail_name=$1; newjail_ip=$2;
+  newjail_name=$1; newjail_ip=$2
 
   # we need at least a name and an ip for new jail
   [ "${newjail_name}" -a "${newjail_ip}" -a $# = 2 ] || exerr 'Usage: ezjail create [-f flavour] [-r jailroot] [-x] jailname jailip'
 
   # check, whether ezjail-update has been called. existence of
   # ezjail_jailbase is our indicator
-  [ -d ${ezjail_jailbase} ] || exerr "Error: base jail does not exist. Please run 'ezjail-admin update' first"
+  [ -d ${ezjail_jailbase} ] || exerr "Error: base jail does not exist. Please run 'ezjail-admin update' first."
 
   # relative paths don't make sense in rc.scripts
-  [ ${ezjail_jaildir#/} = ${ezjail_jaildir} ] && exerr "Error: Need an absolute path in ezjail_jaildir, it currently is set to: $ezjail_jaildir"
+  [ ${ezjail_jaildir#/} = ${ezjail_jaildir} ] && exerr "Error: Need an absolute path in ezjail_jaildir, it currently is set to: ${ezjail_jaildir}."
 
-  # jail names must not have names that irritate file systems,
-  # excluding dots from this list was done intentionally to
-  # allow foo.com style directory names, however, the jail
-  # name will be foo_com in most scripts
-  newjail_name=`echo $newjail_name | tr /~ __`;
+  # jail names must not irritate file systems, excluding dots
+  # from this list was done intentionally to permit foo.com
+  # style directory names, however, the jail name will be
+  # foo_com in most scripts
+  newjail_name=`echo ${newjail_name} | tr /~ __`
+  newjail_nname=`echo ${newjail_name} | tr . _`
   newjail_root=${newjail_root:-"${ezjail_jaildir}/${newjail_name}"}
-  newjail_nname=`echo $newjail_name | tr . _`;
 
   # if jail root specified on command line is not absolute,
   # make it absolute inside our jail directory
-  [ ${newjail_root#/} = ${newjail_root} ] && newjail_root=$ezjail_jaildir/$newjail_root
+  [ ${newjail_root#/} = ${newjail_root} ] && newjail_root=${ezjail_jaildir}/${newjail_root}
 
   # if jail root specified on command line does not lie
   # within our jail directory, we need to create a softlink
-  if [ ${newjail_root##${ezjail_jaildir}} = $newjail_root ]; then
-    newjail_softlink=$ezjail_jaildir/`basename $newjail_root`
-    [ -e $newjail_softlink -a $newjail_fill = "YES" ] && exerr "Error: an ezjail already exists at $newjail_softlink"
+  if [ ${newjail_root##${ezjail_jaildir}} = ${newjail_root} ]; then
+    newjail_softlink=${ezjail_jaildir}/`basename ${newjail_root}`
+    [ -e ${newjail_softlink} -a ${newjail_fill} = "YES" ] && exerr "Error: an ezjail already exists at ${newjail_softlink}."
   fi
 
   # do some sanity checks on the selected flavour (if any)
   if [ "${newjail_flavour}" ]; then
-    [ -d ${ezjail_flavours}/${newjail_flavour}/ ] || exerr "Error: Flavour config directory ${ezjail_flavours}/${newjail_flavour} not found"
+    [ -d ${ezjail_flavours}/${newjail_flavour}/ ] || exerr "Error: Flavour config directory ${ezjail_flavours}/${newjail_flavour} not found."
   fi
+
+  # All sanity checks that may lead to errors are hopefully
+  # passed here
 
   # now take a copy of our template jail
   if [ "$newjail_fill" = "YES" ]; then
     mkdir -p ${newjail_root} && cd ${ezjail_jailtemplate} && \
     find * | cpio -p -v ${newjail_root} > /dev/null
+    [ $? = 0 ] || exerr 'Error: Could not copy template jail'
   fi
 
   # if a soft link is necessary, create it now
-  [ "$newjail_softlink" ] && ln -s $newjail_root $newjail_softlink
+  [ "${newjail_softlink}" ] && ln -s ${newjail_root} ${newjail_softlink}
 
-  # if the automount feature is not disabled, create an
-  # fstab entry for new jail
-  echo $ezjail_jailbase $newjail_root/basejail nullfs ro 0 0 > /etc/fstab.$newjail_nname
+  # if the automount feature is not disabled, this
+  # fstab entry for new jail will be obeyed
+  echo ${ezjail_jailbase} ${newjail_root}/basejail nullfs ro 0 0 > /etc/fstab.${newjail_nname}
 
   # now, where everything seems to have gone right,
   # create control file in ezjails config dir
-  mkdir -p $ezjail_jailcfgs
+  mkdir -p ${ezjail_jailcfgs}
   echo export jail_${newjail_nname}_hostname=\"${newjail_name}\"  > ${ezjail_jailcfgs}/${newjail_nname}
   echo export jail_${newjail_nname}_ip=\"${newjail_ip}\"  >> ${ezjail_jailcfgs}/${newjail_nname}
   echo export jail_${newjail_nname}_rootdir=\"${newjail_root}\"  >> ${ezjail_jailcfgs}/${newjail_nname}
@@ -122,28 +126,30 @@ create)
     find * | cpio -p -v ${newjail_root} > /dev/null
 
     install -o root -g wheel -m 0755 ${ezjail_share}/ezjail-config.sh ${newjail_root}/etc/rc.d/ezjail-config.sh
-    echo "Note: Shell scripts installed, flavourizing on jails first startup"
+    echo "Note: Shell scripts installed, flavourizing on jails first startup."
   fi
 
+  # For user convenience, some scenarios commonly causing
+  # headaches are checked
+
   # check, whether IP is configured on a local interface, warn if it isnt
-  ping -c 1 -m 1 -t 1 -q $newjail_ip > /dev/null
-  [ $? = 0 ] || echo "Warning: IP $newjail_ip not configured on a local interface"
+  ping -c 1 -m 1 -t 1 -q ${newjail_ip} > /dev/null
+  [ $? = 0 ] || echo "Warning: IP ${newjail_ip} not configured on a local interface."
 
   # check, whether some host system services do listen on the Jails IP
   TIFS=$IFS; IFS=_
-  newjail_listener=`sockstat -4 -l | grep $newjail_ip:[[:digit:]]`
+  newjail_listener=`sockstat -4 -l | grep ${newjail_ip}:[[:digit:]]`
   if [ $? = 0 ]; then
-    echo "Warning: Some services already seem to be listening on IP $newjail_ip"
+    echo "Warning: Some services already seem to be listening on IP ${newjail_ip}"
     echo "  This may cause some confusion, here they are:"
-    echo $newjail_listener
+    echo ${newjail_listener}
   fi
-
   newjail_listener=`sockstat -4 -l | grep \*:[[:digit:]]`
   if [ $? = 0 ]; then
-    echo "Warning: Some services already seem to be listening on all IPs"
-    echo "  (including $newjail_ip)"
+    echo "Warning: Some services already seem to be listening on all IPs."
+    echo "  (including ${newjail_ip})"
     echo "  This may cause some confusion, here they are:"
-    echo $newjail_listener
+    echo ${newjail_listener}
   fi
   IFS=$TIFS
 
@@ -154,8 +160,8 @@ delete)
   args=`getopt w $*`
   [ $? = 0 ] || exerr 'Usage: ezjail delete [-w] jailname';
   
-  oldjail_wipe="NO"
-  
+  oldjail_wipe=
+
   set -- $args
   for arg do
     case $arg in
@@ -166,13 +172,13 @@ delete)
   oldjail_name=$1;
 
   # we only need name of jail to vanish
-  [ "$oldjail_name" -a $# = 1 ] || exerr 'Usage: ezjail delete [-w] jailname'
+  [ "${oldjail_name}" -a $# = 1 ] || exerr 'Usage: ezjail delete [-w] jailname'
 
   # tidy up jail name the ezjail way
-  oldjail_nname=`echo $oldjail_name | tr /~. ___`;
+  oldjail_nname=`echo ${oldjail_name} | tr /~. ___`;
 
   # check for existence of jail in our records
-  [ -f ${ezjail_jailcfgs}/${oldjail_nname} ] || exerr "Error: Nothing known about jail $oldjail_name"
+  [ -f ${ezjail_jailcfgs}/${oldjail_nname} ] || exerr "Error: Nothing known about jail ${oldjail_name}."
 
   # fetch information about the jail to be gone
   # by parsing our records
@@ -181,7 +187,7 @@ delete)
 
   # if jail is still running, refuse to go any further
   if [ -f /var/run/jail_${oldjail_nname}.id ]; then
-    echo "Error: Jail appears to be still running, stop it first"
+    echo "Error: Jail appears to be still running, stop it first."
     echo "(/var/run/jail_${oldjail_nname}.id exists)"
     exit 1;
   fi
@@ -191,25 +197,25 @@ delete)
   rm -f ${ezjail_jailcfgs}/${oldjail_nname}
 
   # delete fstab.JAILNAME
-  rm -f /etc/fstab.$oldjail_nname
+  rm -f /etc/fstab.${oldjail_nname}
 
   # if there is a soft link pointing to the jail root, remove it
-  oldjail_softlink=$ezjail_jaildir/`basename $oldjail_rootdir`
-  [ -L $oldjail_softlink ] && rm $oldjail_softlink
+  oldjail_softlink=${ezjail_jaildir}/`basename ${oldjail_rootdir}`
+  [ -L ${oldjail_softlink} ] && rm ${oldjail_softlink}
 
   # if wiping the jail was requested, remove it
-  [ $oldjail_wipe = "YES" ] && rm -rf $oldjail_rootdir
+  [ ${oldjail_wipe} = "YES" ] && rm -rf ${oldjail_rootdir}
 
   ;;
 ######################## ezjail-admin LIST ########################
   list)
-  jail_list=`ls $ezjail_jailcfgs`
-  for jail in $jail_list; do
-    . ${ezjail_jailcfgs}/$jail
+  jail_list=`ls ${ezjail_jailcfgs}`
+  for jail in ${jail_list}; do
+    . ${ezjail_jailcfgs}/${jail}
     eval jail_ip=\"\$jail_${jail}_ip\"
     eval jail_hostname=\"\$jail_${jail}_hostname\"
     eval jail_rootdir=\"\$jail_${jail}_rootdir\"
-    printf "%-15s %-28s %s\\n" $jail_ip $jail_hostname $jail_rootdir
+    printf "%-15s %-28s %s\\n" ${jail_ip} ${jail_hostname} ${jail_rootdir}
   done
 
   ;;
@@ -233,21 +239,21 @@ setup|update)
     esac
   done;
 
-  if [ $updatejail_installaction = "none" ]; then
+  if [ ${updatejail_installaction} = "none" ]; then
     # check, whether ezjail-update has been called. existence of
     # ezjail_jailbase is our indicator
-    [ -d ${ezjail_jailbase} ] || exerr "Error: base jail does not exist. You cannot fill base jails ports tree before creating it. Please run 'ezjail-admin update' first"
+    [ -d ${ezjail_jailbase} ] || exerr "Error: base jail does not exist. You cannot fill base jails ports tree before creating it. Please run 'ezjail-admin update' first."
   else
     # Bump the user for some of the most common errors
-    [ -d ${ezjail_sourcetree} ] || exerr "Cannot find your copy of the FreeBSD source tree in $ezjail_sourcetree."
-    [ -f ${ezjail_sourcetree}/Makefile ] || exerr "Your source tree in $ezjail_sourcetree seems to be incomplete (Makefile missing)."
+    [ -d ${ezjail_sourcetree} ] || exerr "Cannot find your copy of the FreeBSD source tree in ${ezjail_sourcetree}."
+    [ -e ${ezjail_sourcetree}/Makefile ] || exerr "Your source tree in ${ezjail_sourcetree} seems to be incomplete (Makefile missing)."
 
-    cd ${ezjail_sourcetree}
     # Normally fulljail should be renamed by past ezjail-admin commands
     # However those may have failed
     rm -rf ${ezjail_jailfull}; mkdir -p ${ezjail_jailfull}
 
     # make our world
+    cd ${ezjail_sourcetree}
     make ${updatejail_installaction} DESTDIR=${ezjail_jailfull}
     [ $? = 0 ] || exerr "make ${updatejail_installaction} failed"
 
@@ -257,9 +263,9 @@ setup|update)
 
     cd ${ezjail_jailfull}
     # Fill basejail from installed world
-    mkdir -p ${ezjail_jailbase}/usr ${ezjail_jailbase}/config/pkg
+    mkdir -p ${ezjail_jailbase}/usr
     for a in bin lib libexec sbin usr/bin usr/include usr/lib usr/libexec usr/sbin usr/src usr/share; do
-      find ${a} | cpio -d -p -v ${ezjail_jailbase};
+      find ${a} | cpio -d -p -v ${ezjail_jailbase}
       [ $? = 0 ] || exerr "Installation of ${a} failed."
       chflags -R noschg ${a}; rm -r ${a}; ln -s /basejail/${a} ${a}
     done
@@ -283,25 +289,27 @@ setup|update)
     if [ -f ${ezjail_jailbase}/usr/ports/CVS/Root ]; then
       echo -n "Updating ports from "; cat ${ezjail_jailbase}/usr/ports/CVS/Root
       echo "Gathering local information may take a while."
-      cd ${ezjail_jailbase}/usr/ports/; cvs up -Pd;
+      cd ${ezjail_jailbase}/usr/ports/; cvs up -Pd
     else
       echo "Checking out ports from ${ezjail_portscvsroot}"
       mkdir -p ${ezjail_jailbase}/usr/ports/
-      cd ${ezjail_jailbase}/usr/; cvs -d ${ezjail_portscvsroot} co ports;
+      cd ${ezjail_jailbase}/usr/; cvs -d ${ezjail_portscvsroot} co ports
     fi
-
     [ $? = 0 ] || exerr "Updating ports failed."
-    [ -e ${ezjail_jailtemplate}/usr/ports ] || ln -s /basejail/usr/ports ${ezjail_jailtemplate}/usr/ports
 
   fi
 
   # A ports collection inside jails is hardly useful w/o an appropriate /etc/make.conf
   # if we find basejail/usr/ports/Makefile, assume that the admin wants a working make.conf in new jails
-  if [ -f ${ezjail_jailbase}/usr/ports/Makefile -a -f ${ezjail_examples}/default/etc/make.conf -a \
-     ! -f ${ezjail_jailtemplate}/etc/make.conf ]; then
-    cp -p ${ezjail_examples}/default/etc/make.conf ${ezjail_jailtemplate}/etc/
-    echo Note: a non-standard /etc/make.conf was copied to the template jail
-    echo       in order to get the ports collection running inside jails
+  # also a softlink to the ports in basejail is provided
+  if [ -f ${ezjail_jailbase}/usr/ports/Makefile ]; then
+    # no /usr/ports? link to /basejail/usr/ports
+    [ -e ${ezjail_jailtemplate}/usr/ports ] || ln -s /basejail/usr/ports ${ezjail_jailtemplate}/usr/ports
+
+    if [ -f ${ezjail_examples}/default/etc/make.conf -a ! -f ${ezjail_jailtemplate}/etc/make.conf ]; then
+      cp -p ${ezjail_examples}/default/etc/make.conf ${ezjail_jailtemplate}/etc/
+      echo "Note: a non-standard /etc/make.conf was copied to the template jail in order to get the ports collection running inside jails."
+    fi
   fi
 
   ;;
