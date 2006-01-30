@@ -29,12 +29,13 @@ using either the name specified with the -r option or a name derived from
 the given hostname.
 
 If the jailroot does not start with a /, it is 
-interpreted relative to ezjails root dir. If the given jailroot lies 
-outside ezjails root dir, a soft link is created inside ezjails root dir 
-pointing to the newly created jails location.
+interpreted relative to ezjails root dir (default: /usr/jails). If the
+given jailroot lies outside ezjails root dir, a soft link is created
+inside ezjails root dir pointing to the newly created jails location.
 
-The first step is skipped, if the -x (jail exists) option is given, useful 
-in situations where you just want to alter some of a jail properties and 
+If the -x (jail exists) option is given,
+.B the first step is skipped (an existing jail is used)
+useful in situations where you just want to alter some of a jail properties and 
 called ezjail-admin delete without the -w option before. However, sanity 
 checks are being performed.
 
@@ -48,10 +49,12 @@ is generated, allowing the basejail to be auto-mounted when the jail starts
 up.
 
 The newly created Jail can perform some initializiation actions, if the
--f <flavour> option is given, where flavour is a path to a flavour configuration
-file or a short name expanding to
-.I EZJAIL_PREFIX/etc/ezjail.flavour.<flavour> .
-
+-f
+.I flavour
+option is given, where
+.I flavour
+is a directory directory tree under ezjails root dir (default:
+.I /usr/jails/flavours).
 See section
 .B FLAVOURS
 below for more details.
@@ -75,16 +78,20 @@ root entry is removed as well as the soft link in ezjails root dir.
 lists all jails inside ezjails scope, together with some information on 
 them.
 .SH ezjail-admin update
-installs a FreeBSD system from the source tree whose location is either
-provided in the
+is used to create or update ezjails basejail. Depending on the parameters
+given it will install a FreeBSD system from a source tree whose location
+is either provided in the
 .B ezjail.conf
-config file or via the -s option. It will check out or update a fresh ports
-tree to the base jail, if the -p or -P option is given. In fact, if the -P
-option is given,
-.B only the ports tree will be updated.
+config file or via the -s option.
 
-Install destination is a temporary directory inside ezjails jail root. If 
-the -i (install only) option is given,
+If the -p or -P options are given, the base jail is given a copy of FreeBSDs
+ports tree, which is in turn linked into all newly created ezjails.
+
+If the -P option is given,
+.B only the ports tree will be checked out/updated,
+this can be done, while jails are running.
+
+If the -i (install only) option is given,
 .B ezjail-admin update
 only performes a
 .I make installworld,
@@ -92,14 +99,11 @@ otherwise
 .I make world
 is invoked.
 
-It then fills the basejail from that temporary directory (leaving intact 
-all installed libraries, if the base jail already exists). All
-copied directories are then removed and replaced by soft links into the 
-base jail tree that later will be mounted into the jail.
-
-Finally it removes the old template jail and renames the 
-temporary directory as the new template jail.
 .SH NOTES
+.B ezjail-admin update
+uses a temporary directory to install its world to, thus leaving intact
+all installed libraries, if a base jail already exists.
+
 When using the
 .B ezjail-admin update
 option, be careful to use the same FreeBSD source tree used to build the 
