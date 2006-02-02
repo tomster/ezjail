@@ -27,7 +27,7 @@ stop_cmd="do_stop"
 
 do_start()
 {
-  [ -n "$*" ] && jail_list=`echo -n $* | tr -c [:alnum:] _` || echo " ezjail"
+  [ -n "$*" ] && jail_list=`echo -n $* | tr -c [:alnum:] _` || echo -n " ezjail"
   jail_list=${jail_list:-`ls ${ezjail_prefix}/etc/ezjail/`}
   for jail in $jail_list; do . ${ezjail_prefix}/etc/ezjail/${jail}; done
   sh /etc/rc.d/jail onestart $jail_list
@@ -44,7 +44,7 @@ do_restart()
 
 do_stop()
 {
-  [ -n "$*" ] && jail_list=`echo -n $* | tr -c [:alnum:] _` || echo " ezjail"
+  [ -n "$*" ] && jail_list=`echo -n $* | tr -c [:alnum:] _` || echo -n " ezjail"
   jail_list=${jail_list:-`ls ${ezjail_prefix}/etc/ezjail/`}
   for jail in $jail_list; do . ${ezjail_prefix}/etc/ezjail/${jail}; done
   sh /etc/rc.d/jail onestop $jail_list
