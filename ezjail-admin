@@ -70,8 +70,12 @@ create)
   # foo_com in most scripts
 
   newjail_name=`echo -n ${newjail_name} | tr /~ __`
-  newjail_nname=`echo -n "${newjail_name}" | tr -c [:alnum:]_ _`
+  newjail_nname=`echo -n "${newjail_name}" | tr -c [:alnum:] _`
   newjail_root=${newjail_root:-"${ezjail_jaildir}/${newjail_name}"}
+
+  # jail names may lead to identical configs, eg. foo.bar.com == foo-bar.com
+  # so check, whether we might be running into problems
+  [ -e ${ezjail_jailcfgs}/${newjail_nname} ] && exerr "Error: an ezjail config already exists at ${ezjail_jailcfgs}/${newjail_nname}. Please rename the ezjail."
 
   # if jail root specified on command line is not absolute,
   # make it absolute inside our jail directory
@@ -176,7 +180,7 @@ delete)
   [ "${oldjail_name}" -a $# = 1 ] || exerr 'Usage: ezjail delete [-w] jailname'
 
   # tidy up jail name the ezjail way
-  oldjail_nname=`echo -n ${oldjail_name} | tr -c [:alnum:]_ _`;
+  oldjail_nname=`echo -n ${oldjail_name} | tr -c [:alnum:] _`;
 
   # check for existence of jail in our records
   [ -f ${ezjail_jailcfgs}/${oldjail_nname} ] || exerr "Error: Nothing known about jail ${oldjail_name}."
