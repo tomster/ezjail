@@ -4,7 +4,7 @@
 #
 # PROVIDE: ezjail
 #
-# Note: Add the following lines to /etc/rc.conf to enable ezjail,
+# Add the following lines to /etc/rc.conf.local or /etc/rc.conf to enable ezjail
 #
 #ezjail_enable="YES"
 #
@@ -21,33 +21,25 @@ load_rc_config $name
 
 ezjail_enable=${ezjail_enable:-"NO"}
 
-restart_cmd="do_restart"
-start_cmd="do_start"
-stop_cmd="do_stop"
+restart_cmd="do_cmd restart _"
+start_cmd="do_cmd start '_ ezjail'"
+stop_cmd="do_cmd stop '_ ezjail'"
 
-do_start()
+do_cmd()
 {
-  [ -n "$*" ] && jail_list=`echo -n $* | tr -c [:alnum:] _` || echo -n " ezjail"
+  action=$1; message=$2; shift 2;
+  [ -n "$*" ] && jail_list=`echo -n $* | tr -c "[:alnum:] " _` || echo -n "${message##_}"
   jail_list=${jail_list:-`ls ${ezjail_prefix}/etc/ezjail/`}
-  for jail in $jail_list; do . ${ezjail_prefix}/etc/ezjail/${jail}; done
-  sh /etc/rc.d/jail onestart $jail_list
-}
-
-do_restart()
-{
-  [ -n "$*" ] && jail_list=`echo -n $* | tr -c [:alnum:] _`;
-  jail_list=${jail_list:-`ls ${ezjail_prefix}/etc/ezjail/`}
-  for jail in $jail_list; do . ${ezjail_prefix}/etc/ezjail/${jail}; done
-  sh /etc/rc.d/jail onestop $jail_list
-  sh /etc/rc.d/jail onestart $jail_list
-}
-
-do_stop()
-{
-  [ -n "$*" ] && jail_list=`echo -n $* | tr -c [:alnum:] _` || echo -n " ezjail"
-  jail_list=${jail_list:-`ls ${ezjail_prefix}/etc/ezjail/`}
-  for jail in $jail_list; do . ${ezjail_prefix}/etc/ezjail/${jail}; done
-  sh /etc/rc.d/jail onestop $jail_list
+  jail_pass=""
+  for jail in $jail_list; do
+    if [ -f ${ezjail_prefix}/etc/ezjail/${jail} ]; then
+      . ${ezjail_prefix}/etc/ezjail/${jail};
+      jail_pass="${jail_pass} ${jail}"
+    else
+      echo " Warning: Jail ${jail} not found."
+    fi
+  done
+  [ "$jail_pass" ] && sh /etc/rc.d/jail one${action} $jail_pass
 }
 
 run_rc_command $*
