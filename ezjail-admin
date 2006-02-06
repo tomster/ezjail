@@ -43,9 +43,9 @@ create)
   newjail_softlink=
   newjail_fill="YES"
 
-  set -- $args
+  set -- ${args}
   for arg do
-    case $arg in
+    case ${arg} in
       -x) newjail_fill="NO"; shift;;
       -r) newjail_root="$2"; shift 2;;
       -f) newjail_flavour="$2"; shift 2;;
@@ -97,7 +97,7 @@ create)
   # passed here
 
   # now take a copy of our template jail
-  if [ "$newjail_fill" = "YES" ]; then
+  if [ "${newjail_fill}" = "YES" ]; then
     mkdir -p ${newjail_root} && cd ${ezjail_jailtemplate} && \
     find * | cpio -p -v ${newjail_root} > /dev/null
     [ $? = 0 ] || exerr 'Error: Could not copy template jail'
@@ -142,7 +142,7 @@ create)
   [ $? = 0 ] || echo "Warning: IP ${newjail_ip} not configured on a local interface."
 
   # check, whether some host system services do listen on the Jails IP
-  TIFS=$IFS; IFS=_
+  TIFS=${IFS}; IFS=_
   newjail_listener=`sockstat -4 -l | grep ${newjail_ip}:[[:digit:]]`
   if [ $? = 0 ]; then
     echo "Warning: Some services already seem to be listening on IP ${newjail_ip}"
@@ -156,7 +156,7 @@ create)
     echo "  This may cause some confusion, here they are:"
     echo ${newjail_listener}
   fi
-  IFS=$TIFS
+  IFS=${TIFS}
 
   ;;
 ######################## ezjail-admin DELETE ########################
@@ -167,9 +167,9 @@ delete)
   
   oldjail_wipe=
 
-  set -- $args
+  set -- ${args}
   for arg do
-    case $arg in
+    case ${arg} in
       -w) oldjail_wipe="YES"; shift;;
       --) shift; break;;
     esac
@@ -233,9 +233,9 @@ setup|update)
   updatejail_installaction="world"
   updatejail_provideports=
 
-  set -- $args
+  set -- ${args}
   for arg do
-    case $arg in
+    case ${arg} in
       -i) updatejail_installaction="installworld"; shift;;
       -s) ezjail_sourcetree="$2"; shift 2;;
       -p) updatejail_provideports="YES"; shift;;
@@ -266,19 +266,24 @@ setup|update)
     make distribution DESTDIR=${ezjail_jailfull}
     [ $? = 0 ] || exerr "make distribution failed"
 
-    cd ${ezjail_jailfull}
     # Fill basejail from installed world
+    cd ${ezjail_jailfull}
+    # This mkdir is important, since install will create intermediate
+    # directories with permission 0700 which is bad
     mkdir -p ${ezjail_jailbase}/usr
-    for a in bin lib libexec sbin usr/bin usr/include usr/lib usr/libexec usr/sbin usr/src usr/share; do
-      find ${a} | cpio -d -p -v ${ezjail_jailbase}
-      [ $? = 0 ] || exerr "Installation of ${a} failed."
-      chflags -R noschg ${a}; rm -r ${a}; ln -s /basejail/${a} ${a}
+    for dir in bin lib libexec sbin usr/bin usr/include usr/lib usr/libexec usr/sbin usr/src usr/share; do
+      find ${dir} | cpio -d -p -v ${ezjail_jailbase}
+      [ $? = 0 ] || exerr "Installation of ${dir} failed."
+      chflags -R noschg ${dir}; rm -r ${dir}; ln -s /basejail/${dir} ${dir}
     done
     mkdir basejail
 
+    # Try to remove the old template jail
     if [ -d ${ezjail_jailtemplate} ]; then
-      chflags -R noschg ${ezjail_jailtemplate}_old
-      rm -rf ${ezjail_jailtemplate}_old
+      if [ -d ${ezjail_jailtemplate}_old ]; then
+        chflags -R noschg ${ezjail_jailtemplate}_old
+        rm -rf ${ezjail_jailtemplate}_old
+      fi
       mv ${ezjail_jailtemplate} ${ezjail_jailtemplate}_old
     fi
     mv ${ezjail_jailfull} ${ezjail_jailtemplate}
@@ -289,7 +294,7 @@ setup|update)
   fi # installaction="none"
 
   # The user may want to have a ports tree in basejail
-  if [ "$updatejail_provideports" ]; then
+  if [ "${updatejail_provideports}" = "YES" ]; then
     # if /usr/ports/CVS exists, assume cvs up is safe
     if [ -f ${ezjail_jailbase}/usr/ports/CVS/Root ]; then
       echo -n "Updating ports from "; cat ${ezjail_jailbase}/usr/ports/CVS/Root
@@ -301,7 +306,6 @@ setup|update)
       cd ${ezjail_jailbase}/usr/; cvs -d ${ezjail_portscvsroot} co ports
     fi
     [ $? = 0 ] || exerr "Updating ports failed."
-
   fi
 
   # A ports collection inside jails is hardly useful w/o an appropriate /etc/make.conf
