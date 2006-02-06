@@ -12,10 +12,10 @@ ezjail_jailcfgs=${ezjail_etc}/ezjail
 
 # set defaults
 ezjail_jaildir=${ezjail_jaildir:-"/usr/jails"}
-ezjail_jailtemplate=${ezjail_jailtemplate:-"$ezjail_jaildir/newjail"}
-ezjail_jailbase=${ezjail_jailbase:-"$ezjail_jaildir/basejail"}
-ezjail_jailfull=${ezjail_jailfull:-"$ezjail_jaildir/fulljail"}
-ezjail_flavours=${ezjail_flavours:-"$ezjail_jaildir/flavours"}
+ezjail_jailtemplate=${ezjail_jailtemplate:-"${ezjail_jaildir}/newjail"}
+ezjail_jailbase=${ezjail_jailbase:-"${ezjail_jaildir}/basejail"}
+ezjail_jailfull=${ezjail_jailfull:-"${ezjail_jaildir}/fulljail"}
+ezjail_flavours=${ezjail_flavours:-"${ezjail_jaildir}/flavours"}
 ezjail_sourcetree=${ezjail_sourcetree:-"/usr/src"}
 ezjail_portscvsroot=${ezjail_portscvsroot:-":pserver:anoncvs@anoncvs.at.FreeBSD.org:/home/ncvs"}
 
@@ -26,17 +26,17 @@ ezjail_procfs_enable=${ezjail_procfs_enable:-"YES"}
 ezjail_fdescfs_enable=${ezjail_fdescfs_enable:-"YES"}
 
 # define our bail out shortcut
-exerr () { echo $*; exit 1; }
+exerr () { echo "$*"; exit 1; }
 
 # check for command
-[ "$1" ] || exerr "Usage: `basename $0` [create|delete|list|update] {params}"
+[ "$1" ] || exerr "Usage: `basename -- $0` [create|delete|list|update] {params}"
 
 case "$1" in
 ######################## ezjail-admin CREATE ########################
 create)
   shift
   args=`getopt xf:r: $*`
-  [ $? = 0 ] || exerr 'Usage: ezjail create [-f flavour] [-r jailroot] [-x] jailname jailip'
+  [ $? = 0 ] || exerr "Usage: `basename -- $0` create [-f flavour] [-r jailroot] [-x] jailname jailip"
 
   newjail_root=
   newjail_flavour=
@@ -51,11 +51,11 @@ create)
       -f) newjail_flavour="$2"; shift 2;;
       --) shift; break;;
     esac
-  done;
+  done
   newjail_name=$1; newjail_ip=$2
 
   # we need at least a name and an ip for new jail
-  [ "${newjail_name}" -a "${newjail_ip}" -a $# = 2 ] || exerr 'Usage: ezjail create [-f flavour] [-r jailroot] [-x] jailname jailip'
+  [ "${newjail_name}" -a "${newjail_ip}" -a $# = 2 ] || exerr "Usage: `basename -- $0` create [-f flavour] [-r jailroot] [-x] jailname jailip"
 
   # check, whether ezjail-update has been called. existence of
   # ezjail_jailbase is our indicator
@@ -84,8 +84,8 @@ create)
   # if jail root specified on command line does not lie
   # within our jail directory, we need to create a softlink
   if [ "${newjail_root##${ezjail_jaildir}}" = "${newjail_root}" ]; then
-    newjail_softlink=${ezjail_jaildir}/`basename ${newjail_root}`
-    [ -e ${newjail_softlink} -a ${newjail_fill} = "YES" ] && exerr "Error: an ezjail already exists at ${newjail_softlink}."
+    newjail_softlink=${ezjail_jaildir}/`basename -- ${newjail_root}`
+    [ -e ${newjail_softlink} -a "${newjail_fill}" = "YES" ] && exerr "Error: an ezjail already exists at ${newjail_softlink}."
   fi
 
   # do some sanity checks on the selected flavour (if any)
@@ -100,7 +100,7 @@ create)
   if [ "${newjail_fill}" = "YES" ]; then
     mkdir -p ${newjail_root} && cd ${ezjail_jailtemplate} && \
     find * | cpio -p -v ${newjail_root} > /dev/null
-    [ $? = 0 ] || exerr 'Error: Could not copy template jail'
+    [ $? = 0 ] || exerr "Error: Could not copy template jail."
   fi
 
   # if a soft link is necessary, create it now
@@ -163,7 +163,7 @@ create)
 delete)
   shift
   args=`getopt w $*`
-  [ $? = 0 ] || exerr 'Usage: ezjail delete [-w] jailname';
+  [ $? = 0 ] || exerr "Usage: `basename -- $0` delete [-w] jailname"
   
   oldjail_wipe=
 
@@ -173,11 +173,11 @@ delete)
       -w) oldjail_wipe="YES"; shift;;
       --) shift; break;;
     esac
-  done;
-  oldjail_name=$1;
+  done
+  oldjail_name=$1
 
   # we only need name of jail to vanish
-  [ "${oldjail_name}" -a $# = 1 ] || exerr 'Usage: ezjail delete [-w] jailname'
+  [ "${oldjail_name}" -a $# = 1 ] || exerr "Usage: `basename -- $0` delete [-w] jailname"
 
   # tidy up jail name the ezjail way
   oldjail_nname=`echo -n ${oldjail_name} | tr -c [:alnum:] _`
@@ -194,7 +194,7 @@ delete)
   if [ -f /var/run/jail_${oldjail_nname}.id ]; then
     echo "Error: Jail appears to be still running, stop it first."
     echo "(/var/run/jail_${oldjail_nname}.id exists)"
-    exit 1;
+    exit 1
   fi
 
   # now we know everything we need to let the jail be gone
@@ -228,7 +228,7 @@ delete)
 setup|update)
   shift
   args=`getopt ipPs: $*`
-  [ $? = 0 ] || exerr 'Usage: ezjail update [-s sourcetree] [-i] [-pP]'
+  [ $? = 0 ] || exerr "Usage: `basename -- $0` update [-s sourcetree] [-i] [-pP]"
 
   updatejail_installaction="world"
   updatejail_provideports=
@@ -242,7 +242,7 @@ setup|update)
       -P) updatejail_provideports="YES"; updatejail_installaction="none"; shift;;
       --) shift; break;;
     esac
-  done;
+  done
 
   if [ "${updatejail_installaction}" = "none" ]; then
     # check, whether ezjail-update has been called. existence of
@@ -260,15 +260,15 @@ setup|update)
     # make our world
     cd ${ezjail_sourcetree}
     make ${updatejail_installaction} DESTDIR=${ezjail_jailfull}
-    [ $? = 0 ] || exerr "make ${updatejail_installaction} failed"
+    [ $? = 0 ] || exerr "make ${updatejail_installaction} failed."
 
     # setup world
     make distribution DESTDIR=${ezjail_jailfull}
-    [ $? = 0 ] || exerr "make distribution failed"
+    [ $? = 0 ] || exerr "make distribution failed."
 
     # Fill basejail from installed world
     cd ${ezjail_jailfull}
-    # This mkdir is important, since install will create intermediate
+    # This mkdir is important, since cpio will create intermediate
     # directories with permission 0700 which is bad
     mkdir -p ${ezjail_jailbase}/usr
     for dir in bin lib libexec sbin usr/bin usr/include usr/lib usr/libexec usr/sbin usr/src usr/share; do
@@ -323,6 +323,6 @@ setup|update)
 
   ;;
 *)
-  exerr "Usage: `basename $0` [create|delete|list|update] {params}"
+  exerr "Usage: `basename -- $0` [create|delete|list|update] {params}"
   ;;
 esac
