@@ -33,7 +33,7 @@ do_cmd()
   jail_pass=
   for jail in ${jail_list}; do
     if [ -f ${ezjail_prefix}/etc/ezjail/${jail} ]; then
-      . ${ezjail_prefix}/etc/ezjail/${jail};
+      . ${ezjail_prefix}/etc/ezjail/${jail}
       jail_pass="${jail_pass} ${jail}"
     else
       echo " Warning: Jail ${jail} not found."
