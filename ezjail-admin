@@ -62,7 +62,7 @@ create)
   [ -d ${ezjail_jailbase} ] || exerr "Error: base jail does not exist. Please run 'ezjail-admin update' first."
 
   # relative paths don't make sense in rc.scripts
-  [ ${ezjail_jaildir#/} = ${ezjail_jaildir} ] && exerr "Error: Need an absolute path in ezjail_jaildir, it currently is set to: ${ezjail_jaildir}."
+  [ "${ezjail_jaildir#/}" = "${ezjail_jaildir}" ] && exerr "Error: Need an absolute path in ezjail_jaildir, it currently is set to: ${ezjail_jaildir}."
 
   # jail names must not irritate file systems, excluding dots
   # from this list was done intentionally to permit foo.com
@@ -79,11 +79,11 @@ create)
 
   # if jail root specified on command line is not absolute,
   # make it absolute inside our jail directory
-  [ ${newjail_root#/} = ${newjail_root} ] && newjail_root=${ezjail_jaildir}/${newjail_root}
+  [ "${newjail_root#/}" = "${newjail_root}" ] && newjail_root=${ezjail_jaildir}/${newjail_root}
 
   # if jail root specified on command line does not lie
   # within our jail directory, we need to create a softlink
-  if [ ${newjail_root##${ezjail_jaildir}} = ${newjail_root} ]; then
+  if [ "${newjail_root##${ezjail_jaildir}}" = "${newjail_root}" ]; then
     newjail_softlink=${ezjail_jaildir}/`basename ${newjail_root}`
     [ -e ${newjail_softlink} -a ${newjail_fill} = "YES" ] && exerr "Error: an ezjail already exists at ${newjail_softlink}."
   fi
@@ -180,7 +180,7 @@ delete)
   [ "${oldjail_name}" -a $# = 1 ] || exerr 'Usage: ezjail delete [-w] jailname'
 
   # tidy up jail name the ezjail way
-  oldjail_nname=`echo -n ${oldjail_name} | tr -c [:alnum:] _`;
+  oldjail_nname=`echo -n ${oldjail_name} | tr -c [:alnum:] _`
 
   # check for existence of jail in our records
   [ -f ${ezjail_jailcfgs}/${oldjail_nname} ] || exerr "Error: Nothing known about jail ${oldjail_name}."
@@ -209,7 +209,7 @@ delete)
   [ -L ${oldjail_softlink} ] && rm ${oldjail_softlink}
 
   # if wiping the jail was requested, remove it
-  [ ${oldjail_wipe} = "YES" ] && rm -rf ${oldjail_rootdir}
+  [ "${oldjail_wipe}" = "YES" ] && rm -rf ${oldjail_rootdir}
 
   ;;
 ######################## ezjail-admin LIST ########################
@@ -244,7 +244,7 @@ setup|update)
     esac
   done;
 
-  if [ ${updatejail_installaction} = "none" ]; then
+  if [ "${updatejail_installaction}" = "none" ]; then
     # check, whether ezjail-update has been called. existence of
     # ezjail_jailbase is our indicator
     [ -d ${ezjail_jailbase} ] || exerr "Error: base jail does not exist. You cannot fill base jails ports tree before creating it. Please run 'ezjail-admin update' first."
