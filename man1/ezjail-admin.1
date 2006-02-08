@@ -140,6 +140,34 @@ is being sourced, if it exists.
 
 .I ezjail-config.sh
 then removes all traces, including itself.
+.SH EZJAIL.FLAVOUR
+The ezjail.flavour file found in a flavour directory usually provides
+two variables:
+
+.B ezjail_flavour_users
+.br
+a white space separated list of colon separated entries passed to the
+pw command after some processing. Refer to the pw(8) man page for more
+information. Format of an entry in the list is:
+
+username:uid:group[,group2,..]:gid[,gid2,..]:comment:pw:[-]home:shell
+
+where each group specified in the group list is being created (with the
+given gid for each group) if possible and necessary, before the user is
+added to that group. The character '=' in the comment field is being
+substituted by ' ' (space) to simplify escaping. The pw is being written
+verbatim to the passwd db, see pw(8). If the home directory begins with
+a '-' (dash), it is meant not to be created by the pw command. The dash
+will of course be removed. It is not possible to specify a shell here
+that will be installed by a package in /pkg.
+
+.B ezjail_flavour_files
+.br
+a white space separated list of colon separated entries passed to the
+chown -R command after some processing. Refer to the chown(8) man page
+for more information. Format of an entry in the list is:
+
+user:group:file[:file2...]
 .SH EXAMPLES
 ezjail-admin update -p
 .br
@@ -166,6 +194,6 @@ EZJAIL_PREFIX/etc/rc.d/ezjail.sh
 .br
 EZJAIL_PREFIX/share/examples/ezjail/
 .SH "SEE ALSO"
-ezjail(5), ezjail.conf(5), jail(8), devfs(5), fdescfs(5), procfs(5)
+ezjail(5), ezjail.conf(5), jail(8), devfs(5), fdescfs(5), procfs(5), pw(8)
 .SH AUTHOR
 Dirk Engling <erdgeist@erdgeist.org>

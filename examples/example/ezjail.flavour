@@ -17,15 +17,12 @@
 # admin::wheel::Admin=User:$1$p75bbfK.$Kz3dwkoVlgZrfLZdAXQt91:/home/admin:/bin/sh \
 # pgsql:1002:pgsql:1002:Post=Gres::-/usr/local/psql:/bin/nologin'
 
-# ezjail-admin script installs all files found in FLAVOUR/root to the
-# new jail's root
-#
 # Files or directories that should not belong to root:wheel will be
 # chowned -R according to the following variable
 #
 # Format is as follows:
 #
-# user:group:file(s)
+# user:group:file[:file...]
 #
 # Example:
 #
