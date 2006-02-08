@@ -13,49 +13,32 @@ fi
 ezjail_flavour_users=${ezjail_flavour_users:-""}
 ezjail_flavour_files=${ezjail_flavour_files:-""}
 
-# try to create users
+# try to create users, variables named after pw useradd params
 for user in ${ezjail_flavour_users}; do
   TIFS=${IFS}; IFS=:; set -- ${user}; IFS=${TIFS}
   if [ $# -eq 8 ]; then
-    gc=1; name=$1; grouplist=$3; gidlist=$4; home=$7
-
-    [ $2 ] && uid="-u $2"       || uid=""
-    [ $5 ] && comment="-c$5"    || comment=""
-    [ $6 ] && pass="$6"         || pass="*"
-    [ $8 ] && shell="-s $8"     || shell=""
-
-    [ "${home}" = "${home#-}" ] && mkhome="-m" || mkhome=""
-    [ ${home#-} ] && home="-d ${home#-}" || home=""
+    u=${2:+-u$2}; G=$3; gs=$4; c=${5:+-c$5}; p=${6:-*}; d=${7#-}; m=${7%%[!-]*}; s=${8:+-s$8};
 
     # ensure all groups
-    if [ ${grouplist} ]; then
-      for group in `echo -n ${grouplist} | tr "," " "`; do
-        gid=`echo ${gidlist} | cut -d , -f ${gc}`; [ "${gid}" ] && gid="-g ${gid}"
-        pw groupadd -n ${group} ${gid}
-        gc=$((1+${gc}))
-      done
-    fi
+    gc=1; for n in `echo -n ${G} | tr , ' '`; do
+      g=`echo -n ${gs} | cut -d , -f ${gc}`
+      pw groupadd -q -n ${n} ${g:+-g${g}}
+      gc=$((1+${gc}))
+    done
+
     # create user
-    [ "${grouplist}" ] && grouplist="-G ${grouplist}"
-    [ "${name}" ] && echo "${pass}" | pw useradd -n ${name} ${uid} ${shell} ${mkhome} ${home} ${grouplist} "`echo -n${comment} | tr = ' '`" -H 0
+    [ $1 ] && echo ${p} | pw useradd -n $1 ${u} ${s} ${m:+-m} ${d:+-d${d}} ${G:+-G${G}} "`echo -n ${c} | tr = ' '`" -H 0
   fi
 done
+set +o noglob
 
 # chmod all files not belonging to root
 for file in ${ezjail_flavour_files}; do
   TIFS=${IFS}; IFS=:; set -- ${file}; IFS=${TIFS}
-  set +o noglob
-  if [ $# -eq 3 -a "$3" ]; then
-    owner=$1; [ $2 ] && owner="$1:$2"
-    for file in ./$3; do
-      chown -R ${owner} /${file}
-    done
-  fi
-  set -o noglob
+  [ $# -gt 2 ] && owner="$1:$2" && shift 2 && chown -R ${owner} $*
 done
 
 # install packages
-set +o noglob
 [ -d /pkg ] && PACKAGESITE=file:// pkg_add -r /pkg/*
 
 # source post install script
