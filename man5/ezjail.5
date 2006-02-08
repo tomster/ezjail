@@ -26,11 +26,10 @@ and
 .I stop.
 It may be passed an additional list of jails. If no jail name is 
 specified (usually when the script is being called by rc.local at boot 
-and shutdown time), all jails in ezjails config directory are being
-started/stopped.
+and shutdown time), all jails in ezjails scope are being started/stopped.
 
-The script then examines its config directory, sets config variables 
-for each jail in the jail_list before passing its command on to the
+The script examines its config, sets variables for each jail in the
+jail_list before passing its command on to the
 .B /etc/rc.d/jail
 script.
 .SH NOTES

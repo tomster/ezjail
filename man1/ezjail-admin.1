@@ -24,38 +24,38 @@ The
 tool is used to manage jails inside the ezjail scope. It is not used 
 to start or stop ezjails jails. Refer to ezjail(5) for more details. 
 .SH ezjail-admin create
-makes a copy of the ezjail template jail to the standard jail directory,
-using either the name specified with the -r option or a name derived from 
-the given hostname.
+copies the template jail to the root of a new jail, whose name and IP
+address are provided as mandatory parameters.
 
-If the jailroot does not start with a /, it is 
-interpreted relative to ezjails root dir (default: /usr/jails). If the
-given jailroot lies outside ezjails root dir, a soft link is created
-inside ezjails root dir pointing to the newly created jails location.
+If no jail root is specified via the -r option, it is derived from
+the jails name. In this case or, if a jail root is given and does not
+start with a '/', it is interpreted relative to ezjails root dir
+(default:
+.I /usr/jails
+). If a specified jail root lies outside ezjail root dir, a soft link
+is created inside this root dir pointing to the newly created jails
+location.
 
-If the -x (jail exists) option is given,
-.B the first step is skipped (an existing jail is used)
-useful in situations where you just want to alter some of a jail properties and 
-called ezjail-admin delete without the -w option before. However, sanity 
-checks are being performed.
+The -x (jail exists) option indicates, that an ezjail already exists
+at the jail root.
+.B In this case nothing is copied. ezjail only updates its config.
+This is useful in situations where you just want to alter some of a
+jail properties and called ezjail-admin delete without the -w option
+before. However, sanity checks are being performed.
 
-It then creates an entry in its
-.I EZJAIL_PREFIX/etc/ezjail/
-resource directory allowing the jail to be brought up after next reboot.
-
-If the ezjail_mount_enable option is set, a
+The script creates an entry in its config and a
 .I /etc/fstab.hostname
-is generated, allowing the basejail to be auto-mounted when the jail starts 
-up.
+file allowing the jail to be brought up after next reboot (or) via
+the EZJAIL_PREFIX/etc/rc.d/ezjail.sh script.
 
-The newly created Jail can perform some initializiation actions, if the
+The newly created jail can perform some initializiation actions, if the
 -f
 .I flavour
 option is given, where
 .I flavour
-is a directory directory tree under ezjails root dir (default:
-.I /usr/jails/flavours).
-See section
+is a directory tree under ezjails root dir (default:
+.I /usr/jails/flavours
+). See section
 .B FLAVOURS
 below for more details.
 
@@ -63,29 +63,26 @@ Options for newly created jails are read from
 .B ezjail.conf,
 refer to ezjail.conf(5) for more information.
 .SH ezjail-admin delete
-removes a jail from ezjails
-.I EZJAIL_PREFIX/etc/ezjail/
-resource directory thus preventing 
-it from being brought up on next reboot.
-
-It then removes the
+removes a jail from ezjails config and the corresponding
 .I /etc/fstab.hostname
-entry, if it exists.
+file, thus preventing the jail from being brought
+up on next reboot.
 
-If the -w (wipe) option is given, the directory pointed to by the jail 
+If the -w (wipe) option is given, the directory pointed to by the jail
 root entry is removed as well as the soft link in ezjails root dir.
 .SH ezjail-admin list
 lists all jails inside ezjails scope, together with some information on 
 them.
 .SH ezjail-admin update
-is used to create or update ezjails basejail. Depending on the parameters
+creates or update ezjails basejail. Depending on the parameters
 given it will install a FreeBSD system from a source tree whose location
 is either provided in the
 .B ezjail.conf
 config file or via the -s option.
 
-If the -p or -P options are given, the base jail is given a copy of FreeBSDs
-ports tree, which is in turn linked into all newly created ezjails.
+If the -p or -P options are given, the base jail also is given a copy of
+FreeBSDs ports tree, which is in turn linked into all newly created
+ezjails.
 
 If the -P option is given,
 .B only the ports tree will be checked out/updated,
@@ -116,7 +113,7 @@ When a ports tree exists in base jail, a make.conf containing reasonable
 values for having ports in jails is created in the template jail.
 .SH FLAVOURS
 .B ezjail-admin
-provides an easy way to create many Jails with similar or identical
+provides an easy way to create many jails with similar or identical
 properties. Currently it supports creating users, installing files and
 installing packages.
 
@@ -125,7 +122,7 @@ A sample flavour config directory resides under
 Some typical Jail initialization actions are demonstrated and you are
 encouraged to use it as a template for your flavours.
 
-If a flavour is selected on Jail creation, the flavour root is being
+If a flavour is selected on jail creation, the flavour root is being
 copied to the new Jails root, mostly containing an
 .I /ezjail.flavour .
 If the Jail starts up for the first time it runs a setup script found
@@ -133,11 +130,11 @@ at
 .I /etc/rc.d/ezjail-config.sh.
 
 This script will create some users specified in the flavour config.
-It will then chown files specified in the flavour config. (This is to allow
-giving file to users that didn't exist on Jail creation time.) All
+It will then chown files specified in the flavour config. (This allows
+chown-ing files to users only created by the config script.) All
 packages residing under
 .I /pkg
-will be installed. Finally the script
+will be pkg_install-ed. Finally the script
 .I /ezjail.postinstall
 is being sourced, if it exists.
 
@@ -156,8 +153,11 @@ ezjail-admin delete ns.test.org
 .br
 ezjail-admin create -x -r /jails/ns ns.test.org 10.0.2.1
 .SH BUGS
-.B ezjail-admin
-does not perform paranoid checks on its variables.
+Due to the way ezjail handles jail config files it is not possible to
+create multiple jails if their names are identical when piped through
+.B tr -C [:alnum:] _
+
+Sure to be others.
 .SH FILES
 .T4
 EZJAIL_PREFIX/etc/ezjail.conf
