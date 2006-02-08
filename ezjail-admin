@@ -147,7 +147,7 @@ create)
   [ $? = 0 ] && echo -e "Warning: Some services already seem to be listening on IP ${newjail_ip}\n  This may cause some confusion, here they are:\n${newjail_listener}"
 
   newjail_listener=`sockstat -4 -l | grep \*:[[:digit:]]`
-  [ $? = 0 ] && echo -e "Warning: Some services already seem to be listening on all IP, (including ${newjail_ip})\nThis may cause some confusion, here they are:\n ${newjail_listener}""
+  [ $? = 0 ] && echo -e "Warning: Some services already seem to be listening on all IP, (including ${newjail_ip})\n  This may cause some confusion, here they are:\n${newjail_listener}"
   IFS=${TIFS}
 
   ;;
@@ -183,7 +183,7 @@ delete)
   eval oldjail_rootdir=\"\$jail_${oldjail_nname}_rootdir\"
 
   # if jail is still running, refuse to go any further
-  [ -f /var/run/jail_${oldjail_nname}.id ] && exerr "Error: Jail appears to be still running, stop it first.\n(/var/run/jail_${oldjail_nname}.id exists)"
+  [ -f /var/run/jail_${oldjail_nname}.id ] && exerr "Error: Jail appears to be still running, stop it first.\n(/var/run/jail_${oldjail_nname}.id exists)."
 
   # now we know everything we need to let the jail be gone
   # remove entry from ezjail resource structure
