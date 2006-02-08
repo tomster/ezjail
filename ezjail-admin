@@ -26,10 +26,10 @@ ezjail_procfs_enable=${ezjail_procfs_enable:-"YES"}
 ezjail_fdescfs_enable=${ezjail_fdescfs_enable:-"YES"}
 
 # define our bail out shortcut
-exerr () { echo "$*"; exit 1; }
+exerr () { echo -e "$*"; exit 1; }
 
 # check for command
-[ "$1" ] || exerr "Usage: `basename -- $0` [create|delete|list|update] {params}"
+[ $1 ] || exerr "Usage: `basename -- $0` [create|delete|list|update] {params}"
 
 case "$1" in
 ######################## ezjail-admin CREATE ########################
@@ -89,7 +89,7 @@ create)
   fi
 
   # do some sanity checks on the selected flavour (if any)
-  if [ "${newjail_flavour}" ]; then
+  if [ ${newjail_flavour} ]; then
     [ -d ${ezjail_flavours}/${newjail_flavour}/ ] || exerr "Error: Flavour config directory ${ezjail_flavours}/${newjail_flavour} not found."
   fi
 
@@ -104,7 +104,7 @@ create)
   fi
 
   # if a soft link is necessary, create it now
-  [ "${newjail_softlink}" ] && ln -s ${newjail_root} ${newjail_softlink}
+  [ ${newjail_softlink} ] && ln -s ${newjail_root} ${newjail_softlink}
 
   # if the automount feature is not disabled, this
   # fstab entry for new jail will be obeyed
@@ -124,7 +124,7 @@ create)
   echo export jail_${newjail_nname}_fdescfs_enable=\"${ezjail_fdescfs_enable}\" >> ${ezjail_jailcfgs}/${newjail_nname}
 
   # Final steps for flavour installation
-  if [ "${newjail_flavour}" ]; then
+  if [ ${newjail_flavour} ]; then
     # install files, packages and config to new jail
     # user creating, chown and package installation on jails startup
     cd ${ezjail_flavours}/${newjail_flavour}
@@ -144,18 +144,10 @@ create)
   # check, whether some host system services do listen on the Jails IP
   TIFS=${IFS}; IFS=_
   newjail_listener=`sockstat -4 -l | grep ${newjail_ip}:[[:digit:]]`
-  if [ $? = 0 ]; then
-    echo "Warning: Some services already seem to be listening on IP ${newjail_ip}"
-    echo "  This may cause some confusion, here they are:"
-    echo ${newjail_listener}
-  fi
+  [ $? = 0 ] && echo -e "Warning: Some services already seem to be listening on IP ${newjail_ip}\n  This may cause some confusion, here they are:\n${newjail_listener}"
+
   newjail_listener=`sockstat -4 -l | grep \*:[[:digit:]]`
-  if [ $? = 0 ]; then
-    echo "Warning: Some services already seem to be listening on all IPs."
-    echo "  (including ${newjail_ip})"
-    echo "  This may cause some confusion, here they are:"
-    echo ${newjail_listener}
-  fi
+  [ $? = 0 ] && echo -e "Warning: Some services already seem to be listening on all IP, (including ${newjail_ip})\nThis may cause some confusion, here they are:\n ${newjail_listener}""
   IFS=${TIFS}
 
   ;;
@@ -191,11 +183,7 @@ delete)
   eval oldjail_rootdir=\"\$jail_${oldjail_nname}_rootdir\"
 
   # if jail is still running, refuse to go any further
-  if [ -f /var/run/jail_${oldjail_nname}.id ]; then
-    echo "Error: Jail appears to be still running, stop it first."
-    echo "(/var/run/jail_${oldjail_nname}.id exists)"
-    exit 1
-  fi
+  [ -f /var/run/jail_${oldjail_nname}.id ] && exerr "Error: Jail appears to be still running, stop it first.\n(/var/run/jail_${oldjail_nname}.id exists)"
 
   # now we know everything we need to let the jail be gone
   # remove entry from ezjail resource structure
@@ -299,7 +287,7 @@ setup|update)
     if [ -f ${ezjail_jailbase}/usr/ports/CVS/Root ]; then
       echo -n "Updating ports from "; cat ${ezjail_jailbase}/usr/ports/CVS/Root
       echo "Gathering local information may take a while."
-      cd ${ezjail_jailbase}/usr/ports/; cvs up -Pd
+      cd ${ezjail_jailbase}/usr/ports/; cvs -d ${ezjail_portscvsroot} up -Pd
     else
       echo "Checking out ports from ${ezjail_portscvsroot}"
       mkdir -p ${ezjail_jailbase}/usr/ports/
