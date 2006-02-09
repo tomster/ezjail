@@ -1,29 +1,61 @@
+#!/bin/sh
+#
 # ezjail flavour example
-# refer to ezjail-admin(1) for more information
-#
-# ezjails jail init script tries to create the following users. Format is 
-# as follows:
-#
-# username:uid:group[,group,..]:gid[,gid,..]:comment:cryptpw:[-]homedir:shell
-#
-# Note: Since ' ' (space) does not survive shell expansion, still often is
-# useful in the comment field, '=' will be converted to ' '.
-#
-# Note: Always use ''' (single ticks) to provide variables containing '$'s
-#
-# Example:
-#
-# ezjail_flavour_users='::heroes:1003:::: \
-# admin::wheel::Admin=User:$1$p75bbfK.$Kz3dwkoVlgZrfLZdAXQt91:/home/admin:/bin/sh \
-# pgsql:1002:pgsql:1002:Post=Gres::-/usr/local/psql:/bin/nologin'
 
-# Files or directories that should not belong to root:wheel will be
-# chowned -R according to the following variable
+# Hide
+######
 #
-# Format is as follows:
+# Prevent this script from being called over and over
+# if something fails.
+
+rm -f /etc/rc.d/ezjail-config.sh /ezjail.flavour
+
+# Groups
+#########
 #
-# user:group:file[:file...]
+# You will probably start with some groups your users
+# should be in
+
+# pw groupadd -q -n coders # -g 1004
+# pw groupadd -q -n sales # -g 1005
+
+# Users
+########
 #
-# Example:
+# You might want to add some users.
+# The password is to be provided in the encrypted form
+# as found in /etc/master.passwd
+# refer to pw(8) for more information
+
+# echo -n '$1$p75bbfK.$Kz3dwkoVlgZrfLZdAXQt91' |\
+# pw useradd -n admin -u 1001 -s /bin/sh -m -d$ /home/admin -G wheel -c 'Admin User' -H 0
+# echo -n '$1$p75bbfK.$Kz3dwkoVlgZrfLZdAXQt91' |\
+# pw useradd -n saag -u 1002 -s /bin/sh -m -d$ /home/saag -G coders -c 'Mutton Saag' -H 0
+# echo -n '$1$p75bbfK.$Kz3dwkoVlgZrfLZdAXQt91' |\
+# pw useradd -n mac -u 1002 -s /bin/sh -m -d$ /home/mac -G sales -c 'Big Mac' -H 0
+
+# Files
+########
 #
-# ezjail_flavour_files='admin:wheel:/home/admin/'
+# You can now give files to users just created
+
+# chown -R admin:coders /usr/local/cvsroot
+# chown -R admin:sales /usr/local/nfs/sales
+
+# Packages
+###########
+#
+# Install all packages previously put to /pkg
+
+[ -d /pkg ] && PACKAGESITE=file:// pkg_add -r /pkg/*
+rm -rf /pkg
+
+# Postinstall
+#################
+#
+# Your own stuff here, for example set login shells
+# that were only installed just before
+
+# chpass -s /usr/local/bin/bash admin
+# pkg_add -r pico
+# cd /usr/ports/sysutils/screen && make install

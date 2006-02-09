@@ -130,8 +130,11 @@ create)
     cd ${ezjail_flavours}/${newjail_flavour}
     find * | cpio -p -v ${newjail_root} > /dev/null
 
-    install -o root -g wheel -m 0755 ${ezjail_share}/ezjail-config.sh ${newjail_root}/etc/rc.d/ezjail-config.sh
-    echo "Note: Shell scripts installed, flavourizing on jails first startup."
+    if [ -f ${ezjail_share}/ezjail.flavour ]; then
+      ln -s /ezjail.flavour ${newjail_root}/etc/rc.d/ezjail-config.sh
+      chmod 0700 ${newjail_root}/etc/rc.d/ezjail-config.sh
+      echo "Note: Shell scripts installed, flavourizing on jails first startup."
+    fi
   fi
 
   # For user convenience, some scenarios commonly causing
