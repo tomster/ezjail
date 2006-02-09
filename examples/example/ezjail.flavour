@@ -1,20 +1,20 @@
 #!/bin/sh
 #
+# BEFORE: DAEMON
+#
 # ezjail flavour example
 
 # Hide
-######
+#######
 #
-# Prevent this script from being called over and over
-# if something fails.
+# Prevent this script from being called over and over if something fails.
 
 rm -f /etc/rc.d/ezjail-config.sh /ezjail.flavour
 
 # Groups
 #########
 #
-# You will probably start with some groups your users
-# should be in
+# You will probably start with some groups your users should be in
 
 # pw groupadd -q -n coders # -g 1004
 # pw groupadd -q -n sales # -g 1005
@@ -22,9 +22,8 @@ rm -f /etc/rc.d/ezjail-config.sh /ezjail.flavour
 # Users
 ########
 #
-# You might want to add some users.
-# The password is to be provided in the encrypted form
-# as found in /etc/master.passwd
+# You might want to add some users. The password is to be provided in the 
+# encrypted form as found in /etc/master.passwd
 # refer to pw(8) for more information
 
 # echo -n '$1$p75bbfK.$Kz3dwkoVlgZrfLZdAXQt91' |\
@@ -46,15 +45,16 @@ rm -f /etc/rc.d/ezjail-config.sh /ezjail.flavour
 ###########
 #
 # Install all packages previously put to /pkg
+# Remove package files afterwards
 
 [ -d /pkg ] && PACKAGESITE=file:// pkg_add -r /pkg/*
 rm -rf /pkg
 
 # Postinstall
-#################
+##############
 #
-# Your own stuff here, for example set login shells
-# that were only installed just before
+# Your own stuff here, for example set login shells that were only 
+# installed just before
 
 # chpass -s /usr/local/bin/bash admin
 # pkg_add -r pico
