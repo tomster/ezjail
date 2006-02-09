@@ -129,7 +129,7 @@ create)
     # If a config is found, make it auto run on jails startup
     if [ -f ${newjail_root}/ezjail.flavour ]; then
       ln -s /ezjail.flavour ${newjail_root}/etc/rc.d/ezjail-config.sh
-      chmod 0700 ${newjail_root}/etc/rc.d/ezjail-config.sh
+      chmod 0700 ${newjail_root}/ezjail.flavour
       echo "Note: Shell scripts installed, flavourizing on jails first startup."
     fi
   fi
