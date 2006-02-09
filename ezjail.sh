@@ -39,7 +39,7 @@ do_cmd()
       echo " Warning: Jail ${jail} not found."
     fi
   done
-  [ "${jail_pass}" ] && sh /etc/rc.d/jail one${action} ${jail_pass}
+  [ ${jail_pass} ] && sh /etc/rc.d/jail one${action} ${jail_pass}
 }
 
 run_rc_command $*
