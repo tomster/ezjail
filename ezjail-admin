@@ -61,7 +61,7 @@ create)
   [ -d ${ezjail_jailbase} ] || exerr "Error: base jail does not exist. Please run 'ezjail-admin update' first."
 
   # relative paths don't make sense in rc.scripts
-  [ ${ezjail_jaildir%%[!/]*} ] && exerr "Error: Need an absolute path in ezjail_jaildir, it currently is set to: ${ezjail_jaildir}."
+  [ ${ezjail_jaildir%%[!/]*} ] || exerr "Error: Need an absolute path in ezjail_jaildir, it currently is set to: ${ezjail_jaildir}."
 
   # jail names must not irritate file systems, excluding dots from this list
   # was done intentionally to permit foo.com style directory names, however,
@@ -77,7 +77,7 @@ create)
 
   # if jail root specified on command line is not absolute, make it absolute
   # inside our jail directory
-  [ ${newjail_root%%[!/]*} ] && newjail_root=${ezjail_jaildir}/${newjail_root}
+  [ ${newjail_root%%[!/]*} ] || newjail_root=${ezjail_jaildir}/${newjail_root}
 
   # if jail root specified on command line does not lie within our jail 
   # directory, we need to create a softlink
