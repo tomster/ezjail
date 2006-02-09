@@ -114,8 +114,7 @@ values for having ports in jails is created in the template jail.
 .SH FLAVOURS
 .B ezjail-admin
 provides an easy way to create many jails with similar or identical
-properties. Currently it supports creating users, installing files and
-installing packages.
+properties.
 
 A sample flavour config directory resides under
 .I EZJAIL_PREFIX/share/examples/ezjail/default/.
@@ -125,49 +124,12 @@ encouraged to use it as a template for your flavours.
 If a flavour is selected on jail creation, the flavour root is being
 copied to the new Jails root, mostly containing an
 .I /ezjail.flavour .
-If the Jail starts up for the first time it runs a setup script found
-at
-.I /etc/rc.d/ezjail-config.sh.
+If the Jail starts up for the first time this script is run.
 
-This script will create some users specified in the flavour config.
-It will then chown files specified in the flavour config. (This allows
-chown-ing files to users only created by the config script.) All
-packages residing under
-.I /pkg
-will be pkg_install-ed. Finally the script
-.I /ezjail.postinstall
-is being sourced, if it exists.
+In its default form it will create some groups and users, change the
+ownership of some files and installs all packages residing under /pkg.
 
-.I ezjail-config.sh
-then removes all traces, including itself.
-.SH EZJAIL.FLAVOUR
-The ezjail.flavour file found in a flavour directory usually provides
-two variables:
-
-.B ezjail_flavour_users
-.br
-a white space separated list of colon separated entries passed to the
-pw command after some processing. Refer to the pw(8) man page for more
-information. Format of an entry in the list is:
-
-username:uid:group[,group2,..]:gid[,gid2,..]:comment:pw:[-]home:shell
-
-where each group specified in the group list is being created (with the
-given gid for each group) if possible and necessary, before the user is
-added to that group. The character '=' in the comment field is being
-substituted by ' ' (space) to simplify escaping. The pw is being written
-verbatim to the passwd db, see pw(8). If the home directory begins with
-a '-' (dash), it is meant not to be created by the pw command. The dash
-will of course be removed. It is not possible to specify a shell here
-that will be installed by a package in /pkg.
-
-.B ezjail_flavour_files
-.br
-a white space separated list of colon separated entries passed to the
-chown -R command after some processing. Refer to the chown(8) man page
-for more information. Format of an entry in the list is:
-
-user:group:file[:file2...]
+It allows you to add some post install actions.
 .SH EXAMPLES
 ezjail-admin update -p
 .br
