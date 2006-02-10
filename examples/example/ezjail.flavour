@@ -23,15 +23,16 @@ rm -f /etc/rc.d/ezjail-config.sh /ezjail.flavour
 ########
 #
 # You might want to add some users. The password is to be provided in the 
-# encrypted form as found in /etc/master.passwd
-# refer to pw(8) for more information
+# encrypted form as found in /etc/master.passwd.
+# The example password here is "admin"
+# Refer to crypt(3) and pw(8) for more information
 
 # echo -n '$1$p75bbfK.$Kz3dwkoVlgZrfLZdAXQt91' |\
-# pw useradd -n admin -u 1001 -s /bin/sh -m -d$ /home/admin -G wheel -c 'Admin User' -H 0
+# pw useradd -n admin -u 1001 -s /bin/sh -m -d /home/admin -G wheel -c 'Admin User' -H 0
 # echo -n '$1$p75bbfK.$Kz3dwkoVlgZrfLZdAXQt91' |\
-# pw useradd -n saag -u 1002 -s /bin/sh -m -d$ /home/saag -G coders -c 'Mutton Saag' -H 0
+# pw useradd -n saag -u 1002 -s /bin/sh -m -d /home/saag -G coders -c 'Mutton Saag' -H 0
 # echo -n '$1$p75bbfK.$Kz3dwkoVlgZrfLZdAXQt91' |\
-# pw useradd -n mac -u 1002 -s /bin/sh -m -d$ /home/mac -G sales -c 'Big Mac' -H 0
+# pw useradd -n mac -u 1002 -s /bin/sh -m -d /home/mac -G sales -c 'Big Mac' -H 0
 
 # Files
 ########
