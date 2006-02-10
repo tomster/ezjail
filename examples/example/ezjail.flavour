@@ -55,7 +55,10 @@ rm -rf /pkg
 ##############
 #
 # Your own stuff here, for example set login shells that were only 
-# installed just before
+# installed just before.
+
+# Please note, that for all network related stuff like ports,
+# package remote fetching, etc. you need a sane /etc/resolv.conf
 
 # chpass -s /usr/local/bin/bash admin
 # pkg_add -r pico
