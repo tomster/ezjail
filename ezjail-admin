@@ -134,7 +134,9 @@ create)
     fi
   fi
 
+  #
   # For user convenience some scenarios commonly causing headaches are checked
+  #
 
   # check, whether IP is configured on a local interface, warn if it isnt
   ping -c 1 -m 1 -t 1 -q ${newjail_ip} > /dev/null
