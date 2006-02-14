@@ -254,7 +254,7 @@ setup|update)
     # This mkdir is important, since cpio will create intermediate
     # directories with permission 0700 which is bad
     mkdir -p ${ezjail_jailbase}/usr
-    for dir in bin lib libexec sbin usr/bin usr/include usr/lib usr/libexec usr/sbin usr/src usr/share; do
+    for dir in bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/libexec usr/sbin usr/src usr/share; do
       find ${dir} | cpio -d -p -v ${ezjail_jailbase} || exerr "Installation of ${dir} failed."
       chflags -R noschg ${dir}; rm -r ${dir}; ln -s /basejail/${dir} ${dir}
     done
