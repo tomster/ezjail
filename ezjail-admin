@@ -79,6 +79,10 @@ create)
   # inside our jail directory
   [ ${newjail_root%%[!/]*} ] || newjail_root=${ezjail_jaildir}/${newjail_root}
 
+  # if a directory at the specified jail root already exists, refuse to 
+  # install
+  [ -e ${newjail_root} ] && exerr "Error: the specified jail root ${newjail_root} alread exists."
+
   # if jail root specified on command line does not lie within our jail 
   # directory, we need to create a softlink
   if [ "${newjail_root##${ezjail_jaildir}}" = "${newjail_root}" ]; then
