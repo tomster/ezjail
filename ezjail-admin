@@ -29,7 +29,7 @@ ezjail_fdescfs_enable=${ezjail_fdescfs_enable:-"YES"}
 exerr () { echo -e "$*"; exit 1; }
 
 # check for command
-[ $1 ] || exerr "Usage: `basename -- $0` [create|delete|list|update] {params}"
+[ "$1" ] || exerr "Usage: `basename -- $0` [create|delete|list|update] {params}"
 
 case "$1" in
 ######################## ezjail-admin CREATE ########################
@@ -61,7 +61,7 @@ create)
   [ -d ${ezjail_jailbase} ] || exerr "Error: base jail does not exist. Please run 'ezjail-admin update' first."
 
   # relative paths don't make sense in rc.scripts
-  [ ${ezjail_jaildir%%[!/]*} ] || exerr "Error: Need an absolute path in ezjail_jaildir, it currently is set to: ${ezjail_jaildir}."
+  [ "${ezjail_jaildir%%[!/]*}" ] || exerr "Error: Need an absolute path in ezjail_jaildir, it currently is set to: ${ezjail_jaildir}."
 
   # jail names must not irritate file systems, excluding dots from this list
   # was done intentionally to permit foo.com style directory names, however,
@@ -77,7 +77,7 @@ create)
 
   # if jail root specified on command line is not absolute, make it absolute
   # inside our jail directory
-  [ ${newjail_root%%[!/]*} ] || newjail_root=${ezjail_jaildir}/${newjail_root}
+  [ "${newjail_root%%[!/]*}" ] || newjail_root=${ezjail_jaildir}/${newjail_root}
 
   # if a directory at the specified jail root already exists, refuse to 
   # install
@@ -105,7 +105,7 @@ create)
   fi
 
   # if a soft link is necessary, create it now
-  [ ${newjail_softlink} ] && ln -s ${newjail_root} ${newjail_softlink}
+  [ "${newjail_softlink}" ] && ln -s ${newjail_root} ${newjail_softlink}
 
   # if the automount feature is not disabled, this fstab entry for new jail
   # will be obeyed
@@ -125,7 +125,7 @@ create)
   echo export jail_${newjail_nname}_fdescfs_enable=\"${ezjail_fdescfs_enable}\" >> ${ezjail_jailcfgs}/${newjail_nname}
 
   # Final steps for flavour installation
-  if [ ${newjail_flavour} ]; then
+  if [ "${newjail_flavour}" ]; then
     # install files and config to new jail
     cd ${ezjail_flavours}/${newjail_flavour}
     find * | cpio -p -v ${newjail_root} > /dev/null
@@ -198,7 +198,7 @@ delete)
   [ -L ${oldjail_softlink} ] && rm ${oldjail_softlink}
 
   # if wiping the jail was requested, remove it
-  [ ${oldjail_wipe} ] && rm -rf ${oldjail_rootdir}
+  [ "${oldjail_wipe}" ] && rm -rf ${oldjail_rootdir}
 
   ;;
 ######################## ezjail-admin LIST ########################
