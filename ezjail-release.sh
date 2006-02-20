@@ -29,12 +29,13 @@ case "$1" in
 ######################## ezjail-admin RELEASE ########################
 release)
   shift
-  args=`getopt mpr:s: $*` || exerr "Usage: `basename -- $0` release [-m] [-p] [-r release] [-s server]"
+  args=`getopt mpsh:r: $*` || exerr "Usage: `basename -- $0` release [-mps] [-h host] [-r release]"
 
   basejail_release=
-  basejail_server=
+  basejail_host=
   basejail_manpages=
   basejail_ports=
+  basejail_sources=
   basejail_reldir=
 
   set -- ${args}
@@ -42,24 +43,24 @@ release)
     case ${arg} in
       -m) basejail_manpages=" manpages"; shift;;
       -p) basejail_ports=" ports"; shift;;
+      -s) basejail_sources=" src"; shift;;
+      -h) basejail_host="$2"; shift 2;;
       -r) basejail_release="$2"; shift 2;;
-      -s) basejail_server="$2"; shift 2;;
       --) shift; break;;
     esac
   done
 
   basejail_arch=`uname -p`
-  basejail_server=${basejail_server:-"ftp.freebsd.org"}
-  basejail_server=${basejail_server#ftp://}
-  basejail_dir=${basejail_server#file://}
+  basejail_host=${basejail_host:-"ftp.freebsd.org"}
+  basejail_host=${basejail_host#ftp://}
+  basejail_dir=${basejail_host#file://}
   [ "${basejail_dir%%[!/]*}" ] || basejail_reldir=${PWD}
   basejail_tmp=${ezjail_jaildir}/tmp
-  basejail_fill="base ${basejail_manpages} ${basejail_ports}"
 
   # ftp servers normally wont provide CURRENT-builds
   if [ -z "${basejail_release}" ]; then
     basejail_release=`uname -r`
-    if [ "${basejail_release%CURRENT}" != "${basejail_release}" -a "${basejail_dir}" = "${basejail_server}" ]; then
+    if [ "${basejail_release%CURRENT}" != "${basejail_release}" -a "${basejail_dir}" = "${basejail_host}" ]; then
       echo "Your system is ${basejail_release}. Normally FTP-servers don't provide CURRENT-builds."
       echo -n "Release [ ${basejail_release} ]: "
       read release_tmp
@@ -75,14 +76,13 @@ release)
   DESTDIR=${ezjail_jailfull}
 
   rm -rf ${basejail_tmp}
-  for pkg in ${basejail_fill}; do
-    if [ "${basejail_dir}" = "${basejail_server}" ]; then
+  for pkg in base ${basejail_manpages} ${basejail_ports} ${basejail_sources}; do
+    if [ "${basejail_dir}" = "${basejail_host}" ]; then
       mkdir -p ${basejail_tmp} || exerr "Could not create temporary base jail directory ${basejail_tmp}."
       cd ${basejail_tmp}
       for basejail_path in pub/FreeBSD/releases pub/FreeBSD/snapshot pub/FreeBSD releases snapshots NO; do
-        [ "${basejail_path}" = "NO" ] && exerr "Could not fetch ${pkg} from ${basejail_server}."
-echo "${basejail_server}:${basejail_path}/${basejail_arch}/${basejail_release}/${pkg}/*"
-        ftp "${basejail_server}:${basejail_path}/${basejail_arch}/${basejail_release}/${pkg}/*" && break
+        [ "${basejail_path}" = "NO" ] && exerr "Could not fetch ${pkg} from ${basejail_host}."
+        ftp "${basejail_host}:${basejail_path}/${basejail_arch}/${basejail_release}/${pkg}/*" && break
       done
       [ -f install.sh ] && yes | . install.sh
       rm -rf ${basejail_tmp}
