@@ -58,8 +58,8 @@ release)
 
   # ftp servers normally wont provide CURRENT-builds
   if [ -z "{$basejail_release}" ]; then
-    ${basejail_release}=`uname -r`
-    if [ "${basejail_release%CURRENT}" != "${basejail_release}" -a "${basejail_dir}" != "${basejail_server}" ]; then
+    basejail_release=`uname -r`
+    if [ "${basejail_release%CURRENT}" != "${basejail_release}" -a "${basejail_dir}" = "${basejail_server}" ]; then
       echo "Your system is ${basejail_release}. Normally FTP-servers don't provide CURRENT-builds."
       echo -n "Release [ ${basejail_release} ]: "
       read release_tmp
