@@ -41,7 +41,7 @@ release)
   for arg do
     case ${arg} in
       -m) basejail_manpages=" manpages"; shift;;
-      -m) basejail_ports=" ports"; shift;;
+      -p) basejail_ports=" ports"; shift;;
       -r) basejail_release="$2"; shift 2;;
       -s) basejail_server="$2"; shift 2;;
       --) shift; break;;
@@ -52,7 +52,7 @@ release)
   basejail_server=${basejail_server:-"ftp.freebsd.org:"}
   basejail_server=${basejail_server#ftp://}
   basejail_dir=${basejail_server#file://}
-  [ "${basejail_dir%%[!/]*}" ] || ${basejail_reldir}=${PWD}
+  [ "${basejail_dir%%[!/]*}" ] || basejail_reldir=${PWD}
   basejail_tmp=${ezjail_jaildir}/tmp
   basejail_fill="base ${basejail_manpages} ${basejail_ports}"
 
