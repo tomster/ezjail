@@ -49,7 +49,7 @@ release)
   done
 
   basejail_arch=`uname -p`
-  basejail_server=${basejail_server:-"ftp.freebsd.org:"}
+  basejail_server=${basejail_server:-"ftp.freebsd.org"}
   basejail_server=${basejail_server#ftp://}
   basejail_dir=${basejail_server#file://}
   [ "${basejail_dir%%[!/]*}" ] || basejail_reldir=${PWD}
@@ -79,9 +79,10 @@ release)
     if [ "${basejail_dir}" = "${basejail_server}" ]; then
       mkdir -p ${basejail_tmp} || exerr "Could not create temporary base jail directory ${basejail_tmp}."
       cd ${basejail_tmp}
-      for basejail_path in /pub/FreeBSD/releases /pub/FreeBSD/snapshot /FreeBSD NO; do
+      for basejail_path in pub/FreeBSD/releases pub/FreeBSD/snapshot pub/FreeBSD releases snapshots NO; do
         [ "${basejail_path}" = "NO" ] && exerr "Could not fetch ${pkg} from ${basejail_server}."
-        ftp "${basejail_server}${basejail_path}/${basejail_arch}/${basejail_release}/${pkg}/*" > /dev/null && break
+echo "${basejail_server}:${basejail_path}/${basejail_arch}/${basejail_release}/${pkg}/*"
+        ftp "${basejail_server}:${basejail_path}/${basejail_arch}/${basejail_release}/${pkg}/*" && break
       done
       [ -f install.sh ] && yes | . install.sh
       rm -rf ${basejail_tmp}
