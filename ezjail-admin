@@ -81,7 +81,7 @@ create)
 
   # if a directory at the specified jail root already exists, refuse to 
   # install
-  [ -e ${newjail_root} ] && exerr "Error: the specified jail root ${newjail_root} alread exists."
+  [ -e ${newjail_root} -a "${newjail_fill} = "YES" ] && exerr "Error: the specified jail root ${newjail_root} alread exists."
 
   # if jail root specified on command line does not lie within our jail 
   # directory, we need to create a softlink
