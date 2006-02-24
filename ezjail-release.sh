@@ -84,10 +84,12 @@ release)
         [ "${basejail_path}" = "NO" ] && exerr "Could not fetch ${pkg} from ${basejail_host}."
         ftp "${basejail_host}:${basejail_path}/${basejail_arch}/${basejail_release}/${pkg}/*" && break
       done
+      set -- all
       [ -f install.sh ] && yes | . install.sh
       rm -rf ${basejail_tmp}
     else
       cd ${basejail_reldir}/${basejail_dir}/${pkg} || exerr "Could not change to ${basejail_dir}."
+      set -- all
       [ -f install.sh ] && yes | . install.sh
     fi
   done
