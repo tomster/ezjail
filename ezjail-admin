@@ -81,7 +81,7 @@ create)
 
   # if a directory at the specified jail root already exists, refuse to 
   # install
-  [ -e ${newjail_root} -a "${newjail_fill} = "YES" ] && exerr "Error: the specified jail root ${newjail_root} alread exists."
+  [ -e ${newjail_root} -a "${newjail_fill}" = "YES" ] && exerr "Error: the specified jail root ${newjail_root} alread exists."
 
   # if jail root specified on command line does not lie within our jail 
   # directory, we need to create a softlink
@@ -127,8 +127,8 @@ create)
   # Final steps for flavour installation
   if [ "${newjail_flavour}" ]; then
     # install files and config to new jail
-    cd ${ezjail_flavours}/${newjail_flavour}
-    find * | cpio -p -v ${newjail_root} > /dev/null
+    cd ${ezjail_flavours}/${newjail_flavour} && find * | cpio -p -v ${newjail_root} > /dev/null
+    [ $? = 0 ] || echo "Warning: Could not fully install flavour."
 
     # If a config is found, make it auto run on jails startup
     if [ -f ${newjail_root}/ezjail.flavour ]; then
@@ -243,18 +243,17 @@ setup|update)
 
     # Normally fulljail should be renamed by past ezjail-admin commands.
     # However those may have failed
-    chflags -R noschg ${ezjail_jailfull}; rm -rf ${ezjail_jailfull}
-    mkdir -p ${ezjail_jailfull}
+    [ -d "${ezjail_jailfull}" ] && chflags -R noschg ${ezjail_jailfull} && rm -rf ${ezjail_jailfull}
+    mkdir -p ${ezjail_jailfull} || exerr "Cannot create temporary Jail directory."
 
     # make our world
-    cd ${ezjail_sourcetree}
-    make ${updatejail_installaction} DESTDIR=${ezjail_jailfull} || exerr "make ${updatejail_installaction} failed."
+    cd ${ezjail_sourcetree} && make ${updatejail_installaction} DESTDIR=${ezjail_jailfull} || exerr "make ${updatejail_installaction} failed."
 
     # setup world
-    make distribution DESTDIR=${ezjail_jailfull} || exerr "make distribution failed."
+    cd ${ezjail_sourcetree}/etc && make distribution DESTDIR=${ezjail_jailfull} || exerr "make distribution failed."
 
     # Fill basejail from installed world
-    cd ${ezjail_jailfull}
+    cd ${ezjail_jailfull} || exerr "Cant access temporary Jail directory."
     # This mkdir is important, since cpio will create intermediate
     # directories with permission 0700 which is bad
     mkdir -p ${ezjail_jailbase}/usr
@@ -265,13 +264,7 @@ setup|update)
     mkdir basejail
 
     # Try to remove the old template jail
-    if [ -d ${ezjail_jailtemplate} ]; then
-      if [ -d ${ezjail_jailtemplate}_old ]; then
-        chflags -R noschg ${ezjail_jailtemplate}_old
-        rm -rf ${ezjail_jailtemplate}_old
-      fi
-      mv ${ezjail_jailtemplate} ${ezjail_jailtemplate}_old
-    fi
+    [ -d ${ezjail_template} ] && chflags -R noschg ${ezjail_jailtemplate} && rm -rf ${ezjail_jailtemplate}
     mv ${ezjail_jailfull} ${ezjail_jailtemplate}
 
     # If the default flavour example has not yet been copied, do it now
@@ -285,11 +278,11 @@ setup|update)
     if [ -f ${ezjail_jailbase}/usr/ports/CVS/Root ]; then
       echo -n "Updating ports from "; cat ${ezjail_jailbase}/usr/ports/CVS/Root
       echo "Gathering local information may take a while."
-      cd ${ezjail_jailbase}/usr/ports/; cvs -d ${ezjail_portscvsroot} up -Pd
+      cd ${ezjail_jailbase}/usr/ports/ && cvs -d ${ezjail_portscvsroot} up -Pd
     else
       echo "Checking out ports from ${ezjail_portscvsroot}"
       mkdir -p ${ezjail_jailbase}/usr/ports/
-      cd ${ezjail_jailbase}/usr/; cvs -d ${ezjail_portscvsroot} co ports
+      cd ${ezjail_jailbase}/usr/ && cvs -d ${ezjail_portscvsroot} co ports
     fi
     [ $? = 0 ] || exerr "Updating ports failed."
   fi
