@@ -79,7 +79,7 @@ release)
   for pkg in base ${basejail_manpages} ${basejail_ports} ${basejail_sources}; do
     if [ "${basejail_dir}" = "${basejail_host}" ]; then
       mkdir -p ${basejail_tmp} || exerr "Could not create temporary base jail directory ${basejail_tmp}."
-      cd ${basejail_tmp}
+      cd ${basejail_tmp} || exerr "Could not cd to ${basejail_tmp}."
       for basejail_path in pub/FreeBSD/releases pub/FreeBSD/snapshot pub/FreeBSD releases snapshots NO; do
         [ "${basejail_path}" = "NO" ] && exerr "Could not fetch ${pkg} from ${basejail_host}."
         ftp "${basejail_host}:${basejail_path}/${basejail_arch}/${basejail_release}/${pkg}/*" && break
@@ -88,7 +88,7 @@ release)
       [ -f install.sh ] && yes | . install.sh
       rm -rf ${basejail_tmp}
     else
-      cd ${basejail_reldir}/${basejail_dir}/${pkg} || exerr "Could not change to ${basejail_dir}."
+      cd ${basejail_reldir}/${basejail_dir}/${pkg} || exerr "Could not cd to ${basejail_dir}."
       set -- all
       [ -f install.sh ] && yes | . install.sh
     fi
