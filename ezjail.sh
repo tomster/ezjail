@@ -28,18 +28,19 @@ stop_cmd="do_cmd stop '_ ezjail'"
 do_cmd()
 {
   action=$1; message=$2; shift 2;
-  [ -n "$*" ] && jail_list=`echo -n $* | tr -c "[:alnum:] " _` || echo -n "${message##_}"
-  jail_list=${jail_list:-`ls ${ezjail_prefix}/etc/ezjail/`}
-  jail_pass=
-  for jail in ${jail_list}; do
-    if [ -f ${ezjail_prefix}/etc/ezjail/${jail} ]; then
-      . ${ezjail_prefix}/etc/ezjail/${jail}
-      jail_pass="${jail_pass} ${jail}"
+  ezjail_list=
+  [ -n "$*" ] && ezjail_list=`echo -n $* | tr -c "[:alnum:] " _` || echo -n "${message##_}"
+  ezjail_list=${ezjail_list:-`ls ${ezjail_prefix}/etc/ezjail/`}
+  ezjail_pass=
+  for ezjail in ${ezjail_list}; do
+    if [ -f ${ezjail_prefix}/etc/ezjail/${ezjail} ]; then
+      . ${ezjail_prefix}/etc/ezjail/${ezjail}
+      ezjail_pass="${ezjail_pass} ${ezjail}"
     else
-      echo " Warning: Jail ${jail} not found."
+      echo " Warning: Jail ${ezjail} not found."
     fi
   done
-  [ "${jail_pass}" ] && sh /etc/rc.d/jail one${action} ${jail_pass}
+  [ "${ezjail_pass}" ] && sh /etc/rc.d/jail one${action} ${ezjail_pass}
 }
 
 run_rc_command $*
