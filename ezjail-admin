@@ -56,7 +56,7 @@ create)
   # we need at least a name and an ip for new jail
   [ "${newjail_name}" -a "${newjail_ip}" -a $# = 2 ] || exerr "Usage: `basename -- $0` create [-f flavour] [-r jailroot] [-x] jailname jailip"
 
-  # check, whether ezjail-update has been called. existence of 
+  # check, whether ezjail-update has been called. existence of
   # ezjail_jailbase is our indicator
   [ -d ${ezjail_jailbase} ] || exerr "Error: base jail does not exist. Please run 'ezjail-admin update' first."
 
@@ -85,11 +85,11 @@ create)
   # inside our jail directory
   [ "${newjail_root%%[!/]*}" ] || newjail_root=${ezjail_jaildir}/${newjail_root}
 
-  # if a directory at the specified jail root already exists, refuse to 
+  # if a directory at the specified jail root already exists, refuse to
   # install
   [ -e ${newjail_root} -a "${newjail_fill}" = "YES" ] && exerr "Error: the specified jail root ${newjail_root} alread exists."
 
-  # if jail root specified on command line does not lie within our jail 
+  # if jail root specified on command line does not lie within our jail
   # directory, we need to create a softlink
   if [ "${newjail_root##${ezjail_jaildir}}" = "${newjail_root}" ]; then
     newjail_softlink=${ezjail_jaildir}/`basename -- ${newjail_root}`
@@ -117,7 +117,7 @@ create)
   # will be obeyed
   echo ${ezjail_jailbase} ${newjail_root}/basejail nullfs ro 0 0 > /etc/fstab.${newjail_nname}
 
-  # now, where everything seems to have gone right, create control file in 
+  # now, where everything seems to have gone right, create control file in
   # ezjails config dir
   mkdir -p ${ezjail_jailcfgs}
   echo export jail_${newjail_nname}_hostname=\"${newjail_name}\"  > ${ezjail_jailcfgs}/${newjail_nname}
@@ -194,7 +194,7 @@ delete)
   # if jail is still running, refuse to go any further
   [ -f /var/run/jail_${oldjail_nname}.id ] && exerr "Error: Jail appears to be still running, stop it first.\n(/var/run/jail_${oldjail_nname}.id exists)."
 
-  # now we know everything we need to let the jail be gone remove entry 
+  # now we know everything we need to let the jail be gone remove entry
   # from ezjail resource structure, delete fstab.JAILNAME
   rm -f ${ezjail_jailcfgs}/${oldjail_nname}
   rm -f /etc/fstab.${oldjail_nname}
@@ -239,7 +239,7 @@ setup|update)
   done
 
   if [ "${updatejail_installaction}" = "none" ]; then
-    # check, whether ezjail-update has been called. existence of 
+    # check, whether ezjail-update has been called. existence of
     # ezjail_jailbase is our indicator
     [ -d ${ezjail_jailbase} ] || exerr "Error: base jail does not exist. You cannot fill base jails ports tree before creating it. Please run 'ezjail-admin update' first."
   else
@@ -295,7 +295,7 @@ setup|update)
 
   # A ports collection inside jails is hardly useful w/o an appropriate
   # /etc/make.conf. If we find basejail/usr/ports/Makefile, assume that
-  # the admin wants a working make.conf in new jails also a softlink to 
+  # the admin wants a working make.conf in new jails also a softlink to
   # the ports in basejail is provided
   if [ -f ${ezjail_jailbase}/usr/ports/Makefile ]; then
     # no /usr/ports? link to /basejail/usr/ports
