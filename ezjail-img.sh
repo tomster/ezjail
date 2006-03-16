@@ -28,6 +28,16 @@ ezjail_fdescfs_enable=${ezjail_fdescfs_enable:-"YES"}
 # define our bail out shortcut
 exerr () { echo -e "$*"; exit 1; }
 
+# define detach strategy for image jails
+detach () {
+  # unmount and detach memory disc
+  if [ "${newjail_device}" ]; then
+    umount ${newjail_root}
+    mdconfig -d -u ${newjail_device}
+  fi
+  return 0
+}
+
 # check for command
 [ "$1" ] || exerr "Usage: `basename -- $0` [create] {params}"
 
@@ -42,6 +52,7 @@ create)
   newjail_softlink=
   newjail_imagesize=
   newjail_cryptimage=
+  newjail_device=
   newjail_fill="YES"
   
   set -- ${args}
@@ -112,23 +123,24 @@ create)
 
   # if image is wanted, check, whether the img-file already is present
   if [ "${newjail_imagesize}" ]; then
-    newjail_image=${newjail_root%/}; while [ "${newjail_image}" -a -z "${newjail_image%%*/" ]; do newjail_image=${newjail_image%/}; done
-    [ -z "${newjail_image}" ] && exerr Could not determine image file name, something is wrong with the jail root: ${newjail_root}.
+    newjail_image=${newjail_root%/}; while [ "${newjail_image}" -a -z "${newjail_image%%*/}" ]; do newjail_image=${newjail_image%/}; done
+    [ -z "${newjail_image}" ] && exerr "Error: Could not determine image file name, something is wrong with the jail root: ${newjail_root}."
     newjail_image=${newjail_image}.img
-    [ -e "${newjail_image}" ] && exerr "Error: a file exists at the location ${newjail_image}, preventing our own image file to be created.
+    [ -e "${newjail_image}" ] && exerr "Error: a file exists at the location ${newjail_image}, preventing our own image file to be created."
 
     touch "${newjail_image}"
-    dd if=/dev/random of="${newjail_image}" bs=${newjail_imagesize} count=1 || exerr Could not (or not fully) create the image file. You might want to check (and possibly remove) the file "${newjail_image}". The image size provided was ${newjail_imagesize}.
-    newjail_device=/dev/`mdconfig -a -t vnode -f ${newjail_image}`
-    newfs ${newjail_device}
-    mount ${newjail_device} ${newjail_root}
+    dd if=/dev/random of="${newjail_image}" bs="${newjail_imagesize}" count=1 || exerr "Error: Could not (or not fully) create the image file. You might want to check (and possibly remove) the file ${newjail_image}. The image size provided was ${newjail_imagesize}."
+    newjail_device=`mdconfig -a -t vnode -f ${newjail_image}`
+    newfs /dev/${newjail_device}
+    mkdir -p ${newjail_root}
+    mount /dev/${newjail_device} ${newjail_root}
   fi
 
   # now take a copy of our template jail
   if [ "${newjail_fill}" = "YES" ]; then
     mkdir -p ${newjail_root} && cd ${ezjail_jailtemplate} && \
     find * | cpio -p -v ${newjail_root} > /dev/null
-    [ $? = 0 ] || exerr "Error: Could not copy template jail."
+    [ $? != 0 ] || detach() || exerr "Error: Could not copy template jail."
   fi
 
   # if a soft link is necessary, create it now
@@ -151,7 +163,7 @@ create)
   echo export jail_${newjail_nname}_procfs_enable=\"${ezjail_procfs_enable}\"  >> ${ezjail_jailcfgs}/${newjail_nname}
   echo export jail_${newjail_nname}_fdescfs_enable=\"${ezjail_fdescfs_enable}\" >> ${ezjail_jailcfgs}/${newjail_nname}
   [ "${newjail_imagesize}" ] && \
-  echo export jail_${newjail_nname}_image=\"YES\" >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_image=\"${newjail_image}\" >> ${ezjail_jailcfgs}/${newjail_nname}
   [ "${newjail_cryptimage}" ] && \
   echo export jail_${newjail_nname}_cryptimage=\"YES\" >> ${ezjail_jailcfgs}/${newjail_nname}
 
@@ -168,6 +180,8 @@ create)
       echo "Note: Shell scripts installed, flavourizing on jails first startup."
     fi
   fi
+
+  detach()
   
   #
   # For user convenience some scenarios commonly causing headaches are checked
@@ -183,7 +197,7 @@ create)
   [ $? = 0 ] && echo -e "Warning: Some services already seem to be listening on IP ${newjail_ip}\n  This may cause some confusion, here they are:\n${newjail_listener}"
   
   newjail_listener=`sockstat -4 -l | grep \*:[[:digit:]]`
-  [ $? = 0 ] && echo -e "Warning: Some services already seem to be listening on all IP, (including ${newjail_ip})\n  This may cause some confusion, here they are:\n${$
+  [ $? = 0 ] && echo -e "Warning: Some services already seem to be listening on all IP, (including ${newjail_ip})\n  This may cause some confusion, here they are:\n${newjail_listener}"
   IFS=${TIFS}
   
   ;;
