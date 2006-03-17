@@ -3,6 +3,9 @@
 # $FreeBSD$
 #
 # PROVIDE: ezjail
+# REQUIRE: LOGIN cleanvar
+# BEFORE: securelevel
+# KEYWORD: nojail shutdown
 #
 # Add the following lines to /etc/rc.conf.local or /etc/rc.conf to enable ezjail
 #
