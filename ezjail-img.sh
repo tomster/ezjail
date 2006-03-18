@@ -1,7 +1,8 @@
 #!/bin/sh
 
 # ugly: this variable is set during port install time
-ezjail_prefix=EZJAIL_PREFIX
+#ezjail_prefix=EZJAIL_PREFIX
+ezjail_prefix=/usr/local/
 ezjail_etc=${ezjail_prefix}/etc
 ezjail_share=${ezjail_prefix}/share/ezjail
 ezjail_examples=${ezjail_prefix}/share/examples/ezjail
@@ -29,13 +30,12 @@ ezjail_fdescfs_enable=${ezjail_fdescfs_enable:-"YES"}
 exerr () { echo -e "$*"; exit 1; }
 
 # define detach strategy for image jails
-detach () {
+detach_images () {
   # unmount and detach memory disc
   if [ "${newjail_device}" ]; then
     umount ${newjail_root}
     mdconfig -d -u ${newjail_device}
   fi
-  return 0
 }
 
 # check for command
@@ -140,7 +140,7 @@ create)
   if [ "${newjail_fill}" = "YES" ]; then
     mkdir -p ${newjail_root} && cd ${ezjail_jailtemplate} && \
     find * | cpio -p -v ${newjail_root} > /dev/null
-    [ $? != 0 ] || detach() || exerr "Error: Could not copy template jail."
+    [ $? = 0 ] || detach_images || exerr "Error: Could not copy template jail."
   fi
 
   # if a soft link is necessary, create it now
@@ -148,19 +148,22 @@ create)
 
   # if the automount feature is not disabled, this fstab entry for new jail
   # will be obeyed
-  echo ${ezjail_jailbase} ${newjail_root}/basejail nullfs ro 0 0 > /etc/fstab.${newjail_nname}
+  echo -n > /etc/fstab.${newjail_nname}
+  [ "${newjail_imagesize}" ] && \
+  echo ${newjail_root}.device ${newjail_root} ufs rw 0 0 >> /etc/fstab.${newjail_nname}
+  echo ${ezjail_jailbase} ${newjail_root}/basejail nullfs ro 0 0 >> /etc/fstab.${newjail_nname}
 
   # now, where everything seems to have gone right, create control file in  
   # ezjails config dir
   mkdir -p ${ezjail_jailcfgs}
-  echo export jail_${newjail_nname}_hostname=\"${newjail_name}\"  > ${ezjail_jailcfgs}/${newjail_nname}
-  echo export jail_${newjail_nname}_ip=\"${newjail_ip}\"  >> ${ezjail_jailcfgs}/${newjail_nname}
-  echo export jail_${newjail_nname}_rootdir=\"${newjail_root}\"  >> ${ezjail_jailcfgs}/${newjail_nname}
-  echo export jail_${newjail_nname}_exec=\"/bin/sh /etc/rc\"  >> ${ezjail_jailcfgs}/${newjail_nname}
-  echo export jail_${newjail_nname}_mount_enable=\"${ezjail_mount_enable}\"  >> ${ezjail_jailcfgs}/${newjail_nname}
-  echo export jail_${newjail_nname}_devfs_enable=\"${ezjail_devfs_enable}\"  >> ${ezjail_jailcfgs}/${newjail_nname}
-  echo export jail_${newjail_nname}_devfs_ruleset=\"devfsrules_jail\"  >> ${ezjail_jailcfgs}/${newjail_nname}
-  echo export jail_${newjail_nname}_procfs_enable=\"${ezjail_procfs_enable}\"  >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_hostname=\"${newjail_name}\" > ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_ip=\"${newjail_ip}\" >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_rootdir=\"${newjail_root}\" >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_exec=\"/bin/sh /etc/rc\" >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_mount_enable=\"${ezjail_mount_enable}\" >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_devfs_enable=\"${ezjail_devfs_enable}\" >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_devfs_ruleset=\"devfsrules_jail\" >> ${ezjail_jailcfgs}/${newjail_nname}
+  echo export jail_${newjail_nname}_procfs_enable=\"${ezjail_procfs_enable}\" >> ${ezjail_jailcfgs}/${newjail_nname}
   echo export jail_${newjail_nname}_fdescfs_enable=\"${ezjail_fdescfs_enable}\" >> ${ezjail_jailcfgs}/${newjail_nname}
   [ "${newjail_imagesize}" ] && \
   echo export jail_${newjail_nname}_image=\"${newjail_image}\" >> ${ezjail_jailcfgs}/${newjail_nname}
@@ -181,7 +184,8 @@ create)
     fi
   fi
 
-  detach()
+  # Detach (crypto and) memory discs
+  detach_images
   
   #
   # For user convenience some scenarios commonly causing headaches are checked
