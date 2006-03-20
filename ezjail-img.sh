@@ -32,9 +32,10 @@ exerr () { echo -e "$*"; exit 1; }
 # define detach strategy for image jails
 detach_images () {
   # unmount and detach memory disc
-  if [ "${newjail_device}" ]; then
+  if [ "${newjail_img_device}" ]; then
     umount ${newjail_root}
-    mdconfig -d -u ${newjail_device}
+    [ "${newjail_image}" = "crypto" ] && gbde detach /dev/${newjail_img_device}
+    mdconfig -d -u ${newjail_img_device}
   fi
 }
 
@@ -45,13 +46,13 @@ case "$1" in
 ######################## ezjail-admin CREATE ########################
 create)
   shift
-  args=`getopt xf:r:i: $*` || exerr "Usage: `basename -- $0` create [-f flavour] [-r jailroot] [-i size] [-xc] jailname jailip"
+  args=`getopt xf:r:is:c $*` || exerr "Usage: `basename -- $0` create [-f flavour] [-r jailroot] [-i size] [-xc] jailname jailip"
   
   newjail_root=
   newjail_flavour=
   newjail_softlink=
+  newjail_image=
   newjail_imagesize=
-  newjail_cryptimage=
   newjail_device=
   newjail_fill="YES"
   
@@ -61,8 +62,9 @@ create)
       -x) newjail_fill="NO"; shift;;
       -r) newjail_root="$2"; shift 2;;
       -f) newjail_flavour="$2"; shift 2;;
-      -i) newjail_imagesize="$2"; shift 2;;
-      -c) newjail_cryptimage="YES"; shift;;
+      -i) newjail_image="simple"; shift;;
+      -s) newjail_imagesize="$2"; shift 2;;
+      -c) newjail_image="crypto"; shift;;
       --) shift; break;;
     esac
   done
@@ -72,7 +74,7 @@ create)
   [ "${newjail_name}" -a "${newjail_ip}" -a $# = 2 ] || exerr "Usage: `basename -- $0` create [-f flavour] [-r jailroot] [-x] jailname jailip"
 
   # check for sanity of settings concerning the image feature
-  [ "${newjail_cryptimage}" = "YES" -a ! "${newjail_imagesize}" ] && exerr "Cryptimages need an image size."
+  [ "${newjail_image}" -a "$newjail_fill" = "YES" -a ! "${newjail_imagesize}" ] && exerr "Image jails need an image size."
 
   # check, whether ezjail-update has been called. existence of
   # ezjail_jailbase is our indicator
@@ -121,19 +123,30 @@ create)
   # All sanity checks that may lead to errors are hopefully passed here
   #
 
-  # if image is wanted, check, whether the img-file already is present
-  if [ "${newjail_imagesize}" ]; then
-    newjail_image=${newjail_root%/}; while [ "${newjail_image}" -a -z "${newjail_image%%*/}" ]; do newjail_image=${newjail_image%/}; done
-    [ -z "${newjail_image}" ] && exerr "Error: Could not determine image file name, something is wrong with the jail root: ${newjail_root}."
-    newjail_image=${newjail_image}.img
-    [ -e "${newjail_image}" ] && exerr "Error: a file exists at the location ${newjail_image}, preventing our own image file to be created."
-
-    touch "${newjail_image}"
-    dd if=/dev/random of="${newjail_image}" bs="${newjail_imagesize}" count=1 || exerr "Error: Could not (or not fully) create the image file. You might want to check (and possibly remove) the file ${newjail_image}. The image size provided was ${newjail_imagesize}."
-    newjail_device=`mdconfig -a -t vnode -f ${newjail_image}`
-    newfs /dev/${newjail_device}
-    mkdir -p ${newjail_root}
-    mount /dev/${newjail_device} ${newjail_root}
+  if [ "${newjail_image}" ]; then
+    newjail_img=${newjail_root%/}; while [ "${newjail_img}" -a -z "${newjail_img%%*/}" ]; do newjail_img=${newjail_img%/}; done
+    [ -z "${newjail_img}" ] && exerr "Error: Could not determine image file name, something is wrong with the jail root: ${newjail_root}."
+    newjail_lock=${newjail_img}.lock
+    newjail_img=${newjail_img}.img
+    if [ "$newjail_fill" = "YES" ]; then
+      [ -e "${newjail_img}" ] && exerr "Error: a file exists at the location ${newjail_img}, preventing our own image file to be created."
+      touch "${newjail_img}"
+      dd if=/dev/random of="${newjail_img}" bs="${newjail_imagesize}" count=1 || exerr "Error: Could not (or not fully) create the image file. You might want to check (and possibly remove) the file ${newjail_img}. The image size provided was ${newjail_imagesize}."
+      newjail_img_device=`mdconfig -a -t vnode -f ${newjail_img}`
+      if [ "${newjail_image}" = "crypto" ]; then
+        gbde init /dev/${newjail_img_device} -L ${newjail_lock}
+        gbde attach /dev/${newjail_img_device} -l ${newjail_lock}
+        newjail_device=${newjail_img_device}.bde
+      else
+        newjail_device=${newjail_img_device}
+      fi
+      newfs /dev/${newjail_device}
+      mkdir -p ${newjail_root}
+      mount /dev/${newjail_device} ${newjail_root}
+    else
+      [ -e ${newjail_root} -a ! -d ${newjail_root} ] && exerr "Error: Could not create mount point for your jail image. A file exists at its location. (For existing image jails, call this tool without the .img suffix when specifying jail root.)"
+      [ -d ${newjail_root} ] || mkdir -p ${newjail_root}
+    fi
   fi
 
   # now take a copy of our template jail
@@ -149,7 +162,7 @@ create)
   # if the automount feature is not disabled, this fstab entry for new jail
   # will be obeyed
   echo -n > /etc/fstab.${newjail_nname}
-  [ "${newjail_imagesize}" ] && \
+  [ "${newjail_image}" ] && \
   echo ${newjail_root}.device ${newjail_root} ufs rw 0 0 >> /etc/fstab.${newjail_nname}
   echo ${ezjail_jailbase} ${newjail_root}/basejail nullfs ro 0 0 >> /etc/fstab.${newjail_nname}
 
@@ -166,12 +179,12 @@ create)
   echo export jail_${newjail_nname}_procfs_enable=\"${ezjail_procfs_enable}\" >> ${ezjail_jailcfgs}/${newjail_nname}
   echo export jail_${newjail_nname}_fdescfs_enable=\"${ezjail_fdescfs_enable}\" >> ${ezjail_jailcfgs}/${newjail_nname}
   [ "${newjail_imagesize}" ] && \
-  echo export jail_${newjail_nname}_image=\"${newjail_image}\" >> ${ezjail_jailcfgs}/${newjail_nname}
-  [ "${newjail_cryptimage}" ] && \
+  echo export jail_${newjail_nname}_image=\"${newjail_img}\" >> ${ezjail_jailcfgs}/${newjail_nname}
+  [ "${newjail_image}" = "crypto" ] && \
   echo export jail_${newjail_nname}_cryptimage=\"YES\" >> ${ezjail_jailcfgs}/${newjail_nname}
 
   # Final steps for flavour installation   
-  if [ "${newjail_flavour}" ]; then
+  if [ "${newjail_fill}" = "YES" -a "${newjail_flavour}" ]; then
     # install files and config to new jail
     cd ${ezjail_flavours}/${newjail_flavour} && find * | cpio -p -v ${newjail_root} > /dev/null
     [ $? = 0 ] || echo "Warning: Could not fully install flavour."
