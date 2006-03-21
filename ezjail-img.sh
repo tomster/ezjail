@@ -46,8 +46,8 @@ case "$1" in
 ######################## ezjail-admin CREATE ########################
 create)
   shift
-  args=`getopt xf:r:is:c $*` || exerr "Usage: `basename -- $0` create [-f flavour] [-r jailroot] [-i size] [-xc] jailname jailip"
-  
+  args=`getopt f:r:s:xic $*` || exerr "Usage: `basename -- $0` create [-f flavour] [-r jailroot] [-s size] [-xic] jailname jailip"
+
   newjail_root=
   newjail_flavour=
   newjail_softlink=
@@ -55,7 +55,7 @@ create)
   newjail_imagesize=
   newjail_device=
   newjail_fill="YES"
-  
+
   set -- ${args}
   for arg do
     case ${arg} in
@@ -69,7 +69,7 @@ create)
     esac
   done
   newjail_name=$1; newjail_ip=$2   
-  
+
   # we need at least a name and an ip for new jail
   [ "${newjail_name}" -a "${newjail_ip}" -a $# = 2 ] || exerr "Usage: `basename -- $0` create [-f flavour] [-r jailroot] [-x] jailname jailip"
 
@@ -96,11 +96,11 @@ create)
   # "an ezjail would already exist"
   [ "${newjail_nname}" = "basejail" -o "${newjail_nname}" = "newjail" -o "${newjail_nname}" = "fulljail" -o "${newjail_nname}" = "flavours" ] && \
     exerr "Error: ezjail needs the ${newjail_nname} directory for its own administrative purposes. Please rename the ezjail."
-  
+
   # jail names may lead to identical configs, eg. foo.bar.com == foo-bar.com
   # so check, whether we might be running into problems
   [ -e ${ezjail_jailcfgs}/${newjail_nname} ] && exerr "Error: an ezjail config already exists at ${ezjail_jailcfgs}/${newjail_nname}. Please rename the ezjail."
-  
+
   # if jail root specified on command line is not absolute, make it absolute
   # inside our jail directory
   [ "${newjail_root%%[!/]*}" ] || newjail_root=${ezjail_jaildir}/${newjail_root}
@@ -124,23 +124,43 @@ create)
   #
 
   if [ "${newjail_image}" ]; then
+    # Strip trailing slashes from jail root, those would confuse image path
     newjail_img=${newjail_root%/}; while [ "${newjail_img}" -a -z "${newjail_img%%*/}" ]; do newjail_img=${newjail_img%/}; done
     [ -z "${newjail_img}" ] && exerr "Error: Could not determine image file name, something is wrong with the jail root: ${newjail_root}."
+
+    # Location of our image and crypto image lock file
     newjail_lock=${newjail_img}.lock
     newjail_img=${newjail_img}.img
+
+    # If NOT exist, create image
     if [ "$newjail_fill" = "YES" ]; then
       [ -e "${newjail_img}" ] && exerr "Error: a file exists at the location ${newjail_img}, preventing our own image file to be created."
+      [ "${newjail_image}" = "crypto" -a -e "${newjail_lock}" ] && exerr "Error: a file exists at the location ${newjail_lock}, preventing our own crypto image lock file to be created."
+
+      # Now create jail disc image
       touch "${newjail_img}"
       dd if=/dev/random of="${newjail_img}" bs="${newjail_imagesize}" count=1 || exerr "Error: Could not (or not fully) create the image file. You might want to check (and possibly remove) the file ${newjail_img}. The image size provided was ${newjail_imagesize}."
+
+      # And attach device
       newjail_img_device=`mdconfig -a -t vnode -f ${newjail_img}`
+
       if [ "${newjail_image}" = "crypto" ]; then
+        # Initialise crypto image
+        # XXX TODO: catch error and detach memory disc
+        echo "Initialising crypto device. Enter a new passphrase twice..."
         gbde init /dev/${newjail_img_device} -L ${newjail_lock}
+
+        # XXX TODO: catch error and detach memory disc
+        echo "Attaching crypto device. Enter the passphrase..."
         gbde attach /dev/${newjail_img_device} -l ${newjail_lock}
         newjail_device=${newjail_img_device}.bde
       else
         newjail_device=${newjail_img_device}
       fi
+
+      # Format memory image
       newfs /dev/${newjail_device}
+      # Create mount point and mount
       mkdir -p ${newjail_root}
       mount /dev/${newjail_device} ${newjail_root}
     else
@@ -151,8 +171,7 @@ create)
 
   # now take a copy of our template jail
   if [ "${newjail_fill}" = "YES" ]; then
-    mkdir -p ${newjail_root} && cd ${ezjail_jailtemplate} && \
-    find * | cpio -p -v ${newjail_root} > /dev/null
+    mkdir -p ${newjail_root} && cd ${ezjail_jailtemplate} && find * | cpio -p -v ${newjail_root} > /dev/null
     [ $? = 0 ] || detach_images || exerr "Error: Could not copy template jail."
   fi
 
@@ -178,7 +197,7 @@ create)
   echo export jail_${newjail_nname}_devfs_ruleset=\"devfsrules_jail\" >> ${ezjail_jailcfgs}/${newjail_nname}
   echo export jail_${newjail_nname}_procfs_enable=\"${ezjail_procfs_enable}\" >> ${ezjail_jailcfgs}/${newjail_nname}
   echo export jail_${newjail_nname}_fdescfs_enable=\"${ezjail_fdescfs_enable}\" >> ${ezjail_jailcfgs}/${newjail_nname}
-  [ "${newjail_imagesize}" ] && \
+  [ "${newjail_image}" ] && \
   echo export jail_${newjail_nname}_image=\"${newjail_img}\" >> ${ezjail_jailcfgs}/${newjail_nname}
   [ "${newjail_image}" = "crypto" ] && \
   echo export jail_${newjail_nname}_cryptimage=\"YES\" >> ${ezjail_jailcfgs}/${newjail_nname}
@@ -188,7 +207,7 @@ create)
     # install files and config to new jail
     cd ${ezjail_flavours}/${newjail_flavour} && find * | cpio -p -v ${newjail_root} > /dev/null
     [ $? = 0 ] || echo "Warning: Could not fully install flavour."
-  
+
     # If a config is found, make it auto run on jails startup
     if [ -f ${newjail_root}/ezjail.flavour ]; then
       ln -s /ezjail.flavour ${newjail_root}/etc/rc.d/ezjail-config.sh
@@ -199,20 +218,20 @@ create)
 
   # Detach (crypto and) memory discs
   detach_images
-  
+
   #
   # For user convenience some scenarios commonly causing headaches are checked
   #
-    
+
   # check, whether IP is configured on a local interface, warn if it isnt
   ping -c 1 -m 1 -t 1 -q ${newjail_ip} > /dev/null
   [ $? = 0 ] || echo "Warning: IP ${newjail_ip} not configured on a local interface."
-  
+
   # check, whether some host system services do listen on the Jails IP
   TIFS=${IFS}; IFS=_
   newjail_listener=`sockstat -4 -l | grep ${newjail_ip}:[[:digit:]]`
   [ $? = 0 ] && echo -e "Warning: Some services already seem to be listening on IP ${newjail_ip}\n  This may cause some confusion, here they are:\n${newjail_listener}"
-  
+
   newjail_listener=`sockstat -4 -l | grep \*:[[:digit:]]`
   [ $? = 0 ] && echo -e "Warning: Some services already seem to be listening on all IP, (including ${newjail_ip})\n  This may cause some confusion, here they are:\n${newjail_listener}"
   IFS=${TIFS}
