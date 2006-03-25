@@ -20,6 +20,7 @@ ezjail_prefix=EZJAIL_PREFIX
 
 name=ezjail
 rcvar=`set_rcvar`
+extra_commands="startcrypto stopcrypto"
 load_rc_config ${name}
 
 ezjail_enable=${ezjail_enable:-"NO"}
@@ -27,6 +28,8 @@ ezjail_enable=${ezjail_enable:-"NO"}
 restart_cmd="do_cmd restart _"
 start_cmd="do_cmd start '_ ezjail'"
 stop_cmd="do_cmd stop '_ ezjail'"
+startcrypto_cmd="do_cmd startcrypto _"
+stopcrypto_cmd="do_cmd stopcrypto _"
 
 do_cmd()
 {
@@ -63,6 +66,9 @@ do_cmd()
     # Cannot auto mount crypto jails without interrupting boot process
     [ "${ezjail_fromrc}" = "YES" -a "${ezjail_crypt}" = "YES" -a "${action}" = "start" ] && continue
 
+    # Explicitely do only run crypto jails
+    [ "${action%crypto}" != "${action}" -a "${ezjail_crypt}" = "YES" ] && continue
+
     # Try to attach (crypto) devices
     [ "${ezjail_image}" ] && attach_detach_pre
 
@@ -70,7 +76,7 @@ do_cmd()
   done
 
   # Pass control to jail script which does the actual work
-  [ "${ezjail_pass}" ] && sh /etc/rc.d/jail one${action} ${ezjail_pass}
+  [ "${ezjail_pass}" ] && sh /etc/rc.d/jail one${action%crypto} ${ezjail_pass}
 
   # Can only detach after unmounting (from fstab.JAILNAME in /etc/rc.d/jail)
   attach_detach_post
