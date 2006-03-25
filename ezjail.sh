@@ -14,8 +14,7 @@
 # Please do not change this file, configure in EZJAIL_PREFIX/etc/ezjail.conf
 
 # ugly: this variable is set on port install time
-#ezjail_prefix=EZJAIL_PREFIX
-ezjail_prefix=/usr/local
+ezjail_prefix=EZJAIL_PREFIX
 
 . /etc/rc.subr
 
