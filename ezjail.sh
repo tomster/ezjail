@@ -62,7 +62,7 @@ do_cmd()
     eval ezjail_crypt=\"\$jail_${ezjail}_cryptimage\"
 
     # Cannot auto mount crypto jails without interrupting boot process
-    [ "${ezjail_fromrc}" = "YES" -a "${ezjail_crypt}" = "YES" ] && continue
+    [ "${ezjail_fromrc}" = "YES" -a "${ezjail_crypt}" = "YES" -a "${action}" = "start" ] && continue
 
     # Try to attach (crypto) devices
     [ "${ezjail_image}" ] && attach_detach_pre
