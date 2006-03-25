@@ -66,8 +66,8 @@ do_cmd()
     # Cannot auto mount crypto jails without interrupting boot process
     [ "${ezjail_fromrc}" = "YES" -a "${ezjail_crypt}" = "YES" -a "${action}" = "start" ] && continue
 
-    # Explicitely do only run crypto jails
-    [ "${action%crypto}" != "${action}" -a "${ezjail_crypt}" = "YES" ] && continue
+   # Explicitely do only run crypto jails when *crypto is requested
+    [ "${action%crypto}" != "${action}" -a "${ezjail_crypt}" != "YES" ] && continue
 
     # Try to attach (crypto) devices
     [ "${ezjail_image}" ] && attach_detach_pre
@@ -84,7 +84,7 @@ do_cmd()
 
 attach_detach_pre ()
 {
-  if [ "${action}" = start ]; then
+  if [ "${action%crypto}" = "start" ]; then
     # If jail is running, do not mount devices, this is the same check as
     # /etc/rc.d/jail does
     [ -e /var/run/jail_${ezjail}.id ] && return
