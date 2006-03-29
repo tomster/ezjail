@@ -45,13 +45,14 @@ do_cmd()
     ezjail_list=`echo -n $* | tr -c "[:alnum:] " _` 
     ezjail_fromrc="NO"
   else
-    ezjail_list=${ezjail_list:-`ls ${ezjail_prefix}/etc/ezjail/`}
+    ezjail_list=${ezjail_list:-`rcorder ${ezjail_prefix}/etc/ezjail/*`}
+    ezjail_list=`basename -a ${ezjail_list}`
     echo -n "${message##_}"
   fi
 
   for ezjail in ${ezjail_list}; do
     # If jail is temporary disabled (dot in name), skip it
-    [ ${ezjail%.*} = ${ezjail} ] || continue
+    [ ${ezjail%.*} != ${ezjail} ] && continue
 
     # Check for jails config
     [ ! -r ${ezjail_prefix}/etc/ezjail/${ezjail} ] && echo " Warning: Jail ${ezjail} not found." && continue
