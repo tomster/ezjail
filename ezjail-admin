@@ -290,8 +290,9 @@ delete)
   ;;
 ######################## ezjail-admin LIST ########################
 list)
-  jail_list=`ls ${ezjail_jailcfgs}`
-  for jail in ${jail_list}; do
+  ezjail_list=${ezjail_list:-`rcorder ${ezjail_prefix}/etc/ezjail/*`}
+  ezjail_list=`basename -a ${ezjail_list}`
+  for jail in ${ezjail_list}; do
     . ${ezjail_jailcfgs}/${jail}
     eval jail_ip=\"\$jail_${jail}_ip\"
     eval jail_hostname=\"\$jail_${jail}_hostname\"
