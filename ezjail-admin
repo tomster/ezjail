@@ -32,9 +32,10 @@ exerr () { echo -e "$*"; exit 1; }
 detach_images () {
   # unmount and detach memory disc
   if [ "${newjail_img_device}" ]; then
-    umount ${newjail_root}
-    [ "${newjail_image}" = "crypto" ] && gbde detach /dev/${newjail_img_device}
-    mdconfig -d -u ${newjail_img_device}
+    umount ${newjail_root} > /dev/null
+    [ "${newjail_image}" = "crypto" ] && gbde detach /dev/${newjail_img_device} > /dev/null
+    mdconfig -d -u ${newjail_img_device} > /dev/null
+    [ "$1" == "success" ] || rm -f ${newjail_img}
   fi
 }
 
@@ -142,26 +143,25 @@ create)
 
       # And attach device
       newjail_img_device=`mdconfig -a -t vnode -f ${newjail_img}`
+      [ $? = 0 ] || detach_images || exerr "Error: Could not attach image device. (Command failed was 'mdconfig -a -t vnode -f ${newjail_img}')"
 
       if [ "${newjail_image}" = "crypto" ]; then
         # Initialise crypto image
-        # XXX TODO: catch error and detach memory disc
         echo "Initialising crypto device. Enter a new passphrase twice..."
-        gbde init /dev/${newjail_img_device} -L ${newjail_lock}
+        gbde init /dev/${newjail_img_device} -L ${newjail_lock} || detach_images || exerr "Error: Could not initialise crypto image."
 
-        # XXX TODO: catch error and detach memory disc
         echo "Attaching crypto device. Enter the passphrase..."
-        gbde attach /dev/${newjail_img_device} -l ${newjail_lock}
+        gbde attach /dev/${newjail_img_device} -l ${newjail_lock} || detach_images || exerr "Error: Could not attach crypto image."
         newjail_device=${newjail_img_device}.bde
       else
         newjail_device=${newjail_img_device}
       fi
 
       # Format memory image
-      newfs /dev/${newjail_device}
+      newfs /dev/${newjail_device} || detach_images || exerr "Error: Could not newfs ${newjail_img_device}."
       # Create mount point and mount
-      mkdir -p ${newjail_root}
-      mount /dev/${newjail_device} ${newjail_root}
+      mkdir -p ${newjail_root} || detach_images || exerr "Error: Could not create jail root mount point ${newjail_root}."
+      mount /dev/${newjail_device} ${newjail_root} || detach_images || exerr "Error: Could not mount ${newjail_device} to ${newjail_root}."
     else
       [ -e ${newjail_root} -a ! -d ${newjail_root} ] && exerr "Error: Could not create mount point for your jail image. A file exists at its location. (For existing image jails, call this tool without the .img suffix when specifying jail root.)"
       [ -d ${newjail_root} ] || mkdir -p ${newjail_root}
@@ -219,7 +219,7 @@ create)
   fi
 
   # Detach (crypto and) memory discs
-  detach_images
+  detach_images success
 
   #
   # For user convenience some scenarios commonly causing headaches are checked
