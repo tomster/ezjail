@@ -35,7 +35,7 @@ detach_images () {
     umount ${newjail_root} > /dev/null
     [ "${newjail_image}" = "crypto" ] && gbde detach /dev/${newjail_img_device} > /dev/null
     mdconfig -d -u ${newjail_img_device} > /dev/null
-    [ "$1" == "success" ] || rm -f ${newjail_img}
+    [ "$1" = "success" ] || rm -f ${newjail_img}
   fi
 }
 
