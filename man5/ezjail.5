@@ -21,12 +21,16 @@ read only into a number of stripped down jails via
 The ezjail script
 .B EZJAIL_PREFIX/etc/rc.d/ezjail.sh
 takes parameters
-.I start, restart
+.I start, startcrypto, restart
 and
 .I stop.
 It may be passed an additional list of jails. If no jail name is 
 specified (usually when the script is being called by rc.local at boot 
-and shutdown time), all jails in ezjails scope are being started/stopped.
+and shutdown time), all jails in ezjails scope, except crypto image
+jails, are being started/stopped. To start all crytpo image jails, use
+the
+.I startcrypto
+parameter.
 
 The script examines its config, sets variables for each jail in the
 jail_list before passing its command on to the
