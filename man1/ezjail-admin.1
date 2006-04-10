@@ -4,7 +4,7 @@ ezjail-admin \- Administrate ezjail
 .SH SYNOPSIS
 .T
 .B ezjail-admin create
-[-f flavour] [-r jailroot] [-x]
+[-f flavour] [-r jailroot] [-s imagesize] [-cix]
 .I hostname jailip
 
 .T
@@ -35,6 +35,15 @@ start with a '/', it is interpreted relative to ezjails root dir
 ). If a specified jail root lies outside ezjail root dir, a soft link
 is created inside this root dir pointing to the newly created jails
 location.
+
+The -i and the -c option both require a size passed via the -s option
+and create a file based jail image, gbde encrypted for the -c case. The
+image file is named as the jail root suffixed with
+.I .img
+, a lock file required for gbde devices is named as the jail root
+suffixed with
+.I .lock
+.
 
 The -x (jail exists) option indicates, that an ezjail already exists
 at the jail root.
