@@ -18,6 +18,7 @@ ezjail_jailfull=${ezjail_jailfull:-"${ezjail_jaildir}/fulljail"}
 ezjail_flavours=${ezjail_flavours:-"${ezjail_jaildir}/flavours"}
 ezjail_sourcetree=${ezjail_sourcetree:-"/usr/src"}
 ezjail_portscvsroot=${ezjail_portscvsroot:-":pserver:anoncvs@anoncvs.at.FreeBSD.org:/home/ncvs"}
+ezjail_uglyperlhack=${ezjail_uglyperlhack:-"YES"}
 
 ezjail_mount_enable=${ezjail_mount_enable:-"YES"}
 ezjail_devfs_enable=${ezjail_devfs_enable:-"YES"}
@@ -388,6 +389,10 @@ setup|update)
       echo "Note: a non-standard /etc/make.conf was copied to the template jail in order to get the ports collection running inside jails."
     fi
   fi
+
+  # The ugly perl hack[tm]. Note: we wont do such things for any given
+  # port :(
+  [ "${ezjail_uglyperlhack}" = "YES" -a ! -L ${ezjail_jailbase}/usr/bin/perl ] && ln -s /usr/local/bin/perl ${ezjail_jailbase}/usr/bin/perl
 
   ;;
 *)

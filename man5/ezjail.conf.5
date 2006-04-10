@@ -36,6 +36,11 @@ utility for more information)
 Cvs root to use when checking out or updating the ports tree in base jail
 .br
 .I default: :pserver:anoncvs@anoncvs.at.FreeBSD.org:/home/ncvs
+.TP
+.B ezjail_uglyperlhack (bool)
+Set to YES, if ezjail should provide a soft link from /usr/bin/perl to /usr/local/bin/perl in base jail.
+.br
+.I default: YES
 .SH JAIL CREATION OPTIONS
 Default options for newly created jails. Used by the
 .B ezjail-admin(1)

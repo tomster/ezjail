@@ -11,10 +11,10 @@
 # ezjail_jaildir=/usr/jails
 
 # Location of the tiny skeleton jail template
-# ezjail_jailtemplate=$ezjail_jaildir/newjail
+# ezjail_jailtemplate=${ezjail_jaildir}/newjail
 
 # Location of the huge base jail
-# ezjail_jailbase=$ezjail_jaildir/basejail
+# ezjail_jailbase=${ezjail_jaildir}/basejail
 
 # Location of your copy of FreeBSD's source tree
 # ezjail_sourcetree=/usr/src
@@ -22,6 +22,10 @@
 # In case you want to provide a copy of ports tree in base jail, set this to
 # a cvsroot near you
 # ezjail_portscvsroot=:pserver:anoncvs@anoncvs.at.FreeBSD.org:/home/ncvs
+
+# base jail will provide a soft link from /usr/bin/perl to /usr/local/bin/perl
+# to accomodate all scripts using '#!/usr/bin/perl'...
+# ezjail_uglyperlhack="YES"
 
 # Default options for newly created jails
 #
