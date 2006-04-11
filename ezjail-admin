@@ -72,7 +72,7 @@ create)
   newjail_name=$1; newjail_ip=$2   
 
   # we need at least a name and an ip for new jail
-  [ "${newjail_name}" -a "${newjail_ip}" -a $# = 2 ] || exerr "Usage: `basename -- $0` create [-f flavour] [-r jailroot] [-x] jailname jailip"
+  [ "${newjail_name}" -a "${newjail_ip}" -a $# = 2 ] || exerr "Usage: `basename -- $0` create [-f flavour] [-r jailroot] [-s size] [-xic] jailname jailip"
 
   # check for sanity of settings concerning the image feature
   [ "${newjail_image}" -a "$newjail_fill" = "YES" -a ! "${newjail_imagesize}" ] && exerr "Image jails need an image size."
