@@ -208,7 +208,7 @@ create)
   # Final steps for flavour installation   
   if [ "${newjail_fill}" = "YES" -a "${newjail_flavour}" ]; then
     # install files and config to new jail
-    cd ${ezjail_flavours}/${newjail_flavour} && find * | cpio -p -v ${newjail_root} > /dev/null
+    cd ${ezjail_flavours}/${newjail_flavour} && find * | cpio -p -u -v ${newjail_root} > /dev/null
     [ $? = 0 ] || echo "Warning: Could not fully install flavour."
 
     # If a config is found, make it auto run on jails startup
