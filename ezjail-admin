@@ -63,7 +63,7 @@ create)
       -x) newjail_fill="NO"; shift;;
       -r) newjail_root="$2"; shift 2;;
       -f) newjail_flavour="$2"; shift 2;;
-      -i) newjail_image="simple"; shift;;
+      -i) newjail_image=${newjail_image:-"simple"}; shift;;
       -s) newjail_imagesize="$2"; shift 2;;
       -c) newjail_image="crypto"; shift;;
       --) shift; break;;
