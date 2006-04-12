@@ -52,7 +52,7 @@ do_cmd()
 
   for ezjail in ${ezjail_list}; do
     # If jail is temporary disabled (dot in name), skip it
-    [ ${ezjail%.*} != ${ezjail} ] && continue
+    [ "${ezjail%.*}" != "${ezjail}" ] && continue
 
     # Check for jails config
     [ ! -r ${ezjail_prefix}/etc/ezjail/${ezjail} ] && echo " Warning: Jail ${ezjail} not found." && continue
