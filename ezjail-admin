@@ -298,19 +298,18 @@ list)
     eval jail_ip=\"\$jail_${jail}_ip\"
     eval jail_hostname=\"\$jail_${jail}_hostname\"
     eval jail_rootdir=\"\$jail_${jail}_rootdir\"
-
     eval jail_image=\"\$jail_${ezjail}_image\"
     eval jail_crypt=\"\$jail_${ezjail}_cryptimage\"
 
-    jail_id=`jls | grep ${jail_hostname} | head -n 1 | cut -f 1`
+    jail_id=`jls | grep "${jail_hostname}" | head -n 1 | awk {'print $1'}`
 
     jail_state="D"
     [ "${jail_image}" ] && jail_state="I"
     [ "${jail_crypt}" ] && jail_state="C"
-    [ "${jail_id}" ] && jail_state=${jail_state}R || jail_state=${jail_state}S
+    [ "${jail_id}" ]    && jail_state=${jail_state}R || jail_state=${jail_state}S
     [ "${jail%.*}" != "${jail}" ] && jail_state=${jail_state}N
 
-    printf "%-3s %-5 %-15s %-20s %-30s\\n" ${jail_state} ${jail_id:-"N/A"} ${jail_ip} ${jail_hostname} ${jail_rootdir}
+    printf "%-3s %-5s %-15s %-28s %s\\n" "${jail_state}" "${jail_id:-N/A}" "${jail_ip}" "${jail_hostname}" "${jail_rootdir}"
   done
 
   ;;
