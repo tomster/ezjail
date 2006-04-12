@@ -293,13 +293,16 @@ delete)
 list)
   ezjail_list=${ezjail_list:-`rcorder ${ezjail_prefix}/etc/ezjail/*`}
   ezjail_list=`basename -a ${ezjail_list}`
+
+  printf "%-3s %-5s %-15s %-28s %s\\n" STA JID IP Hostname "Root Directory"
+  echo   "--- ----- --------------- ---------------------------- -----------------------------"
   for jail in ${ezjail_list}; do
     . ${ezjail_jailcfgs}/${jail}
     eval jail_ip=\"\$jail_${jail}_ip\"
     eval jail_hostname=\"\$jail_${jail}_hostname\"
     eval jail_rootdir=\"\$jail_${jail}_rootdir\"
-    eval jail_image=\"\$jail_${ezjail}_image\"
-    eval jail_crypt=\"\$jail_${ezjail}_cryptimage\"
+    eval jail_image=\"\$jail_${jail}_image\"
+    eval jail_crypt=\"\$jail_${jail}_cryptimage\"
 
     jail_id=`jls | grep "${jail_hostname}" | head -n 1 | awk {'print $1'}`
 
