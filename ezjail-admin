@@ -54,8 +54,8 @@ fetchjailinfo () {
   [ "${ezjail_config}" ] || return 0
 
   . ${ezjail_config}
-  eval ezjail_hostname=\"\$jail_$ezjail_safename}_hostname\"
-  eval ezjail_rootdir=\"\$jail_$ezjail_safename}_rootdir\"
+  eval ezjail_hostname=\"\$jail_${ezjail_safename}_hostname\"
+  eval ezjail_rootdir=\"\$jail_${ezjail_safename}_rootdir\"
   eval ezjail_image=\"\$jail_${ezjail_safename}_image\"
   eval ezjail_imagetype=\"\$jail_${ezjail_safename}_imagetype\"
   eval ezjail_ip=\"\$jail_${ezjail_safename}_ip\"
