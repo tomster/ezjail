@@ -417,22 +417,22 @@ setup|update)
   ;;
 ######################## ezjail-admin CONFIG ########################
 config)
-  shift 
-      
+  shift
+
   args=`getopt -r: $*` || exerr "Usage: `basename -- $0` config [-r run|norun] jailname"
-      
+
   ezjail_setrunnable=
-        
+
   set -- ${args}
   for arg do
     case ${arg} in
-      -r) ezjail_setrunnable=$1; shift 2;;
+      -r) ezjail_setrunnable=$2; shift 2;;
       --) shift; break;;
     esac
   done
-    
+
   [ $# = 1 ] || exerr "Usage: `basename -- $0` config [-r run|norun] jailname"
-      
+
   # Jail name mandatory
   fetchjailinfo $1
 
@@ -444,10 +444,10 @@ config)
 
   case ${ezjail_setrunnable} in
     run)
-    [ "${ezjail_config}" = "${ezjail_config%.norun}" ] || mv {ezjail_config} ${ezjail_config%.norun}
+    [ "${ezjail_config}" = "${ezjail_config%.norun}" ] || mv ${ezjail_config} ${ezjail_config%.norun}
     ;;
     norun)
-    [ "${ezjail_config}" = "${ezjail_config%.norun}" ] && mv {ezjail_config} ${ezjail_config}.norun
+    [ "${ezjail_config}" = "${ezjail_config%.norun}" ] && mv ${ezjail_config} ${ezjail_config}.norun
     ;;
   esac
 
