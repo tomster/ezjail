@@ -121,7 +121,7 @@ create)
 
   # jail names may lead to identical configs, eg. foo.bar.com == foo-bar.com
   # so check, whether we might be running into problems
-  [ -e ${ezjail_config} ] && exerr "Error: an ezjail config already exists at ${ezjail_jailconfig}. Please rename the ezjail."
+  [ -e ${ezjail_config} ] && exerr "Error: an ezjail config already exists at ${ezjail_config}. Please rename the ezjail."
 
   # if jail root specified on command line is not absolute, make it absolute
   # inside our jail directory
@@ -155,7 +155,7 @@ create)
     ezjail_image=${ezjail_image}.img
 
     # If NOT exist, create image
-    if [ "$ezjail_fillme" = "YES" ]; then
+    if [ "${ezjail_fillme}" = "YES" ]; then
       [ -e "${ezjail_image}" ] && exerr "Error: a file exists at the location ${ezjail_image}, preventing our own image file to be created."
       [ "${ezjail_imagetype}" = "crypto" -a -e "${ezjail_lock}" ] && exerr "Error: a file exists at the location ${ezjail_lock}, preventing our own crypto image lock file to be created."
 
@@ -204,25 +204,25 @@ create)
   echo -n > /etc/fstab.${ezjail_safename}
   [ "${ezjail_imagetype}" ] && \
   echo ${ezjail_rootdir}.device ${ezjail_rootdir} ufs rw 0 0 >> /etc/fstab.${ezjail_safename}
-  echo ${ezjail_jailbase} ${ezjail_rootdir}/basejail nullfs ro 0 0 >> /etc/fstab.${ezjail_nname}
+  echo ${ezjail_jailbase} ${ezjail_rootdir}/basejail nullfs ro 0 0 >> /etc/fstab.${ezjail_safename}
 
   # now, where everything seems to have gone right, create control file in  
   # ezjails config dir
   mkdir -p ${ezjail_jailcfgs}
-  echo "# To specify the start up order of your ezjails, use these lines to" > ${ezjail_jailconfig}
-  echo "# create a Jail dependency tree. See rcorder(8) for more details." >> ${ezjail_jailconfig}
-  echo -e "#\n# PROVIDE: \n# REQUIRE: \n# BEFORE: \n#\n" >> ${ezjail_jailconfig}
-  echo export jail_${ezjail_safename}_hostname=\"${ezjail_hostname}\" >> ${ezjail_jailconfig}
-  echo export jail_${ezjail_safename}_ip=\"${ezjail_ip}\" >> ${ezjail_jailconfig}
-  echo export jail_${ezjail_safename}_rootdir=\"${ezjail_rootdir}\" >> ${ezjail_jailconfig}
-  echo export jail_${ezjail_safename}_exec=\"/bin/sh /etc/rc\" >> ${ezjail_jailconfig}
-  echo export jail_${ezjail_safename}_mount_enable=\"${ezjail_mount_enable}\" >> ${ezjail_jailconfig}
-  echo export jail_${ezjail_safename}_devfs_enable=\"${ezjail_devfs_enable}\" >> ${ezjail_jailconfig}
-  echo export jail_${ezjail_safename}_devfs_ruleset=\"devfsrules_jail\" >> ${ezjail_jailconfig}
-  echo export jail_${ezjail_safename}_procfs_enable=\"${ezjail_procfs_enable}\" >> ${ezjail_jailconfig}
-  echo export jail_${ezjail_safename}_fdescfs_enable=\"${ezjail_fdescfs_enable}\" >> ${ezjail_jailconfig}
-  echo export jail_${ezjail_safename}_image=\"${ezjail_image}\" >> ${ezjail_jailconfig}
-  echo export jail_${ezjail_safename}_imagetype=\"${ezjail_imagetype}\" >> ${ezjail_jailconfig}
+  echo "# To specify the start up order of your ezjails, use these lines to" > ${ezjail_config}
+  echo "# create a Jail dependency tree. See rcorder(8) for more details." >> ${ezjail_config}
+  echo -e "#\n# PROVIDE: \n# REQUIRE: \n# BEFORE: \n#\n" >> ${ezjail_config}
+  echo export jail_${ezjail_safename}_hostname=\"${ezjail_hostname}\" >> ${ezjail_config}
+  echo export jail_${ezjail_safename}_ip=\"${ezjail_ip}\" >> ${ezjail_config}
+  echo export jail_${ezjail_safename}_rootdir=\"${ezjail_rootdir}\" >> ${ezjail_config}
+  echo export jail_${ezjail_safename}_exec=\"/bin/sh /etc/rc\" >> ${ezjail_config}
+  echo export jail_${ezjail_safename}_mount_enable=\"${ezjail_mount_enable}\" >> ${ezjail_config}
+  echo export jail_${ezjail_safename}_devfs_enable=\"${ezjail_devfs_enable}\" >> ${ezjail_config}
+  echo export jail_${ezjail_safename}_devfs_ruleset=\"devfsrules_jail\" >> ${ezjail_config}
+  echo export jail_${ezjail_safename}_procfs_enable=\"${ezjail_procfs_enable}\" >> ${ezjail_config}
+  echo export jail_${ezjail_safename}_fdescfs_enable=\"${ezjail_fdescfs_enable}\" >> ${ezjail_config}
+  echo export jail_${ezjail_safename}_image=\"${ezjail_image}\" >> ${ezjail_config}
+  echo export jail_${ezjail_safename}_imagetype=\"${ezjail_imagetype}\" >> ${ezjail_config}
 
   # Final steps for flavour installation
   if [ "${ezjail_fillme}" = "YES" -a "${ezjail_flavour}" ]; then
@@ -289,7 +289,7 @@ delete)
 
   # now we know everything we need to let the jail be gone remove entry
   # from ezjail resource structure, delete fstab.JAILNAME
-  rm -f ${ezjail_jailconfig}
+  rm -f ${ezjail_config}
   rm -f /etc/fstab.${ezjail_safename}
 
   # if there is a soft link pointing to the jail root, remove it
@@ -437,7 +437,7 @@ config)
   fetchjailinfo $1
 
   # check for existence of jail in our records
-  [ "${ezjail_jailconfig}" ] || exerr "Error: Nothing known about jail ${ezjail_name}."
+  [ "${ezjail_config}" ] || exerr "Error: Nothing known about jail ${ezjail_name}."
 
   # Nothing to be configured?
   [ "${ezjail_setrunnable}" ] || echo "Warning: No config option specified."
