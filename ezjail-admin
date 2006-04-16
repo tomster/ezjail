@@ -285,7 +285,7 @@ delete)
   [ "${ezjail_config}" ] || exerr "Error: Nothing known about jail ${ezjail_name}."
 
   # if jail is still running, refuse to go any further
-  [ "${ezjail_id}" ] && exerr "Error: Jail appears to be still running, stop it first.\n"
+  [ "${ezjail_id}" ] && exerr "Error: Jail appears to be still running, stop it first."
 
   # now we know everything we need to let the jail be gone remove entry
   # from ezjail resource structure, delete fstab.JAILNAME
