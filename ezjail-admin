@@ -65,7 +65,7 @@ fetchjailinfo () {
 }
 
 # check for command
-[ "$1" ] || exerr "Usage: `basename -- $0` [config|create|delete|list|update] {params}"
+[ "$1" ] || exerr "Usage: `basename -- $0` [config|create|delete|install|list|update] {params}"
 
 case "$1" in
 ######################## ezjail-admin CREATE ########################
@@ -95,7 +95,7 @@ create)
   [ "${ezjail_name}" -a "${ezjail_ip}" -a $# = 2 ] || exerr "Usage: `basename -- $0` create [-f flavour] [-r jailroot] [-s size] [-xic] jailname jailip"
 
   # check for sanity of settings concerning the image feature
-  [ "${ezjail_imagetype}" -a "$ezjail_fillme" = "YES" -a ! "${ezjail_imagesize}" ] && exerr "Image jails need an image size."
+  [ "${ezjail_imagetype}" -a "${ezjail_fillme}" = "YES" -a ! "${ezjail_imagesize}" ] && exerr "Image jails need an image size."
 
   # check, whether ezjail-update has been called. existence of
   # ezjail_jailbase is our indicator
@@ -116,7 +116,7 @@ create)
   # This scenario really will only lead to real troubles in the 'fulljail'
   # case, but I should still explain this to the user and not claim that
   # "an ezjail would already exist"
-  [ "${ezjail_hostname}" = "basejail" -o "${ezjail_hostname}" = "newjail" -o "${ezjail_hostname}" = "fulljail" -o "${ezjail_hostname}" = "flavours" ] && \
+  [ "${ezjail_hostname}" = "basejail" -o "${ezjail_hostname}" = "newjail" -o "${ezjail_hostname}" = "fulljail" -o "${ezjail_hostname}" = "flavours" -o "${ezjail_hostname}" = "ezjailtemp" ] && \
     exerr "Error: ezjail needs the ${ezjail_hostname} directory for its own administrative purposes. Please rename the ezjail."
 
   # jail names may lead to identical configs, eg. foo.bar.com == foo-bar.com
@@ -275,11 +275,11 @@ delete)
     esac
   done
 
+  # we need name of jail to vanish
+  [ $# = 1 ] || exerr "Usage: `basename -- $0` delete [-w] jailname"
+
   # Get all info we have on that jail
   fetchjailinfo $1
-
-  # we only need name of jail to vanish
-  [ "${ezjail_safename}" -a $# = 1 ] || exerr "Usage: `basename -- $0` delete [-w] jailname"
 
   # check for existence of jail in our records
   [ "${ezjail_config}" ] || exerr "Error: Nothing known about jail ${ezjail_name}."
@@ -289,8 +289,7 @@ delete)
 
   # now we know everything we need to let the jail be gone remove entry
   # from ezjail resource structure, delete fstab.JAILNAME
-  rm -f ${ezjail_config}
-  rm -f /etc/fstab.${ezjail_safename}
+  rm -f ${ezjail_config} /etc/fstab.${ezjail_safename}
 
   # if there is a soft link pointing to the jail root, remove it
   [ -L ${ezjail_softlink} ] && rm ${ezjail_softlink}
@@ -311,7 +310,6 @@ list)
   echo   "--- ----- --------------- ---------------------------- -----------------------------"
   for ezjail in ${ezjail_list}; do
     fetchjailinfo ${ezjail%.norun}
-    ezjail_id=`jls | grep " ${ezjail_hostname} " | head -n 1 | awk {'print $1'}`
     ezjail_state="D"
     [ "${ezjail_imagetype}" = "simple" ] && ezjail_state="I"
     [ "${ezjail_imagetype}" = "crypto" ] && ezjail_state="C"
@@ -327,21 +325,23 @@ setup|update)
   shift
   args=`getopt ipPs: $*` || exerr "Usage: `basename -- $0` update [-s sourcetree] [-i] [-pP]"
 
-  updatejail_installaction="world"
-  updatejail_provideports=
+  # Clean variables, prevent polution
+  unset ezjail_provideports
+
+  ezjail_installaction="world"
 
   set -- ${args}
   for arg do
     case ${arg} in
-      -i) updatejail_installaction="installworld"; shift;;
+      -i) ezjail_installaction="installworld"; shift;;
       -s) ezjail_sourcetree="$2"; shift 2;;
-      -p) updatejail_provideports="YES"; shift;;
-      -P) updatejail_provideports="YES"; updatejail_installaction="none"; shift;;
+      -p) ezjail_provideports="YES"; shift;;
+      -P) ezjail_provideports="YES"; ezjail_installaction="none"; shift;;
       --) shift; break;;
     esac
   done
 
-  if [ "${updatejail_installaction}" = "none" ]; then
+  if [ "${ezjail_installaction}" = "none" ]; then
     # check, whether ezjail-update has been called. existence of
     # ezjail_jailbase is our indicator
     [ -d ${ezjail_jailbase} ] || exerr "Error: base jail does not exist. You cannot fill base jails ports tree before creating it. Please run 'ezjail-admin update' first."
@@ -356,7 +356,7 @@ setup|update)
     mkdir -p ${ezjail_jailfull} || exerr "Cannot create temporary Jail directory."
 
     # make our world
-    cd ${ezjail_sourcetree} && make ${updatejail_installaction} DESTDIR=${ezjail_jailfull} || exerr "make ${updatejail_installaction} failed."
+    cd ${ezjail_sourcetree} && make ${ezjail_installaction} DESTDIR=${ezjail_jailfull} || exerr "make ${ezjail_installaction} failed."
 
     # setup world
     cd ${ezjail_sourcetree}/etc && make distribution DESTDIR=${ezjail_jailfull} || exerr "make distribution failed."
@@ -373,7 +373,7 @@ setup|update)
     mkdir basejail
 
     # Try to remove the old template jail
-    [ -d ${ezjail_template} ] && chflags -R noschg ${ezjail_jailtemplate} && rm -rf ${ezjail_jailtemplate}
+    [ -d ${ezjail_jailtemplate} ] && chflags -R noschg ${ezjail_jailtemplate} && rm -rf ${ezjail_jailtemplate}
     mv ${ezjail_jailfull} ${ezjail_jailtemplate}
 
     # If the default flavour example has not yet been copied, do it now
@@ -382,7 +382,7 @@ setup|update)
   fi # installaction="none"
 
   # The user may want to have a ports tree in basejail
-  if [ "${updatejail_provideports}" = "YES" ]; then
+  if [ "${ezjail_provideports}" = "YES" ]; then
     # if /usr/ports/CVS exists, assume cvs up is safe
     if [ -f ${ezjail_jailbase}/usr/ports/CVS/Root ]; then
       echo -n "Updating ports from "; cat ${ezjail_jailbase}/usr/ports/CVS/Root
@@ -415,13 +415,110 @@ setup|update)
   [ "${ezjail_uglyperlhack}" = "YES" -a ! -L ${ezjail_jailbase}/usr/bin/perl ] && ln -s /usr/local/bin/perl ${ezjail_jailbase}/usr/bin/perl
 
   ;;
+######################## ezjail-admin INSTALL ########################
+install)
+  shift
+  args=`getopt mpsh:r: $*` || exerr "Usage: `basename -- $0` install [-mps] [-h host] [-r release]"
+
+  # Clean variables, prevent polution
+  unset ezjail_release ezjail_ftphost ezjail_installmanpages ezjail_installports ezjail_installsources ezjail_dir ezjail_reldir ezjail_temp
+
+  set -- ${args}
+  for arg do
+    case ${arg} in
+      -m) ezjail_installmanpages=" manpages"; shift;;
+      -p) ezjail_installports=" ports"; shift;;
+      -s) ezjail_installsources=" src"; shift;;
+      -h) ezjail_ftphost="$2"; shift 2;;
+      -r) ezjail_release="$2"; shift 2;;
+      --) shift; break;;
+    esac
+  done
+
+  ezjail_installarch=`uname -p`
+  ezjail_ftphost=${ezjail_ftphost:-"ftp.freebsd.org"}
+  ezjail_ftphost=${ezjail_host#ftp://}
+  ezjail_dir=${ezjail_ftphost#file://}
+  [ "${ezjail_dir%%[!/]*}" ] || ezjail_reldir=${PWD}
+  # XXX
+  ezjail_temp=${ezjail_jaildir}/ezjailtemp
+
+  # ftp servers normally wont provide CURRENT-builds
+  if [ -z "${ezjail_release}" ]; then
+    ezjail_release=`uname -r`
+    if [ "${ezjail_release%CURRENT}" != "${ezjail_release}" -a "${ezjail_dir}" = "${ezjail_ftphost}" ]; then
+      echo "Your system is ${ezjail_release}. Normally FTP-servers don't provide CURRENT-builds."
+      echo -n "Release [ ${ezjail_release} ]: "
+      read ezjail_releasetmp
+      [ "${ezjail_releasetmp}" ] && ezjail_release=${ezjail_releasetmp}
+    fi
+  fi
+
+  # Normally fulljail should be renamed by past ezjail-admin commands.
+  # However those may have failed
+  [ -d "${ezjail_jailfull}" ] && chflags -R noschg ${ezjail_jailfull} && rm -rf ${ezjail_jailfull}
+  mkdir -p ${ezjail_jailfull} || exerr "Cannot create temporary Jail directory."
+  DESTDIR=${ezjail_jailfull}
+
+  # XXX
+  rm -rf ${ezjail_temp}
+  for pkg in base ${ezjail_installmanpages} ${ezjail_installports} ${ezjail_installsources}; do
+
+    # The first case means, that a remote host has been specified.
+    if [ "${ezjail_dir}" = "${ezjail_ftphost}" ]; then
+      # Create and try to access temp dir
+      mkdir -p ${ezjail_temp} || exerr "Could not create temporary base jail directory ${ezjail_temp}."
+      cd ${ezjail_temp} || exerr "Could not cd to ${ezjail_temp}."
+
+      # Try all paths as stolen from sysinstall, break on success.
+      for ezjail_path in pub/FreeBSD/releases pub/FreeBSD/snapshot pub/FreeBSD releases snapshots NO; do
+        [ "${ezjail_path}" = "NO" ] && exerr "Could not fetch ${pkg} from ${ezjail_ftphost}."
+        ftp "${ezjail_ftphost}:${ezjail_path}/${ezjail_arch}/${ezjail_release}/${pkg}/*" && break
+      done
+
+      # These actions are really ugly: sources want $1 to contain the set
+      # of sources to install, base asks the user if he is sure, hence the
+      # yes and the set -- all
+      set -- all
+      [ -f install.sh ] && yes | . install.sh
+      # XXX error checking.
+
+      rm -rf ${ezjail_temp}
+    else
+      cd ${basejail_reldir}/${basejail_dir}/${pkg} || exerr "Could not cd to ${basejail_dir}."
+      set -- all
+      [ -f install.sh ] && yes | . install.sh
+    fi
+  done
+
+  # Fill basejail from installed world
+  cd ${ezjail_jailfull} || exerr "Cant access temporary Jail directory."
+  # This mkdir is important, since cpio will create intermediate
+  # directories with permission 0700 which is bad
+  mkdir -p ${ezjail_jailbase}/usr
+  for dir in bin boot lib libexec rescue sbin usr/bin usr/games usr/include usr/lib usr/libdata usr/libexec usr/sbin usr/src usr/share; do
+    find ${dir} | cpio -d -p -v ${ezjail_jailbase} || exerr "Installation of ${dir} failed."
+    chflags -R noschg ${dir}; rm -r ${dir}; ln -s /basejail/${dir} ${dir}
+  done
+  mkdir basejail
+
+  # Try to remove the old template jail
+  [ -d ${ezjail_jailtemplate} ] && chflags -R noschg ${ezjail_jailtemplate} && rm -rf ${ezjail_jailtemplate}
+  mv ${ezjail_jailfull} ${ezjail_jailtemplate}
+
+  # If the default flavour example has not yet been copied, do it now
+  [ -d ${ezjail_flavours}/default ] || mkdir -p ${ezjail_flavours} && cp -p -R ${ezjail_examples}/default ${ezjail_flavours}
+
+  # XXX ports stuff still missing
+
+  ;;
 ######################## ezjail-admin CONFIG ########################
 config)
   shift
-
   args=`getopt -r: $*` || exerr "Usage: `basename -- $0` config [-r run|norun] jailname"
 
-  ezjail_setrunnable=
+  # Clean variables, prevent polution
+  unset ezjail_setrunnable
 
   set -- ${args}
   for arg do
@@ -453,6 +550,6 @@ config)
 
   ;;
 *)
-  exerr "Usage: `basename -- $0` [config|create|delete|list|update] {params}"
+  exerr "Usage: `basename -- $0` [config|create|delete|install|list|update] {params}"
   ;;
 esac
