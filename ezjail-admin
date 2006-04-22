@@ -437,7 +437,7 @@ install)
 
   ezjail_installarch=`uname -p`
   ezjail_ftphost=${ezjail_ftphost:-"ftp.freebsd.org"}
-  ezjail_ftphost=${ezjail_host#ftp://}
+  ezjail_ftphost=${ezjail_ftphost#ftp://}
   ezjail_dir=${ezjail_ftphost#file://}
   [ "${ezjail_dir%%[!/]*}" ] || ezjail_reldir=${PWD}
   # XXX
@@ -473,7 +473,7 @@ install)
       # Try all paths as stolen from sysinstall, break on success.
       for ezjail_path in pub/FreeBSD/releases pub/FreeBSD/snapshot pub/FreeBSD releases snapshots NO; do
         [ "${ezjail_path}" = "NO" ] && exerr "Could not fetch ${pkg} from ${ezjail_ftphost}."
-        ftp "${ezjail_ftphost}:${ezjail_path}/${ezjail_arch}/${ezjail_release}/${pkg}/*" && break
+        ftp "${ezjail_ftphost}:${ezjail_path}/${ezjail_installarch}/${ezjail_release}/${pkg}/*" && break
       done
 
       # These actions are really ugly: sources want $1 to contain the set
