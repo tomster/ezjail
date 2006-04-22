@@ -74,7 +74,7 @@ create)
   args=`getopt f:r:s:xic $*` || exerr "Usage: `basename -- $0` create [-f flavour] [-r jailroot] [-s size] [-xic] jailname jailip"
 
   # Clean variables, prevent polution
-  unset ezjail_rootdir ezjail_flavour ezjail_softlink ezjail_image ezjail_lock ezjail_imagetype ezjail_imagesize ezjail_device ezjail_config
+  unset ezjail_rootdir ezjail_flavour ezjail_softlink ezjail_image ezjail_imagetype ezjail_imagesize ezjail_device ezjail_config
   ezjail_fillme="YES"
 
   set -- ${args}
@@ -150,14 +150,12 @@ create)
     ezjail_image=${ezjail_rootdir%/}; while [ "${ezjail_image}" -a -z "${ezjail_image%%*/}" ]; do ezjail_image=${ezjail_image%/}; done
     [ -z "${ezjail_image}" ] && exerr "Error: Could not determine image file name, something is wrong with the jail root: ${ezjail_rootdir}."
 
-    # Location of our image and crypto image lock file
-    ezjail_lock=${ezjail_image}.lock
+    # Location of our image file
     ezjail_image=${ezjail_image}.img
 
     # If NOT exist, create image
     if [ "${ezjail_fillme}" = "YES" ]; then
       [ -e "${ezjail_image}" ] && exerr "Error: a file exists at the location ${ezjail_image}, preventing our own image file to be created."
-      [ "${ezjail_imagetype}" = "crypto" -a -e "${ezjail_lock}" ] && exerr "Error: a file exists at the location ${ezjail_lock}, preventing our own crypto image lock file to be created."
 
       # Now create jail disc image
       touch "${ezjail_image}"
@@ -170,10 +168,10 @@ create)
       if [ "${ezjail_imagetype}" = "crypto" ]; then
         # Initialise crypto image
         echo "Initialising crypto device. Enter a new passphrase twice..."
-        gbde init /dev/${ezjail_imagedevice} -L ${ezjail_lock} || detach_images || exerr "Error: Could not initialise crypto image."
+        gbde init /dev/${ezjail_imagedevice} || detach_images || exerr "Error: Could not initialise crypto image."
 
         echo "Attaching crypto device. Enter the passphrase..."
-        gbde attach /dev/${ezjail_imagedevice} -l ${ezjail_lock} || detach_images || exerr "Error: Could not attach crypto image."
+        gbde attach /dev/${ezjail_imagedevice} || detach_images || exerr "Error: Could not attach crypto image."
         ezjail_device=${ezjail_imagedevice}.bde
       else
         ezjail_device=${ezjail_imagedevice}
@@ -296,7 +294,7 @@ delete)
 
   # if wiping the jail was requested, remove it
   if [ "${ezjail_wipeme}" ]; then
-    [ "${ezjail_image}" ] && rm -f ${ezjail_image} ${ezjail_image%.img}.lock ${ezjail_image%.img}.device
+    [ "${ezjail_image}" ] && rm -f ${ezjail_image} ${ezjail_image%.img}.device
     rm -rf ${ezjail_rootdir}
   fi
 

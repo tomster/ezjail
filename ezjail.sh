@@ -97,7 +97,7 @@ attach_detach_pre ()
     # this is. In this case, the device to mount is 
     if [ "${ezjail_imagetype}" = "crypto" ]; then
       echo "Attaching gbde device for image jail ${ezjail}..."
-      gbde attach /dev/${ezjail_device} -l ${ezjail_image%.img}.lock
+      gbde attach /dev/${ezjail_device}
 
       # Device to mount is not md anymore
       ezjail_device=${ezjail_device}.bde
