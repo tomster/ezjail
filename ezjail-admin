@@ -507,7 +507,7 @@ install)
   ezjail_splitworld
 
   # Fill ports, if requested
-  [ "${ezjail_installports} = "YES" ] && ezjail_updateports
+  [ "${ezjail_installports}" = "YES" ] && ezjail_updateports
 
   ;;
 ######################## ezjail-admin CONFIG ########################
