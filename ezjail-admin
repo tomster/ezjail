@@ -456,11 +456,11 @@ install)
   ezjail_dir=${ezjail_ftphost#file://}
   [ "${ezjail_dir%%[!/]*}" ] || ezjail_reldir=${PWD}
 
-  # ftp servers normally wont provide CURRENT-builds
+  # ftp servers normally wont provide non-RELEASE-builds
   if [ -z "${ezjail_release}" ]; then
     ezjail_release=`uname -r`
-    if [ "${ezjail_release%CURRENT}" != "${ezjail_release}" -a "${ezjail_dir}" = "${ezjail_ftphost}" ]; then
-      echo "Your system is ${ezjail_release}. Normally FTP-servers don't provide CURRENT-builds."
+    if [ "${ezjail_release%-RELEASE}" != "${ezjail_release}" -a "${ezjail_dir}" = "${ezjail_ftphost}" ]; then
+      echo "Your system is ${ezjail_release}. Normally FTP-servers don't provide non-RELEASE-builds."
       echo -n "Release [ ${ezjail_release} ]: "
       read ezjail_releasetmp
       [ "${ezjail_releasetmp}" ] && ezjail_release=${ezjail_releasetmp}
