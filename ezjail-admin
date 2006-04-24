@@ -303,8 +303,7 @@ delete)
   ;;
 ######################## ezjail-admin LIST ########################
 list)
-  ezjail_list=${ezjail_list:-`rcorder ${ezjail_prefix}/etc/ezjail/*`}
-  ezjail_list=`basename -a ${ezjail_list}`
+  ezjail_list=`find -X ${ezjail_prefix}/etc/ezjail/ 2> /dev/null | xargs rcorder | xargs basename -a`
 
   printf "%-3s %-5s %-15s %-28s %s\\n" STA JID IP Hostname "Root Directory"
   echo   "--- ----- --------------- ---------------------------- -----------------------------"

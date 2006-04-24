@@ -34,9 +34,7 @@ stopcrypto_cmd="do_cmd stopcrypto _"
 do_cmd()
 {
   action=$1; message=$2; shift 2;
-  ezjail_list=
-  ezjail_pass=
-  ezjail_mds=
+  unset ezjail_list ezjail_pass ezjail_mds
   ezjail_fromrc="YES"
 
   # If a jail list is given on command line, process it
@@ -45,8 +43,7 @@ do_cmd()
     ezjail_list=`echo -n $* | tr -c "[:alnum:] " _` 
     ezjail_fromrc="NO"
   else
-    ezjail_list=${ezjail_list:-`rcorder ${ezjail_prefix}/etc/ezjail/*`}
-    ezjail_list=`basename -a ${ezjail_list}`
+    ezjail_list=`find -X ${ezjail_prefix}/etc/ezjail/ 2> /dev/null | xargs rcorder | xargs basename -a`
     echo -n "${message##_}"
   fi
 
