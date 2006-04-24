@@ -26,6 +26,8 @@ ezjail_devfs_ruleset=${ezjail_devfs_ruleset:-"devfsrules_jail"}
 ezjail_procfs_enable=${ezjail_procfs_enable:-"YES"}
 ezjail_fdescfs_enable=${ezjail_fdescfs_enable:-"YES"}
 
+ezjail_dirlist="bin boot lib libexec rescue sbin usr/bin usr/games usr/include usr/lib usr/libdata usr/libexec usr/sbin usr/src usr/share"
+
 # define our bail out shortcut
 exerr () { echo -e "$*"; exit 1; }
 
@@ -364,7 +366,7 @@ setup|update)
     # This mkdir is important, since cpio will create intermediate
     # directories with permission 0700 which is bad
     mkdir -p ${ezjail_jailbase}/usr
-    for dir in bin boot lib libexec rescue sbin usr/bin usr/games usr/include usr/lib usr/libdata usr/libexec usr/sbin usr/src usr/share; do
+    for dir in ${ezjail_dirlist}; do
       find ${dir} | cpio -d -p -v ${ezjail_jailbase} || exerr "Installation of ${dir} failed."
       chflags -R noschg ${dir}; rm -r ${dir}; ln -s /basejail/${dir} ${dir}
     done
@@ -494,7 +496,7 @@ install)
   # This mkdir is important, since cpio will create intermediate
   # directories with permission 0700 which is bad
   mkdir -p ${ezjail_jailbase}/usr
-  for dir in bin boot lib libexec rescue sbin usr/bin usr/games usr/include usr/lib usr/libdata usr/libexec usr/sbin usr/src usr/share; do
+  for dir in ${ezjail_dirlist}; do
     find ${dir} | cpio -d -p -v ${ezjail_jailbase} || exerr "Installation of ${dir} failed."
     chflags -R noschg ${dir}; rm -r ${dir}; ln -s /basejail/${dir} ${dir}
   done
