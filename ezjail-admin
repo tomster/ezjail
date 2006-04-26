@@ -41,7 +41,10 @@ detach_images () {
   # unmount and detach memory disc
   if [ "${ezjail_imagedevice}" ]; then
     umount ${ezjail_rootdir} > /dev/null
-    [ "${ezjail_imagetype}" = "crypto" ] && gbde detach /dev/${ezjail_imagedevice} > /dev/null
+    case ${ezjail_imagetype} in
+      bde) gbde detach /dev/${ezjail_imagedevice} > /dev/null ;;
+      eli) ;;
+    esac
     mdconfig -d -u ${ezjail_imagedevice} > /dev/null
     [ "$1" = "success" ] || rm -f ${ezjail_image}
   fi
@@ -135,10 +138,10 @@ case "$1" in
 ######################## ezjail-admin CREATE ########################
 create)
   shift
-  args=`getopt f:r:s:xic $*` || exerr "Usage: `basename -- $0` create [-f flavour] [-r jailroot] [-s size] [-xic] jailname jailip"
+  args=`getopt f:r:s:xic:C: $*` || exerr "Usage: `basename -- $0` create [-xi] [-f flavour] [-r jailroot] [-s size] [-c bde|eli] [-C args] jailname jailip"
 
   # Clean variables, prevent polution
-  unset ezjail_rootdir ezjail_flavour ezjail_softlink ezjail_image ezjail_imagetype ezjail_imagesize ezjail_device ezjail_config
+  unset ezjail_rootdir ezjail_flavour ezjail_softlink ezjail_image ezjail_imagetype ezjail_imageparams ezjail_imagesize ezjail_device ezjail_config
   ezjail_fillme="YES"
 
   set -- ${args}
@@ -147,7 +150,8 @@ create)
       -x) ezjail_fillme="NO"; shift;;
       -r) ezjail_rootdir="$2"; shift 2;;
       -f) ezjail_flavour="$2"; shift 2;;
-      -c) ezjail_imagetype="crypto"; shift;;
+      -c) ezjail_imagetype=$2; shift 2;;
+      -C) ezjail_imageparams=$2; shift 2;;
       -i) ezjail_imagetype=${ezjail_imagetype:-"simple"}; shift;;
       -s) ezjail_imagesize="$2"; shift 2;;
       --) shift; break;;
@@ -156,10 +160,13 @@ create)
   ezjail_name=$1; ezjail_ip=$2   
 
   # we need at least a name and an ip for new jail
-  [ "${ezjail_name}" -a "${ezjail_ip}" -a $# = 2 ] || exerr "Usage: `basename -- $0` create [-f flavour] [-r jailroot] [-s size] [-xic] jailname jailip"
+  [ "${ezjail_name}" -a "${ezjail_ip}" -a $# = 2 ] || exerr "Usage: `basename -- $0` create [-xi] [-f flavour] [-r jailroot] [-s size] [-c bde|eli] [-C args] jailname jailip"
 
   # check for sanity of settings concerning the image feature
   [ "${ezjail_imagetype}" -a "${ezjail_fillme}" = "YES" -a ! "${ezjail_imagesize}" ] && exerr "Image jails need an image size."
+
+  # check for a sane image type
+  case ${ezjail_imagetype} in ""|simple|bde|eli) ;; *) exerr "Usage: `basename -- $0` create [-xi] [-f flavour] [-r jailroot] [-s size] [-c bde|eli] [-C args] jailname jailip";; esac
 
   # check, whether ezjail-update has been called. existence of
   # ezjail_jailbase is our indicator
@@ -180,8 +187,7 @@ create)
   # This scenario really will only lead to real troubles in the 'fulljail'
   # case, but I should still explain this to the user and not claim that
   # "an ezjail would already exist"
-  [ "${ezjail_hostname}" = "basejail" -o "${ezjail_hostname}" = "newjail" -o "${ezjail_hostname}" = "fulljail" -o "${ezjail_hostname}" = "flavours" -o "${ezjail_hostname}" = "ezjailtemp" ] && \
-    exerr "Error: ezjail needs the ${ezjail_hostname} directory for its own administrative purposes. Please rename the ezjail."
+  case ${ezjail_hostname} in basejail|newjail|fulljail|flavous|ezjailtemp) exerr "Error: ezjail needs the ${ezjail_hostname} directory for its own administrative purposes. Please rename the ezjail.";; esac
 
   # jail names may lead to identical configs, eg. foo.bar.com == foo-bar.com
   # so check, whether we might be running into problems
@@ -229,17 +235,22 @@ create)
       ezjail_imagedevice=`mdconfig -a -t vnode -f ${ezjail_image}`
       [ $? = 0 ] || detach_images || exerr "Error: Could not attach image device. (Command failed was 'mdconfig -a -t vnode -f ${ezjail_image}')"
 
-      if [ "${ezjail_imagetype}" = "crypto" ]; then
-        # Initialise crypto image
-        echo "Initialising crypto device. Enter a new passphrase twice..."
-        gbde init /dev/${ezjail_imagedevice} || detach_images || exerr "Error: Could not initialise crypto image."
+      case "${ezjail_imagetype}" in
+        bde)
+          # Initialise crypto image
+          echo "Initialising crypto device. Enter a new passphrase twice..."
+          gbde init /dev/${ezjail_imagedevice} || detach_images || exerr "Error: Could not initialise crypto image."
 
-        echo "Attaching crypto device. Enter the passphrase..."
-        gbde attach /dev/${ezjail_imagedevice} || detach_images || exerr "Error: Could not attach crypto image."
-        ezjail_device=${ezjail_imagedevice}.bde
-      else
+          echo "Attaching crypto device. Enter the passphrase..."
+          gbde attach /dev/${ezjail_imagedevice} || detach_images || exerr "Error: Could not attach crypto image."
+          ezjail_device=${ezjail_imagedevice}.bde
+        ;;
+       eli)
+        ;;
+       simple)
         ezjail_device=${ezjail_imagedevice}
-      fi
+        ;;
+      esac
 
       # Format memory image
       newfs /dev/${ezjail_device} || detach_images || exerr "Error: Could not newfs /dev/${ezjail_device}."
@@ -371,10 +382,8 @@ list)
   echo   "--- ----- --------------- ---------------------------- -----------------------------"
   for ezjail in ${ezjail_list}; do
     fetchjailinfo ${ezjail%.norun}
-    ezjail_state="D"
-    [ "${ezjail_imagetype}" = "simple" ] && ezjail_state="I"
-    [ "${ezjail_imagetype}" = "crypto" ] && ezjail_state="C"
-    [ "${ezjail_id}"                   ] && ezjail_state=${ezjail_state}R || ezjail_state=${ezjail_state}S
+    case ${ezjail_imagetype} in simple) ezjail_state="I";; bde) ezjail_state="B";; eli) ezjail_state="E";; *) ezjail_state="D";; esac
+    [ "${ezjail_id}" ] && ezjail_state=${ezjail_state}R || ezjail_state=${ezjail_state}S
     [ "${ezjail_safename}" != "${ezjail}" ] && ezjail_state=${ezjail_state}N
 
     printf "%-3s %-5s %-15s %-28s %s\\n" "${ezjail_state}" "${ezjail_id:-N/A}" "${ezjail_ip}" "${ezjail_hostname}" "${ezjail_rootdir}"
@@ -489,13 +498,14 @@ install)
       # yes and the set -- all
       set -- all
       [ -f install.sh ] && yes | . install.sh
-      # XXX error checking.
+      [ $? = 0 ] || exerr "Package install script for ${pkg} failed."
 
       rm -rf ${ezjail_jailtemp}
     else
       cd ${basejail_reldir}/${basejail_dir}/${pkg} || exerr "Could not cd to ${basejail_dir}."
       set -- all
       [ -f install.sh ] && yes | . install.sh
+      [ $? = 0 ] || exerr "Package install script for ${pkg} failed."
     fi
   done
 

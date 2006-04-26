@@ -92,13 +92,17 @@ attach_detach_pre ()
 
     # If this is a crypto jail, try to mount it, remind user, which jail
     # this is. In this case, the device to mount is 
-    if [ "${ezjail_imagetype}" = "crypto" ]; then
+    case ${ezjail_imagetype} in
+    crypto|bde)
       echo "Attaching gbde device for image jail ${ezjail}..."
       gbde attach /dev/${ezjail_device}
 
       # Device to mount is not md anymore
       ezjail_device=${ezjail_device}.bde
-    fi
+      ;;
+    eli)
+      ;;
+    esac
 
     # relink image device
     rm -f ${ezjail_root}.device
@@ -122,6 +126,7 @@ attach_detach_post () {
   # In case of a stop, unmount image devices after stopping jails
   for md in ${ezjail_mds}; do
     [ -e ${md}.bde ] && gbde detach ${md}
+    [ -e ${md}.eli ] && geli detach ${md}
     mdconfig -d -u ${md#/dev/}
   done
 }
