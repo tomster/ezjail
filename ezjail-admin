@@ -34,7 +34,7 @@ ezjail_dirlist="bin boot lib libexec rescue sbin usr/bin usr/games usr/include u
 #
 
 # define our bail out shortcut
-exerr () { echo -e "$*"; exit 1; }
+exerr () { echo -e "$*" >&2 ; exit 1; }
 
 # define detach strategy for image jails
 detach_images () {
@@ -132,41 +132,45 @@ ezjail_updateports () {
 #
 
 # check for command
-[ "$1" ] || exerr "Usage: `basename -- $0` [config|create|delete|install|list|update] {params}"
+[ $# -gt 0 ] || exerr "Usage: `basename -- $0` [config|create|delete|install|list|update] {params}"
 
 case "$1" in
 ######################## ezjail-admin CREATE ########################
 create)
-  shift
-  args=`getopt f:r:s:xic:C: $*` || exerr "Usage: `basename -- $0` create [-xi] [-f flavour] [-r jailroot] [-s size] [-c bde|eli] [-C args] jailname jailip"
-
   # Clean variables, prevent polution
   unset ezjail_rootdir ezjail_flavour ezjail_softlink ezjail_image ezjail_imagetype ezjail_imageparams ezjail_imagesize ezjail_device ezjail_config
   ezjail_fillme="YES"
 
-  set -- ${args}
-  for arg do
-    case ${arg} in
-      -x) ezjail_fillme="NO"; shift;;
-      -r) ezjail_rootdir="$2"; shift 2;;
-      -f) ezjail_flavour="$2"; shift 2;;
-      -c) ezjail_imagetype=$2; shift 2;;
-      -C) ezjail_imageparams=$2; shift 2;;
-      -i) ezjail_imagetype=${ezjail_imagetype:-"simple"}; shift;;
-      -s) ezjail_imagesize="$2"; shift 2;;
-      --) shift; break;;
-    esac
-  done
+  shift; while getopts :f:r:s:xic:C: arg; do case ${arg} in
+    x) ezjail_fillme="NO";;
+    r) ezjail_rootdir="${OPTARG}";;
+    f) ezjail_flavour="${OPTARG}";;
+    c) ezjail_imagetype="${OPTARG}";;
+    C) ezjail_imageparams="${OPTARG}";;
+    i) ezjail_imagetype=${ezjail_imagetype:-"simple"};;
+    s) ezjail_imagesize="${OPTARG}";;
+    ?) exerr "Usage: `basename -- $0` create [-xi] [-f flavour] [-r jailroot] [-s size] [-c bde|eli] [-C args] jailname jailip";;
+  esac; done; shift $(( ${OPTIND} - 1 ))
+
   ezjail_name=$1; ezjail_ip=$2   
 
   # we need at least a name and an ip for new jail
-  [ "${ezjail_name}" -a "${ezjail_ip}" -a $# = 2 ] || exerr "Usage: `basename -- $0` create [-xi] [-f flavour] [-r jailroot] [-s size] [-c bde|eli] [-C args] jailname jailip"
+  [ "${ezjail_name}" -a "${ezjail_ip}" -a $# -eq 2 ] || exerr "Usage: `basename -- $0` create [-xi] [-f flavour] [-r jailroot] [-s size] [-c bde|eli] [-C args] jailname jailip"
 
   # check for sanity of settings concerning the image feature
   [ "${ezjail_imagetype}" -a "${ezjail_fillme}" = "YES" -a ! "${ezjail_imagesize}" ] && exerr "Image jails need an image size."
 
   # check for a sane image type
   case ${ezjail_imagetype} in ""|simple|bde|eli) ;; *) exerr "Usage: `basename -- $0` create [-xi] [-f flavour] [-r jailroot] [-s size] [-c bde|eli] [-C args] jailname jailip";; esac
+
+  # check for a sane image size and split it up in blocks
+  if [ "${ezjail_imagesize}" ]; then
+    _val=`echo "${ezjail_imagesize}"|tr A-Z a-z|sed -Ees:g:km:g -es:m:kk:g -es:k:*2b:g -es:b:*128w:g -es:w:*4\ :g -e"s:(^|[^0-9])0x:\1\0X:g" -ey:x:*:`
+    _val=`echo $(( ${_val} ))`
+    [ $? -eq 0 ] || exerr "Error: The image size you specified is somehow incomprehensible."
+    ezjail_imageblockcount=$(( ${_val} / 1048576 ))
+    ezjail_imagerestbyte=$(( ${_val} % 1048576 ))
+  fi
 
   # check, whether ezjail-update has been called. existence of
   # ezjail_jailbase is our indicator
@@ -229,7 +233,8 @@ create)
 
       # Now create jail disc image
       touch "${ezjail_image}"
-      dd if=/dev/random of="${ezjail_image}" bs="${ezjail_imagesize}" count=1 || exerr "Error: Could not (or not fully) create the image file. You might want to check (and possibly remove) the file ${ezjail_image}. The image size provided was ${ezjail_imagesize}."
+      dd if=/dev/random of="${ezjail_image}" bs=1m count=${ezjail_imageblockcount} || exerr "Error: Could not (or not fully) create the image file. You might want to check (and possibly remove) the file ${ezjail_image}. The image size provided was ${ezjail_imagesize}."
+      ( dd if=/dev/random bs=${ezjail_imagerestbytes} count=1 >> "${ezjail_image}" ) || exerr "Error: Could not (or not fully) create the image file. You might want to check (and possibly remove) the file ${ezjail_image}. The image size provided was ${ezjail_imagesize}."
 
       # And attach device
       ezjail_imagedevice=`mdconfig -a -t vnode -f ${ezjail_image}`
@@ -334,22 +339,16 @@ create)
   ;;
 ######################## ezjail-admin DELETE ########################
 delete)
-  shift
-  args=`getopt w $*` || exerr "Usage: `basename -- $0` delete [-w] jailname"
-
   # Clean variables, prevent polution
   unset ezjail_wipeme
 
-  set -- ${args}
-  for arg do
-    case ${arg} in
-      -w) ezjail_wipeme="YES"; shift;;
-      --) shift; break;;
-    esac
-  done
+  shift; while getopts :w arg; do case ${arg} in
+    w) ezjail_wipeme="YES";;
+    ?) exerr "Usage: `basename -- $0` delete [-w] jailname";;
+  esac; done; shift $(( $OPTIND - 1 ))
 
   # we need name of jail to vanish
-  [ $# = 1 ] || exerr "Usage: `basename -- $0` delete [-w] jailname"
+  [ $# -eq 1 ] || exerr "Usage: `basename -- $0` delete [-w] jailname"
 
   # Get all info we have on that jail
   fetchjailinfo $1
@@ -376,6 +375,8 @@ delete)
   ;;
 ######################## ezjail-admin LIST ########################
 list)
+  [ $# -eq 0 ] || exerr "Usage: `basename -- $0` list"
+
   ezjail_list=`find -X ${ezjail_prefix}/etc/ezjail/ 2> /dev/null | xargs rcorder | xargs basename -a`
 
   printf "%-3s %-5s %-15s %-28s %s\\n" STA JID IP Hostname "Root Directory"
@@ -392,23 +393,19 @@ list)
   ;;
 ######################## ezjail-admin UPDATE ########################
 setup|update)
-  shift
-  args=`getopt ipPs: $*` || exerr "Usage: `basename -- $0` update [-s sourcetree] [-i] [-pP]"
-
   # Clean variables, prevent polution
   unset ezjail_provideports
   ezjail_installaction="world"
 
-  set -- ${args}
-  for arg do
-    case ${arg} in
-      -i) ezjail_installaction="installworld"; shift;;
-      -s) ezjail_sourcetree="$2"; shift 2;;
-      -p) ezjail_provideports="YES"; shift;;
-      -P) ezjail_provideports="YES"; ezjail_installaction="none"; shift;;
-      --) shift; break;;
-    esac
-  done
+  shift; while getopts :ipPs: arg; do case ${arg} in
+    i) ezjail_installaction="installworld";;
+    s) ezjail_sourcetree="${OPTARG}";;
+    p) ezjail_provideports="YES";;
+    P) ezjail_provideports="YES"; ezjail_installaction="none";;
+    ?) exerr "Usage: `basename -- $0` update [-s sourcetree] [-i] [-pP]";;
+  esac; done; shift $(( ${OPTIND} - 1 ))
+
+  [ $# -eq 0 ] || exerr "Usage: `basename -- $0` update [-s sourcetree] [-i] [-pP]"
 
   if [ "${ezjail_installaction}" = "none" ]; then
     # check, whether ezjail-update has been called. existence of
@@ -437,23 +434,19 @@ setup|update)
   ;;
 ######################## ezjail-admin INSTALL ########################
 install)
-  shift
-  args=`getopt mpsh:r: $*` || exerr "Usage: `basename -- $0` install [-mps] [-h host] [-r release]"
-
   # Clean variables, prevent polution
   unset ezjail_release ezjail_ftphost ezjail_installmanpages ezjail_installports ezjail_installsources ezjail_dir ezjail_reldir
 
-  set -- ${args}
-  for arg do
-    case ${arg} in
-      -m) ezjail_installmanpages=" manpages"; shift;;
-      -s) ezjail_installsources=" src"; shift;;
-      -p) ezjail_installports="YES"; shift;;
-      -h) ezjail_ftphost="$2"; shift 2;;
-      -r) ezjail_release="$2"; shift 2;;
-      --) shift; break;;
-    esac
-  done
+  shift; while getopts :mpsh:r: arg; do case ${arg} in
+    m) ezjail_installmanpages=" manpages";;
+    s) ezjail_installsources=" src";;
+    p) ezjail_installports="YES";;
+    h) ezjail_ftphost="${OPTARG}";;
+    r) ezjail_release="${OPTARG}";;
+    ?) exerr "Usage: `basename -- $0` install [-mps] [-h host] [-r release]";;
+  esac; done; shift $(( ${OPTIND} - 1 ))
+
+  [ $# -eq 0 ] || exerr "Usage: `basename -- $0` install [-mps] [-h host] [-r release]";;
 
   ezjail_installarch=`uname -p`
   ezjail_ftphost=${ezjail_ftphost:-"ftp.freebsd.org"}
@@ -518,21 +511,15 @@ install)
   ;;
 ######################## ezjail-admin CONFIG ########################
 config)
-  shift
-  args=`getopt -r: $*` || exerr "Usage: `basename -- $0` config [-r run|norun] jailname"
-
   # Clean variables, prevent polution
   unset ezjail_setrunnable
 
-  set -- ${args}
-  for arg do
-    case ${arg} in
-      -r) ezjail_setrunnable=$2; shift 2;;
-      --) shift; break;;
-    esac
-  done
+  shift; while getopts :r: arg; do case ${arg} in
+    r) ezjail_setrunnable=${OPTARG};;
+    ?) exerr "Usage: `basename -- $0` config [-r run|norun] jailname";;
+  esac; done; shift $(( ${OPTIND} - 1 ))
 
-  [ $# = 1 ] || exerr "Usage: `basename -- $0` config [-r run|norun] jailname"
+  [ $# -eq 1 ] || exerr "Usage: `basename -- $0` config [-r run|norun] jailname"
 
   # Jail name mandatory
   fetchjailinfo $1
