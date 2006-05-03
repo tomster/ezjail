@@ -71,7 +71,8 @@ fetchjailinfo () {
   eval ezjail_ip=\"\$jail_${ezjail_safename}_ip\"
 
   ezjail_softlink=${ezjail_jaildir}/`basename -- ${ezjail_rootdir}`
-  ezjail_id=`jls | grep " ${ezjail_hostname} " | head -n 1 | awk '{print $1}'`
+  [ -f /var/run/jail_${ezjail_safename}.id ] && ezjail_id=`cat /var/run/jail_${ezjail_safename}.id` || return
+  jls | grep -q -E "^ +${ezjail_id} " || unset ezjail_id
 }
 
 # fill the base jail - this function is used by install and update
