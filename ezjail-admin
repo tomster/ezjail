@@ -42,8 +42,8 @@ detach_images () {
   if [ "${ezjail_imagedevice}" ]; then
     umount ${ezjail_rootdir} > /dev/null
     case ${ezjail_imagetype} in
-      bde) gbde detach /dev/${ezjail_imagedevice} > /dev/null ;;
-      eli) ;;
+      bde) gbde detach /dev/${ezjail_imagedevice} > /dev/null;;
+      eli) geil detach /dev/${ezjail_imagedevice} > /dev/null;;
     esac
     mdconfig -d -u ${ezjail_imagedevice} > /dev/null
     [ "$1" = "success" ] || rm -f ${ezjail_image}
