@@ -60,6 +60,7 @@ do_cmd()
     eval ezjail_root=\"\$jail_${ezjail}_rootdir\"
     eval ezjail_image=\"\$jail_${ezjail}_image\"
     eval ezjail_imagetype=\"\$jail_${ezjail}_imagetype\"
+    eval ezjail_attachparams=\"\$jail_${ezjail}_attachparams\"
 
     # Cannot auto mount crypto jails without interrupting boot process
     [ "${ezjail_fromrc}" = "YES" -a "${ezjail_imagetype}" = "crypto" -a "${action}" = "start" ] && continue
@@ -95,12 +96,15 @@ attach_detach_pre ()
     case ${ezjail_imagetype} in
     crypto|bde)
       echo "Attaching gbde device for image jail ${ezjail}..."
-      gbde attach /dev/${ezjail_device}
-
+      echo gbde attach /dev/${ezjail_device} ${ezjail_attachparams} | /bin/sh 
       # Device to mount is not md anymore
       ezjail_device=${ezjail_device}.bde
       ;;
     eli)
+      echo "Attaching gbde device for image jail ${ezjail}..."
+      echo geli attach  ${ezjail_attachparams} /dev/${ezjail_device} | /bin/sh 
+      # Device to mount is not md anymore
+      ezjail_device=${ezjail_device}.eli
       ;;
     esac
 
@@ -115,7 +119,10 @@ attach_detach_pre ()
     ezjail_device=`stat -f "%Y" ${ezjail_root}.device`
 
     # Add this device to the list of devices to be unmounted
-    ezjail_mds="${ezjail_mds} ${ezjail_device%.bde}"
+    case ${ezjail_imagetype} in
+      crypto|bde) ezjail_mds="${ezjail_mds} ${ezjail_device%.bde}" ;;
+      eli) ezjail_mds="${ezjail_mds} ${ezjail_device%.eli}" ;;
+    esac
 
     # Remove soft link (which acts as a lock)
     rm -f ${ezjail_root}.device

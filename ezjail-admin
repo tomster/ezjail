@@ -43,7 +43,7 @@ detach_images () {
     umount ${ezjail_rootdir} > /dev/null
     case ${ezjail_imagetype} in
       bde) gbde detach /dev/${ezjail_imagedevice} > /dev/null;;
-      eli) geil detach /dev/${ezjail_imagedevice} > /dev/null;;
+      eli) geli detach /dev/${ezjail_imagedevice} > /dev/null;;
     esac
     mdconfig -d -u ${ezjail_imagedevice} > /dev/null
     [ "$1" = "success" ] || rm -f ${ezjail_image}
@@ -139,7 +139,7 @@ case "$1" in
 ######################## ezjail-admin CREATE ########################
 create)
   # Clean variables, prevent polution
-  unset ezjail_rootdir ezjail_flavour ezjail_softlink ezjail_image ezjail_imagetype ezjail_imageparams ezjail_imagesize ezjail_device ezjail_config
+  unset ezjail_rootdir ezjail_flavour ezjail_softlink ezjail_image ezjail_imagetype ezjail_imageparams ezjail_imagesize ezjail_device ezjail_config ezjail_attachparams
   ezjail_fillme="YES"
 
   shift; while getopts :f:r:s:xic:C: arg; do case ${arg} in
@@ -246,16 +246,24 @@ create)
       [ $? = 0 ] || detach_images || exerr "Error: Could not attach image device. (Command failed was 'mdconfig -a -t vnode -f ${ezjail_image}')"
 
       case "${ezjail_imagetype}" in
-        bde)
-          # Initialise crypto image
-          echo "Initialising crypto device. Enter a new passphrase twice..."
-          gbde init /dev/${ezjail_imagedevice} || detach_images || exerr "Error: Could not initialise crypto image."
+        bde|eli)
+          # parse imageparams, generate attachparams
+          if [ -n "${ezjail_imageparams}" ] ; then 
+            ezjail_attachparams=`echo $0 _parse_g${ezjail_imagetype}_attach_args_ ${ezjail_imageparams} | /bin/sh `
+            [ 0 -eq $? ] ||  exerr "processing of ezjail_imageparams failed"
+          fi  
+          case "${ezjail_imagetype}" in 
+            bde) init_cmd="gbde init /dev/${ezjail_imagedevice} ${ezjail_imageparams}"
+                 attach_cmd="gbde attach /dev/${ezjail_imagedevice} ${ezjail_attachparams}";;
+            eli) init_cmd="geli init ${ezjail_imageparams} /dev/${ezjail_imagedevice}"
+                 attach_cmd="geli attach ${ezjail_attachparams} /dev/${ezjail_imagedevice}";;
+          esac       
+          echo "Initialising crypto device. Enter a new passphrase twice... (if necessary)"
+          ( echo ${init_cmd} | /bin/sh ) || detach_images || exerr "Error: Could not initialise crypto image."
 
-          echo "Attaching crypto device. Enter the passphrase..."
-          gbde attach /dev/${ezjail_imagedevice} || detach_images || exerr "Error: Could not attach crypto image."
-          ezjail_device=${ezjail_imagedevice}.bde
-        ;;
-       eli)
+          echo "Attaching crypto device. Enter the passphrase... (if necessary)"
+          ( echo ${attach_cmd} | /bin/sh ) || detach_images || exerr "Error: Could not attach crypto image."
+          ezjail_device=${ezjail_imagedevice}.${ezjail_imagetype}
         ;;
        simple)
         ezjail_device=${ezjail_imagedevice}
@@ -306,6 +314,7 @@ create)
   echo export jail_${ezjail_safename}_fdescfs_enable=\"${ezjail_fdescfs_enable}\" >> ${ezjail_config}
   echo export jail_${ezjail_safename}_image=\"${ezjail_image}\" >> ${ezjail_config}
   echo export jail_${ezjail_safename}_imagetype=\"${ezjail_imagetype}\" >> ${ezjail_config}
+  echo export jail_${ezjail_safename}_attachparams=\"${ezjail_attachparams}\" >> ${ezjail_config}
 
   # Final steps for flavour installation
   if [ "${ezjail_fillme}" = "YES" -a "${ezjail_flavour}" ]; then
@@ -545,6 +554,41 @@ config)
   esac
 
   ;;
+
+##############################################################################
+# ezjail_imageparams HACK starts here
+#
+#  
+_parse_geli_attach_args_)
+  # create geli(8) attach arguments from geli(8) init arguments:
+  #    -P becomes -p if present, -K newkeyfile becomes -k newkeyfile if present, 
+  #    everything else is dicarded
+  shift; while getopts :bPva:i:K:l:s: arg; do case ${arg} in
+      b|v|a|i|l|s);; # ignore these
+      P) echo -n "-p ";;
+      K) echo -n "-k '$OPTARG' ";;
+      ?) exit 11;;
+  esac; done
+  exit 0
+  ;;
+_parse_gbde_attach_args_)
+  # create gbde(8) attach arguments from gbde(8) init arguments:
+  #   -L lockfile becomes -l lockfile if present
+  #   -K keyfile becomes -k keyfile if present
+  #   -P passphrase becomes -p passphrase if present
+  #   everything else is discarded
+  shift; while getopts :iK:f:L:P: arg; do case ${arg} in
+      i|f);; # ignore these
+      P) echo -n "-p '$OPTARG' ";;
+      K) echo -n "-k '$OPTARG' ";;
+      L) echo -n "-l '$OPTARG' ";;
+      ?) exit 11;;
+  esac; done
+  exit 0
+  ;;
+#
+# ezjail_imageparams HACK ends here (thank god)
+##############################################################################
 *)
   exerr "Usage: `basename -- $0` [config|create|delete|install|list|update] {params}"
   ;;
