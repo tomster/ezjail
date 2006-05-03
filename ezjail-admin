@@ -167,7 +167,7 @@ create)
   if [ "${ezjail_imagesize}" ]; then
     _val=`echo "${ezjail_imagesize}"|tr A-Z a-z|sed -Ees:g:km:g -es:m:kk:g -es:k:*2b:g -es:b:*128w:g -es:w:*4\ :g -e"s:(^|[^0-9])0x:\1\0X:g" -ey:x:*:`
     _val=`echo $(( ${_val} ))`
-    [ $? -eq 0 ] || exerr "Error: The image size you specified is somehow incomprehensible."
+    [ $? -eq 0 -o ${_val} -lt 1 ] || exerr "Error: The image size you specified is somehow incomprehensible (you specified ${ezjail_imagesize}."
     ezjail_imageblockcount=$(( ${_val} / 1048576 ))
     ezjail_imagerestbytes=$(( ${_val} % 1048576 ))
   fi
@@ -233,8 +233,8 @@ create)
 
       # Now create jail disc image
       touch "${ezjail_image}"
-      dd if=/dev/random of="${ezjail_image}" bs=1m count=${ezjail_imageblockcount} || exerr "Error: Could not (or not fully) create the image file. You might want to check (and possibly remove) the file ${ezjail_image}. The image size provided was ${ezjail_imagesize}."
-      ( dd if=/dev/random bs=${ezjail_imagerestbytes} count=1 >> "${ezjail_image}" ) || exerr "Error: Could not (or not fully) create the image file. You might want to check (and possibly remove) the file ${ezjail_image}. The image size provided was ${ezjail_imagesize}."
+      [ "${ezjail_imageblockcount}" -gt 0 ] &&   dd if=/dev/random of="${ezjail_image}" bs=1m count=${ezjail_imageblockcount} || exerr "Error: Could not (or not fully) create the image file. You might want to check (and possibly remove) the file ${ezjail_image}. The image size provided was ${ezjail_imagesize}."
+      [ "${ezjail_imagerestbytes}" -gt 0  ] && ( dd if=/dev/random bs=${ezjail_imagerestbytes} count=1 >> "${ezjail_image}" ) || exerr "Error: Could not (or not fully) create the image file. You might want to check (and possibly remove) the file ${ezjail_image}. The image size provided was ${ezjail_imagesize}."
 
       # And attach device
       ezjail_imagedevice=`mdconfig -a -t vnode -f ${ezjail_image}`
