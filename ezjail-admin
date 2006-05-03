@@ -169,7 +169,7 @@ create)
     _val=`echo $(( ${_val} ))`
     [ $? -eq 0 ] || exerr "Error: The image size you specified is somehow incomprehensible."
     ezjail_imageblockcount=$(( ${_val} / 1048576 ))
-    ezjail_imagerestbyte=$(( ${_val} % 1048576 ))
+    ezjail_imagerestbytes=$(( ${_val} % 1048576 ))
   fi
 
   # check, whether ezjail-update has been called. existence of
