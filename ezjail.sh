@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.27 2006/05/04 14:02:17 erdgeist Exp $
+# $Id: ezjail.sh,v 1.28 2006/05/04 18:49:52 erdgeist Exp $
 #
 # $FreeBSD$
 #
@@ -62,19 +62,16 @@ do_cmd()
     eval ezjail_image=\"\$jail_${ezjail}_image\"
     eval ezjail_imagetype=\"\$jail_${ezjail}_imagetype\"
     eval ezjail_attachparams=\"\$jail_${ezjail}_attachparams\"
+    eval ezjail_attachblocking=\"\$jail_${ezjail}_attachblocking\"
 
-    # Cannot auto mount crypto jails without interrupting boot process
-    if [ "${ezjail_fromrc}" = "YES" -a "${action}" = "start" ]; then
-      case "${ezjail_imagetype}" in crypto|eli|bde) continue;; esac
-    fi
+    # Cannot auto mount blocking crypto jails without interrupting boot process
+    [ "${ezjail_fromrc}" = "YES" -a "${action}" = "start" && "${ezjail_attachblocking}" = "YES" ] && continue
 
-    # Explicitely do only run crypto jails when *crypto is requested
-    if [ "${action%crypto}" != "${action}" ]; then
-      case "${ezjail_imagetype}" in crypto|eli|bde) ;; *) continue;; esac
-    fi
+    # Explicitely do only run blocking crypto jails when *crypto is requested
+    [ "${action%crypto}" != "${action}" -a -z "${ezjail_attachblocking}" ] && continue
 
     # Try to attach (crypto) devices
-    [ "${ezjail_image}" ] && attach_detach_pre
+    [ -n "${ezjail_image}" ] && attach_detach_pre
 
     ezjail_pass="${ezjail_pass} ${ezjail}"
   done
@@ -100,13 +97,13 @@ attach_detach_pre ()
     # this is. In this case, the device to mount is 
     case ${ezjail_imagetype} in
     crypto|bde)
-      echo "Attaching gbde device for image jail ${ezjail}..."
+      echo "Attaching bde device for image jail ${ezjail}..."
       echo gbde attach /dev/${ezjail_device} ${ezjail_attachparams} | /bin/sh 
       # Device to mount is not md anymore
       ezjail_device=${ezjail_device}.bde
       ;;
     eli)
-      echo "Attaching gbde device for image jail ${ezjail}..."
+      echo "Attaching eli device for image jail ${ezjail}..."
       echo geli attach  ${ezjail_attachparams} /dev/${ezjail_device} | /bin/sh 
       # Device to mount is not md anymore
       ezjail_device=${ezjail_device}.eli
