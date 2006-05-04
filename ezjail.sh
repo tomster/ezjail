@@ -1,4 +1,5 @@
 #!/bin/sh
+# $Id: ezjail.sh,v 1.27 2006/05/04 14:02:17 erdgeist Exp $
 #
 # $FreeBSD$
 #

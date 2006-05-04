@@ -1,4 +1,5 @@
 #!/bin/sh
+# $Id: ezjail-admin,v 1.104 2006/05/04 14:01:17 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -251,13 +252,13 @@ create)
           if [ -n "${ezjail_imageparams}" ] ; then 
             ezjail_attachparams=`echo $0 _parse_g${ezjail_imagetype}_attach_args_ ${ezjail_imageparams} | /bin/sh `
             [ 0 -eq $? ] ||  exerr "processing of ezjail_imageparams failed"
-          fi  
-          case "${ezjail_imagetype}" in 
+          fi
+          case "${ezjail_imagetype}" in
             bde) init_cmd="gbde init /dev/${ezjail_imagedevice} ${ezjail_imageparams}"
                  attach_cmd="gbde attach /dev/${ezjail_imagedevice} ${ezjail_attachparams}";;
             eli) init_cmd="geli init ${ezjail_imageparams} /dev/${ezjail_imagedevice}"
                  attach_cmd="geli attach ${ezjail_attachparams} /dev/${ezjail_imagedevice}";;
-          esac       
+          esac
           echo "Initialising crypto device. Enter a new passphrase twice... (if necessary)"
           ( echo ${init_cmd} | /bin/sh ) || detach_images || exerr "Error: Could not initialise crypto image."
 
