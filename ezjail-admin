@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.107 2006/05/05 00:50:40 erdgeist Exp $
+# $Id: ezjail-admin,v 1.108 2006/05/05 00:59:54 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -158,7 +158,7 @@ create)
     i) ezjail_imagetype=${ezjail_imagetype:-"simple"};;
     s) ezjail_imagesize="${OPTARG}";;
     u) ezjail_urlpass="${OPTARG}";;
-    ?) exerr ${ezjail_usage_create}
+    ?) exerr ${ezjail_usage_create};;
   esac; done; shift $(( ${OPTIND} - 1 ))
 
   ezjail_name=$1; ezjail_ip=$2
@@ -170,7 +170,7 @@ create)
   [ "${ezjail_imagetype}" -a -z "${ezjail_exists}" -a -z "${ezjail_imagesize}" ] && exerr "Image jails need an image size."
 
   # check for a sane image type
-  case ${ezjail_imagetype} in ""|simple|bde|eli) ;; *) exerr ${ezjail_usage_create}
+  case ${ezjail_imagetype} in ""|simple|bde|eli) ;; *) exerr ${ezjail_usage_create};; esac
 
   # check for a sane image size and split it up in blocks
   if [ "${ezjail_imagesize}" ]; then
@@ -371,7 +371,7 @@ delete)
 
   shift; while getopts :w arg; do case ${arg} in
     w) ezjail_wipeme="YES";;
-    ?) exerr ${ezjail_usage_delete}
+    ?) exerr ${ezjail_usage_delete};;
   esac; done; shift $(( $OPTIND - 1 ))
 
   # we need name of jail to vanish
@@ -429,7 +429,7 @@ setup|update)
     s) ezjail_sourcetree="${OPTARG}";;
     p) ezjail_provideports="YES";;
     P) ezjail_provideports="YES"; ezjail_installaction="none";;
-    ?) exerr ${ezjail_usage_update}
+    ?) exerr ${ezjail_usage_update};;
   esac; done; shift $(( ${OPTIND} - 1 ))
 
   [ $# -eq 0 ] || exerr ${ezjail_usage_update}
@@ -470,7 +470,7 @@ install)
     p) ezjail_installports="YES";;
     h) ezjail_ftphost="${OPTARG}";;
     r) ezjail_release="${OPTARG}";;
-    ?) exerr ${ezjail_usage_install}
+    ?) exerr ${ezjail_usage_install};;
   esac; done; shift $(( ${OPTIND} - 1 ))
 
   [ $# -eq 0 ] || exerr ${ezjail_usage_install}
@@ -543,7 +543,7 @@ config)
 
   shift; while getopts :r: arg; do case ${arg} in
     r) ezjail_setrunnable=${OPTARG};;
-    ?) exerr ${ezjail_usage_config}
+    ?) exerr ${ezjail_usage_config};;
   esac; done; shift $(( ${OPTIND} - 1 ))
 
   [ $# -eq 1 ] || exerr ${ezjail_usage_config}
@@ -608,6 +608,6 @@ _parse_gbde_attach_args_)
 ##############################################################################
 
 *)
-  exerr ${ezjail_usage_ezjail}
+  exerr ${ezjail_usage_ezjailadmin}
   ;;
 esac
