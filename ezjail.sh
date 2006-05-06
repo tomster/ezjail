@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.28 2006/05/04 18:49:52 erdgeist Exp $
+# $Id: ezjail.sh,v 1.29 2006/05/06 23:06:24 erdgeist Exp $
 #
 # $FreeBSD$
 #
@@ -65,7 +65,7 @@ do_cmd()
     eval ezjail_attachblocking=\"\$jail_${ezjail}_attachblocking\"
 
     # Cannot auto mount blocking crypto jails without interrupting boot process
-    [ "${ezjail_fromrc}" = "YES" -a "${action}" = "start" && "${ezjail_attachblocking}" = "YES" ] && continue
+    [ "${ezjail_fromrc}" = "YES" -a "${action}" = "start" -a "${ezjail_attachblocking}" = "YES" ] && continue
 
     # Explicitely do only run blocking crypto jails when *crypto is requested
     [ "${action%crypto}" != "${action}" -a -z "${ezjail_attachblocking}" ] && continue
