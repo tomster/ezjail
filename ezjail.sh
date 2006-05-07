@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.29 2006/05/06 23:06:24 erdgeist Exp $
+# $Id: ezjail.sh,v 1.30 2006/05/07 22:25:25 erdgeist Exp $
 #
 # $FreeBSD$
 #
@@ -63,12 +63,15 @@ do_cmd()
     eval ezjail_imagetype=\"\$jail_${ezjail}_imagetype\"
     eval ezjail_attachparams=\"\$jail_${ezjail}_attachparams\"
     eval ezjail_attachblocking=\"\$jail_${ezjail}_attachblocking\"
+    eval ezjail_forceblocking=\"\$jail_${ezjail}_forceblocking\"
 
-    # Cannot auto mount blocking crypto jails without interrupting boot process
-    [ "${ezjail_fromrc}" = "YES" -a "${action}" = "start" -a "${ezjail_attachblocking}" = "YES" ] && continue
+    [ ${ezjail_attachblocking} = "YES" -o ${ezjail_forceblocking} = "YES" ] && ezjail_blocking="YES" || unset ezjail_blocking
+
+    # Cannot auto mount blocking jails without interrupting boot process
+    [ "${ezjail_fromrc}" = "YES" -a "${action}" = "start" -a "${ezjail_blocking}" = "YES" ] && continue
 
     # Explicitely do only run blocking crypto jails when *crypto is requested
-    [ "${action%crypto}" != "${action}" -a -z "${ezjail_attachblocking}" ] && continue
+    [ "${action%crypto}" != "${action}" -a -z "${ezjail_blocking}" ] && continue
 
     # Try to attach (crypto) devices
     [ -n "${ezjail_image}" ] && attach_detach_pre

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.108 2006/05/05 00:59:54 erdgeist Exp $
+# $Id: ezjail-admin,v 1.109 2006/05/07 22:25:25 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -30,8 +30,9 @@ ezjail_fdescfs_enable=${ezjail_fdescfs_enable:-"YES"}
 
 ezjail_dirlist="bin boot lib libexec rescue sbin usr/bin usr/games usr/include usr/lib usr/libdata usr/libexec usr/sbin usr/src usr/share"
 
+# Synopsis messages
 ezjail_usage_ezjailadmin="Usage: `basename -- $0` [config|create|delete|install|list|update] {params}"
-ezjail_usage_create="Usage: `basename -- $0` create [-xi] [-f flavour] [-r jailroot] [-s size] [-c bde|eli] [-u passurl] [-C args] jailname jailip"
+ezjail_usage_create="Usage: `basename -- $0` create [-xbi] [-f flavour] [-r jailroot] [-s size] [-c bde|eli] [-u passurl] [-C args] jailname jailip"
 ezjail_usage_delete="Usage: `basename -- $0` delete [-w] jailname"
 ezjail_usage_list="Usage: `basename -- $0` list"
 ezjail_usage_update="Usage: `basename -- $0` update [-s sourcetree] [-i] [-pP]"
@@ -148,13 +149,14 @@ case "$1" in
 ######################## ezjail-admin CREATE ########################
 create)
   # Clean variables, prevent polution
-  unset ezjail_rootdir ezjail_flavour ezjail_softlink ezjail_image ezjail_imagetype ezjail_imageparams ezjail_imagesize ezjail_device ezjail_config ezjail_attachparams ezjail_passphraseurl ezjail_exists ezjail_attachblocking
-  shift; while getopts :f:r:s:xic:u:C: arg; do case ${arg} in
+  unset ezjail_rootdir ezjail_flavour ezjail_softlink ezjail_image ezjail_imagetype ezjail_imageparams ezjail_imagesize ezjail_device ezjail_config ezjail_attachparams ezjail_passphraseurl ezjail_exists ezjail_attachblocking ezjail_forceblocking
+  shift; while getopts :f:r:s:xbic:u:C: arg; do case ${arg} in
     x) ezjail_exists="YES";;
     r) ezjail_rootdir="${OPTARG}";;
     f) ezjail_flavour="${OPTARG}";;
     c) ezjail_imagetype="${OPTARG}";;
     C) ezjail_imageparams="${OPTARG}";;
+    b) ezjail_forceblocking="YES";;
     i) ezjail_imagetype=${ezjail_imagetype:-"simple"};;
     s) ezjail_imagesize="${OPTARG}";;
     u) ezjail_urlpass="${OPTARG}";;
@@ -325,6 +327,7 @@ create)
   echo export jail_${ezjail_safename}_imagetype=\"${ezjail_imagetype}\" >> ${ezjail_config}
   echo export jail_${ezjail_safename}_attachparams=\"${ezjail_attachparams}\" >> ${ezjail_config}
   echo export jail_${ezjail_safename}_attachblocking=\"${ezjail_attachblocking}\" >> ${ezjail_config}
+  echo export jail_${ezjail_safename}_forceblocking=\"${ezjail_forceblocking}\" >> ${ezjail_config}
   echo export jail_${ezjail_safename}_passphraseurl=\"${ezjail_passphraseurl}\" >> ${ezjail_config}
 
   # Final steps for flavour installation
