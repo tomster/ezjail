@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.110 2006/05/09 00:26:04 erdgeist Exp $
+# $Id: ezjail-admin,v 1.111 2006/05/09 00:33:14 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -573,7 +573,7 @@ config)
     *)     echo "Warning: Unknow runnable option specified.";;
   esac
 
-  [ -n "${ezjail_imageaction} -a -z "${ezjail_image}" ] && exerr "Error: Jail ${ezjail_name} not an image jail."
+  [ -n "${ezjail_imageaction}" -a -z "${ezjail_image}" ] && exerr "Error: Jail ${ezjail_name} not an image jail."
 
   case ${ezjail_imageaction} in
     attach)
@@ -613,7 +613,7 @@ config)
 
       ;;
     detach)
-      [ -n "${ezjail_id}" ] && exerr "Error: Jail ${ezjail_name} still running. Can't detach."
+      [ -n "${ezjail_id}" ] && exerr "Error: Jail ${ezjail_name} still running. Can not detach."
 
       # Check, if image really attached
       if [ -L "${ezjail_root}.device" ]; then
@@ -626,7 +626,7 @@ config)
       case ${ezjail_imagetype} in
         crypto|bde) ezjail_imagedevice="${ezjail_device%.bde}" ;;
         eli)        ezjail_imagedevice="${ezjail_device%.eli}" ;;
-        *)          ezjail_imagedevice="${ezjail_device} ;;
+        *)          ezjail_imagedevice="${ezjail_device}" ;;
       esac
 
       # Unmount/detach everything
@@ -636,6 +636,7 @@ config)
       rm -f ${ezjail_root}.device
       ;;
     *) echo "Warning: Unknow image action specified.";;
+    esac
   ;;
 
 ##############################################################################
