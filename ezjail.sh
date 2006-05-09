@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.30 2006/05/07 22:25:25 erdgeist Exp $
+# $Id: ezjail.sh,v 1.31 2006/05/09 00:26:04 erdgeist Exp $
 #
 # $FreeBSD$
 #
@@ -74,7 +74,9 @@ do_cmd()
     [ "${action%crypto}" != "${action}" -a -z "${ezjail_blocking}" ] && continue
 
     # Try to attach (crypto) devices
-    [ -n "${ezjail_image}" ] && attach_detach_pre
+    if [ -n "${ezjail_image}" ]; then
+      attach_detach_pre || continue
+    fi
 
     ezjail_pass="${ezjail_pass} ${ezjail}"
   done
@@ -91,10 +93,16 @@ attach_detach_pre ()
   if [ "${action%crypto}" = "start" ]; then
     # If jail is running, do not mount devices, this is the same check as
     # /etc/rc.d/jail does
-    [ -e /var/run/jail_${ezjail}.id ] && return
+    [ -e /var/run/jail_${ezjail}.id ] && return 1
+
+    if [ -L "${ezjail_root}.device" ]; then
+      # Fetch destination of soft link
+      ezjail_device=`stat -f "%Y" ${ezjail_root}.device`
+      [ -b "${ezjail_device}" ] && echo "Warning: Jail image file ${ezjail_name} already attached as ${ezjail_device}." && return 1
+    fi
 
     # Create a memory disc from jail image
-    ezjail_device=`mdconfig -a -t vnode -f ${ezjail_image}`
+    ezjail_device=`mdconfig -a -t vnode -f ${ezjail_image}` || return 1
 
     # If this is a crypto jail, try to mount it, remind user, which jail
     # this is. In this case, the device to mount is 
@@ -102,16 +110,27 @@ attach_detach_pre ()
     crypto|bde)
       echo "Attaching bde device for image jail ${ezjail}..."
       echo gbde attach /dev/${ezjail_device} ${ezjail_attachparams} | /bin/sh 
+      if [ $? -eq 0 ]; then
+        mdconfig -d -u ${ezjail_imagedevice} > /dev/null
+        echo "Error: Attaching bde device failed."; return 1
+      fi
       # Device to mount is not md anymore
       ezjail_device=${ezjail_device}.bde
       ;;
     eli)
       echo "Attaching eli device for image jail ${ezjail}..."
       echo geli attach  ${ezjail_attachparams} /dev/${ezjail_device} | /bin/sh 
+      if [ $? -eq 0 ]; then
+        mdconfig -d -u ${ezjail_imagedevice} > /dev/null
+        echo "Error: Attaching eli device failed."; return 1
+      fi
       # Device to mount is not md anymore
       ezjail_device=${ezjail_device}.eli
       ;;
     esac
+
+    # Clean image
+    fsck_ufs -F -p ${ezjail_device}
 
     # relink image device
     rm -f ${ezjail_root}.device
