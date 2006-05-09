@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.31 2006/05/09 00:26:04 erdgeist Exp $
+# $Id: ezjail.sh,v 1.32 2006/05/09 02:00:04 erdgeist Exp $
 #
 # $FreeBSD$
 #
@@ -58,14 +58,14 @@ do_cmd()
     # Read config file
     . ${ezjail_prefix}/etc/ezjail/${ezjail}
 
-    eval ezjail_root=\"\$jail_${ezjail}_rootdir\"
+    eval ezjail_rootdir=\"\$jail_${ezjail}_rootdir\"
     eval ezjail_image=\"\$jail_${ezjail}_image\"
     eval ezjail_imagetype=\"\$jail_${ezjail}_imagetype\"
     eval ezjail_attachparams=\"\$jail_${ezjail}_attachparams\"
     eval ezjail_attachblocking=\"\$jail_${ezjail}_attachblocking\"
     eval ezjail_forceblocking=\"\$jail_${ezjail}_forceblocking\"
 
-    [ ${ezjail_attachblocking} = "YES" -o ${ezjail_forceblocking} = "YES" ] && ezjail_blocking="YES" || unset ezjail_blocking
+    [ "${ezjail_attachblocking}" = "YES" -o "${ezjail_forceblocking}" = "YES" ] && ezjail_blocking="YES" || unset ezjail_blocking
 
     # Cannot auto mount blocking jails without interrupting boot process
     [ "${ezjail_fromrc}" = "YES" -a "${action}" = "start" -a "${ezjail_blocking}" = "YES" ] && continue
@@ -95,10 +95,10 @@ attach_detach_pre ()
     # /etc/rc.d/jail does
     [ -e /var/run/jail_${ezjail}.id ] && return 1
 
-    if [ -L "${ezjail_root}.device" ]; then
+    if [ -L "${ezjail_rootdir}.device" ]; then
       # Fetch destination of soft link
-      ezjail_device=`stat -f "%Y" ${ezjail_root}.device`
-      [ -b "${ezjail_device}" ] && echo "Warning: Jail image file ${ezjail_name} already attached as ${ezjail_device}." && return 1
+      ezjail_device=`stat -f "%Y" ${ezjail_rootdir}.device`
+      [ -e "${ezjail_device}" ] && echo "Jail image file ${ezjail} already attached as ${ezjail_device}. 'ezjail-admin config -i detach' it first." && return 1
     fi
 
     # Create a memory disc from jail image
@@ -110,8 +110,8 @@ attach_detach_pre ()
     crypto|bde)
       echo "Attaching bde device for image jail ${ezjail}..."
       echo gbde attach /dev/${ezjail_device} ${ezjail_attachparams} | /bin/sh 
-      if [ $? -eq 0 ]; then
-        mdconfig -d -u ${ezjail_imagedevice} > /dev/null
+      if [ $? -ne 0 ]; then
+        mdconfig -d -u ${ezjail_device} > /dev/null
         echo "Error: Attaching bde device failed."; return 1
       fi
       # Device to mount is not md anymore
@@ -120,8 +120,8 @@ attach_detach_pre ()
     eli)
       echo "Attaching eli device for image jail ${ezjail}..."
       echo geli attach  ${ezjail_attachparams} /dev/${ezjail_device} | /bin/sh 
-      if [ $? -eq 0 ]; then
-        mdconfig -d -u ${ezjail_imagedevice} > /dev/null
+      if [ $? -ne 0 ]; then
+        mdconfig -d -u ${ezjail_device} > /dev/null
         echo "Error: Attaching eli device failed."; return 1
       fi
       # Device to mount is not md anymore
@@ -130,17 +130,21 @@ attach_detach_pre ()
     esac
 
     # Clean image
-    fsck_ufs -F -p ${ezjail_device}
+    fsck_ufs -F -p /dev/${ezjail_device}
 
     # relink image device
-    rm -f ${ezjail_root}.device
-    ln -s /dev/${ezjail_device} ${ezjail_root}.device
+    rm -f ${ezjail_rootdir}.device
+    ln -s /dev/${ezjail_device} ${ezjail_rootdir}.device
   else
+    # If jail is not running, do not unmount devices, this is the same check
+    # as /etc/rc.d/jail does
+    [ -e /var/run/jail_${ezjail}.id ] || return 1
+
     # If soft link to device is not set, we cannot unmount
-    [ -e ${ezjail_root}.device ] || return
+    [ -e ${ezjail_rootdir}.device ] || return
 
     # Fetch destination of soft link
-    ezjail_device=`stat -f "%Y" ${ezjail_root}.device`
+    ezjail_device=`stat -f "%Y" ${ezjail_rootdir}.device`
 
     # Add this device to the list of devices to be unmounted
     case ${ezjail_imagetype} in
@@ -149,7 +153,7 @@ attach_detach_pre ()
     esac
 
     # Remove soft link (which acts as a lock)
-    rm -f ${ezjail_root}.device
+    rm -f ${ezjail_rootdir}.device
   fi
 }
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.111 2006/05/09 00:33:14 erdgeist Exp $
+# $Id: ezjail-admin,v 1.112 2006/05/09 02:00:04 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -49,7 +49,7 @@ exerr () { echo -e "$*" >&2 ; exit 1; }
 # define detach strategy for image jails
 detach_images () {
   # unmount and detach memory disc
-  if [ "${ezjail_imagedevice}" ]; then
+  if [ -n "${ezjail_imagedevice}" ]; then
     umount ${ezjail_rootdir} > /dev/null
     case ${ezjail_imagetype} in
       bde) gbde detach /dev/${ezjail_imagedevice} > /dev/null;;
@@ -67,7 +67,7 @@ fetchjailinfo () {
   ezjail_name=$1
 
   # Clean variables, prevent polution
-  unset ezjail_config ezjail_running ezjail_hostname ezjail_rootdir ezjail_image ezjail_imagetype ezjail_ip ezjail_id
+  unset ezjail_config ezjail_running ezjail_hostname ezjail_rootdir ezjail_image ezjail_imagetype ezjail_ip ezjail_id ezjail_attached ezjail_device
 
   ezjail_safename=`echo -n "${ezjail_name}" | tr -c [:alnum:] _`
 
@@ -87,6 +87,13 @@ fetchjailinfo () {
   eval ezjail_passphraseurl=\"\$jail_${ezjail_safename}_passphraseurl\"
 
   ezjail_softlink=${ezjail_jaildir}/`basename -- ${ezjail_rootdir}`
+
+  if [ -n "${ezjail_image}" -a -L "${ezjail_rootdir}.device" ]; then
+    # Fetch destination of soft link
+    ezjail_device=`stat -f "%Y" ${ezjail_rootdir}.device`
+    [ -e "${ezjail_device}" ] && ezjail_attached="YES"
+  fi
+
   [ -f /var/run/jail_${ezjail_safename}.id ] && ezjail_id=`cat /var/run/jail_${ezjail_safename}.id` || return
   jls | grep -q -E "^ +${ezjail_id} " || unset ezjail_id
 }
@@ -390,10 +397,13 @@ delete)
   fetchjailinfo $1
 
   # check for existence of jail in our records
-  [ "${ezjail_config}" ] || exerr "Error: Nothing known about jail ${ezjail_name}."
+  [ -n "${ezjail_config}" ] || exerr "Error: Nothing known about jail ${ezjail_name}."
 
   # if jail is still running, refuse to go any further
-  [ "${ezjail_id}" ] && exerr "Error: Jail appears to be still running, stop it first."
+  [ -n "${ezjail_id}" ] && exerr "Error: Jail appears to be still running, stop it first."
+
+  # if jail is attached, refuse to go any further
+  [ -n "${ezjail_attached}" ] && exerr "Error: Jail image file ${ezjail_image} is attached as ${ezjail_device}. '`basename -- $0` config -i detach' it first."
 
   # now we know everything we need to let the jail be gone remove entry
   # from ezjail resource structure, delete fstab.JAILNAME
@@ -420,7 +430,11 @@ list)
   for ezjail in ${ezjail_list}; do
     fetchjailinfo ${ezjail%.norun}
     case ${ezjail_imagetype} in simple) ezjail_state="I";; bde) ezjail_state="B";; eli) ezjail_state="E";; *) ezjail_state="D";; esac
-    [ "${ezjail_id}" ] && ezjail_state=${ezjail_state}R || ezjail_state=${ezjail_state}S
+    if [ "${ezjail_id}" ]; then
+      ezjail_state=${ezjail_state}R
+    else
+      [ -n "${ezjail_attached}" ] && ezjail_state=${ezjail_state}A || ezjail_state=${ezjail_state}S
+    fi
     [ "${ezjail_safename}" != "${ezjail}" ] && ezjail_state=${ezjail_state}N
 
     printf "%-3s %-5s %-15s %-28s %s\\n" "${ezjail_state}" "${ezjail_id:-N/A}" "${ezjail_ip}" "${ezjail_hostname}" "${ezjail_rootdir}"
@@ -550,7 +564,7 @@ config)
   # Clean variables, prevent polution
   unset ezjail_setrunnable ezjail_imageaction
 
-  shift; while getopts :r: arg; do case ${arg} in
+  shift; while getopts :r:i: arg; do case ${arg} in
     i) ezjail_imageaction=${OPTARG};;
     r) ezjail_setrunnable=${OPTARG};;
     ?) exerr ${ezjail_usage_config};;
@@ -570,20 +584,15 @@ config)
   case ${ezjail_setrunnable} in
     run)   [ "${ezjail_config}" = "${ezjail_config%.norun}" ] || mv ${ezjail_config} ${ezjail_config%.norun};;
     norun) [ "${ezjail_config}" = "${ezjail_config%.norun}" ] && mv ${ezjail_config} ${ezjail_config}.norun ;;
-    *)     echo "Warning: Unknow runnable option specified.";;
   esac
 
   [ -n "${ezjail_imageaction}" -a -z "${ezjail_image}" ] && exerr "Error: Jail ${ezjail_name} not an image jail."
 
-  case ${ezjail_imageaction} in
+  case "${ezjail_imageaction}" in
     attach)
       # Check, if image already attached
-      if [ -L "${ezjail_root}.device" ]; then
-        # Fetch destination of soft link
-        ezjail_device=`stat -f "%Y" ${ezjail_root}.device`
-        [ -b "${ezjail_device}" ] && exerr "Error: Jail image file ${ezjail_name} already attached as ${ezjail_device}."
-        rm -f ${ezjail_root}.device
-      fi
+      [ -n "${ezjail_attached}" ] && exerr "Error: Jail image file ${ezjail_image} already attached as ${ezjail_device}."
+      rm -f ${ezjail_rootdir}.device
 
       # Create a memory disc from jail image
       ezjail_imagedevice=`mdconfig -a -t vnode -f ${ezjail_image}` || exerr "Error: Could not attach memory disc."
@@ -600,7 +609,7 @@ config)
         ;;
       eli)
         echo "Attaching eli device for image jail ${ezjail}..."
-        echo geli attach  ${ezjail_attachparams} /dev/${ezjail_device} | /bin/sh 
+        echo geli attach  ${ezjail_attachparams} /dev/${ezjail_imagedevice} | /bin/sh 
         [ $? -eq 0 ] || detach_images keep || exerr "Error: Attaching eli device failed."
         # Device to mount is not md anymore
         ezjail_device=${ezjail_imagedevice}.eli
@@ -609,18 +618,14 @@ config)
 
       mount /dev/${ezjail_device} ${ezjail_rootdir} || detach_images keep || exerr "Error: Could not mount /dev/${ezjail_device} to ${ezjail_root}."
       # relink image device
-      ln -s /dev/${ezjail_device} ${ezjail_root}.device
+      ln -s /dev/${ezjail_device} ${ezjail_rootdir}.device
 
       ;;
     detach)
+      # Check, if image really attached or running
       [ -n "${ezjail_id}" ] && exerr "Error: Jail ${ezjail_name} still running. Can not detach."
-
-      # Check, if image really attached
-      if [ -L "${ezjail_root}.device" ]; then
-        # Fetch destination of soft link
-        ezjail_device=`stat -f "%Y" ${ezjail_root}.device`
-        [ -b "${ezjail_device}" ] || exerr "Error: Jail image file ${ezjail_name} is not attached."
-      fi
+      [ -n "${ezjail_attached}" ] || exerr "Error: Jail image file ${ezjail_name} is not attached."
+      ezjail_device=${ezjail_device#/dev/}
 
       # Add this device to the list of devices to be unmounted
       case ${ezjail_imagetype} in
@@ -633,9 +638,8 @@ config)
       detach_images keep
 
       # Remove soft link (which acts as a lock)
-      rm -f ${ezjail_root}.device
+      rm -f ${ezjail_rootdir}.device
       ;;
-    *) echo "Warning: Unknow image action specified.";;
     esac
   ;;
 
