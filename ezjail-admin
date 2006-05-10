@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.112 2006/05/09 02:00:04 erdgeist Exp $
+# $Id: ezjail-admin,v 1.113 2006/05/10 13:47:28 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -156,7 +156,7 @@ ezjail_updateports () {
 #
 
 # check for command
-[ $# -gt 0 ] || exerr ${ezjail_usage_ezjail}
+[ $# -gt 0 ] || exerr ${ezjail_usage_ezjailadmin}
 
 case "$1" in
 ######################## ezjail-admin CREATE ########################
