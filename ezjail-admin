@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.113 2006/05/10 13:47:28 erdgeist Exp $
+# $Id: ezjail-admin,v 1.114 2006/05/10 14:11:32 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -29,6 +29,7 @@ ezjail_procfs_enable=${ezjail_procfs_enable:-"YES"}
 ezjail_fdescfs_enable=${ezjail_fdescfs_enable:-"YES"}
 
 ezjail_dirlist="bin boot lib libexec rescue sbin usr/bin usr/games usr/include usr/lib usr/libdata usr/libexec usr/sbin usr/src usr/share"
+case `uname -p` in amd64) ezjail_dirlist="${ezjail_dirlist} usr/lib32";; esac
 
 # Synopsis messages
 ezjail_usage_ezjailadmin="Usage: `basename -- $0` [config|create|delete|install|list|update] {params}"
