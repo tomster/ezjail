@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.117 2006/05/15 19:50:22 erdgeist Exp $
+# $Id: ezjail-admin,v 1.118 2006/05/15 20:15:18 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -162,7 +162,7 @@ case "$1" in
 ######################## ezjail-admin CREATE ########################
 create)
   # Clean variables, prevent polution
-  unset ezjail_rootdir ezjail_flavour ezjail_softlink ezjail_image ezjail_imagetype ezjail_imageparams ezjail_imagesize ezjail_device ezjail_config ezjail_attachparams ezjail_exists ezjail_attachblocking ezjail_forceblocking
+  unset ezjail_rootdir ezjail_flavour ezjail_softlink ezjail_image ezjail_imagetype ezjail_imageparams ezjail_imagesize ezjail_device ezjail_config ezjail_attachparams ezjail_exists ezjail_attachblocking ezjail_forceblocking ezjail_sourcedevice
   shift; while getopts :f:r:s:xbic:C: arg; do case ${arg} in
     x) ezjail_exists="YES";;
     r) ezjail_rootdir="${OPTARG}";;
@@ -250,6 +250,10 @@ create)
     # Location of our image file
     ezjail_image=${ezjail_image}.img
 
+    # Prepare crypto jail so that an attacker cannot guess which blocks
+    # have been written
+    case ${ezjail_imagetype} in crypto|bde|eli) ezjail_sourcedevice=/dev/random;; simple) ezjail_sourcedevice=/dev/zero;; esac
+
     # If NOT exist, create image
     if [ -z "${ezjail_exists}" ]; then
       [ -e "${ezjail_image}" ] && exerr "Error: a file exists at the location ${ezjail_image}, preventing our own image file to be created."
@@ -257,10 +261,10 @@ create)
       # Now create jail disc image
       touch "${ezjail_image}"
       if [ "${ezjail_imageblockcount}" -gt 0 ]; then
-        dd if=/dev/random of="${ezjail_image}" bs=1m count=${ezjail_imageblockcount} || exerr "Error: Could not (or not fully) create the image file. You might want to check (and possibly remove) the file ${ezjail_image}. The image size provided was ${ezjail_imagesize}."
+        dd if=${ezjail_sourcedevice} of="${ezjail_image}" bs=1m count=${ezjail_imageblockcount} || exerr "Error: Could not (or not fully) create the image file. You might want to check (and possibly remove) the file ${ezjail_image}. The image size provided was ${ezjail_imagesize}."
       fi
       if [ "${ezjail_imagerestbytes}" -gt 0  ]; then
-        ( dd if=/dev/random bs=${ezjail_imagerestbytes} count=1 >> "${ezjail_image}" ) || exerr "Error: Could not (or not fully) create the image file. You might want to check (and possibly remove) the file ${ezjail_image}. The image size provided was ${ezjail_imagesize}."
+        ( dd if=${ezjail_sourcedevice} bs=${ezjail_imagerestbytes} count=1 >> "${ezjail_image}" ) || exerr "Error: Could not (or not fully) create the image file. You might want to check (and possibly remove) the file ${ezjail_image}. The image size provided was ${ezjail_imagesize}."
       fi
 
       # And attach device
