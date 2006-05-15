@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.32 2006/05/09 02:00:04 erdgeist Exp $
+# $Id: ezjail.sh,v 1.33 2006/05/15 13:16:49 erdgeist Exp $
 #
 # $FreeBSD$
 #
@@ -150,6 +150,7 @@ attach_detach_pre ()
     case ${ezjail_imagetype} in
       crypto|bde) ezjail_mds="${ezjail_mds} ${ezjail_device%.bde}" ;;
       eli) ezjail_mds="${ezjail_mds} ${ezjail_device%.eli}" ;;
+      simple) ezjail_mds="${ezjail_mds} ${ezjail_device}" ;;
     esac
 
     # Remove soft link (which acts as a lock)
