@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.115 2006/05/15 19:09:28 erdgeist Exp $
+# $Id: ezjail-admin,v 1.116 2006/05/15 19:37:03 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -189,7 +189,7 @@ create)
   # check for a sane image size and split it up in blocks
   if [ "${ezjail_imagesize}" ]; then
     _val=`echo "${ezjail_imagesize}"|tr A-Z a-z|sed -Ees:g:km:g -es:m:kk:g -es:k:*2b:g -es:b:*128w:g -es:w:*4\ :g -e"s:(^|[^0-9])0x:\1\0X:g" -ey:x:*:`
-    _val=`echo $(( ${_val} ))`
+    _val=`echo ${_val} | bc`
     [ $? -eq 0 -a ${_val} -gt 0 ] || exerr "Error: The image size you specified is somehow incomprehensible (you specified ${ezjail_imagesize})."
     ezjail_imageblockcount=$(( ${_val} / 1048576 ))
     ezjail_imagerestbytes=$(( ${_val} % 1048576 ))
