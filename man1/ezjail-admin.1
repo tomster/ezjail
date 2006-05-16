@@ -4,7 +4,7 @@ ezjail-admin \- Administrate ezjail
 .SH SYNOPSIS
 .T
 .B ezjail-admin create
-[-f flavour] [-r jailroot] [-s imagesize] [-cix]
+[-f flavour] [-r jailroot] [-s imagesize] [-cibx] [-C attachargs]
 .I hostname jailip
 
 .T
@@ -14,6 +14,9 @@ ezjail-admin \- Administrate ezjail
 
 .T
 .B ezjail-admin list
+
+.T
+.B ezjail-admin install [-mps] [-h host] [-r release]
 
 .T
 .B ezjail-admin update
@@ -37,12 +40,9 @@ is created inside this root dir pointing to the newly created jails
 location.
 
 The -i and the -c option both require a size passed via the -s option
-and create a file based jail image, gbde encrypted for the -c case. The
-image file is named as the jail root suffixed with
+and create a file based jail image, gbde or geli encrypted for the -c 
+case. The image file is named as the jail root suffixed with
 .I .img
-, a lock file required for gbde devices is named as the jail root
-suffixed with
-.I .lock
 .
 
 The -x (jail exists) option indicates, that an ezjail already exists
@@ -80,8 +80,57 @@ up on next reboot.
 If the -w (wipe) option is given, the directory pointed to by the jail
 root entry is removed as well as the soft link in ezjails root dir.
 .SH ezjail-admin list
-lists all jails inside ezjails scope, together with some information on 
-them.
+lists all jails inside ezjails scope. They are sorted by the order they 
+start up, as defined by rcorder. The list format is straight forward.
+
+A status flag consisting of 2 or 3 letters, the first meaning
+.B (D)irectory
+based,
+.B (I)mage
+based,
+.B (B)de
+crypto image based,
+.B (E)li
+crypto image based. The second one meaning
+.B (R)unning
+,
+.B (A)ttached
+but not running,
+.B (S)topped
+. An optional
+.B (N)orun
+stands for disabled jails (see
+.I ezjail-admin config
+).
+
+Rest of the row is follow by jails jid (if available), its IP, hostname 
+and root directory.
+.SH ezjail-admin install
+fetches everything needed to setup a base jail from an FTP server and 
+installs it.
+
+Default location for ezjails base jail is
+.I /usr/jails
+, so be sure you have enough space there (a FreeBSD base without man 
+pages, sources and ports is around 120MB).
+
+The -m and -s option will fetch and install man pages (ca. 10MB) and
+sources packages (ca. 450MB) respectively. The -p option invokes the
+portsnap utility to fetch and extract a FreeBSD ports tree (ca. 475MB).
+
+Default OS version is, whatever uname -r returns. If this does not match
+"*-RELEASE", you will be prompted for a better guess. (Normally
+ftp-servers do not provide release candidates or CURRENT builds). You can
+use the -r option to specify a releas from command line.
+
+Default host to fetch packages from is ftp.freebsd.org, you may want to
+change this via the -h option. If the specified location begins with
+file://, your local copy of the release is used. That way you can do some
+modifications to install.sh scripts before executing them.
+
+You can later update your world from CVS by
+.U ezjail-admin update
+or rerun this subcommand with another OS version.
 .SH ezjail-admin update
 creates or update ezjails basejail. Depending on the parameters
 given it will install a FreeBSD system from a source tree whose location
@@ -91,10 +140,10 @@ config file or via the -s option.
 
 If the -p or -P options are given, the base jail also is given a copy of
 FreeBSDs ports tree, which is in turn linked into all newly created
-ezjails.
+ezjails. The portsnap utility is invoked to do the actual work.
 
 If the -P option is given,
-.B only the ports tree will be checked out/updated,
+.B only the ports tree will be updated,
 this can be done, while jails are running.
 
 If the -i (install only) option is given,
