@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.118 2006/05/15 20:15:18 erdgeist Exp $
+# $Id: ezjail-admin,v 1.119 2006/05/16 10:50:48 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -545,7 +545,7 @@ install)
 
       rm -rf ${ezjail_jailtemp}
     else
-      cd ${basejail_reldir}/${basejail_dir}/${pkg} || exerr "Could not cd to ${basejail_dir}."
+      cd ${ezjail_reldir}/${ezjail_dir}/${pkg} || exerr "Could not cd to ${ezjail_dir}."
       set -- all
       [ -f install.sh ] && yes | . install.sh
       [ $? = 0 ] || exerr "Package install script for ${pkg} failed."
