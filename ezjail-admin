@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.120 2006/05/17 11:44:36 erdgeist Exp $
+# $Id: ezjail-admin,v 1.121 2006/05/17 12:59:52 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -507,7 +507,8 @@ install)
   # ftp servers normally wont provide non-RELEASE-builds
   if [ -z "${ezjail_release}" ]; then
     ezjail_release=`uname -r`
-    if [ "${ezjail_release%-RELEASE}" != "${ezjail_release}" -a "${ezjail_dir}" = "${ezjail_ftphost}" ]; then
+    case ${ezjail_release} in *-STABLE) ezjail_release="${ezjail_release%-STABLE}-RELEASE";; esac
+    if [ "${ezjail_release%-RELEASE}" = "${ezjail_release}" -a "${ezjail_dir}" = "${ezjail_ftphost}" ]; then
       echo "Your system is ${ezjail_release}. Normally FTP-servers don't provide non-RELEASE-builds."
       echo -n "Release [ ${ezjail_release} ]: "
       read ezjail_releasetmp
