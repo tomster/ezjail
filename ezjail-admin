@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.121 2006/05/17 12:59:52 erdgeist Exp $
+# $Id: ezjail-admin,v 1.122 2006/05/17 13:07:32 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -533,13 +533,14 @@ install)
 
       # Try all paths as stolen from sysinstall, break on success.
       for ezjail_path in pub/FreeBSD/releases pub/FreeBSD/snapshot pub/FreeBSD releases snapshots NO; do
-        [ "${ezjail_path}" = "NO" ] && exerr "Could not fetch ${pkg} from ${ezjail_ftphost}."
+        [ "${ezjail_path}" = "NO" ] && exerr "Could not fetch ${pkg} from ${ezjail_ftphost}. Maybe your release (${ezjail_release}) is specified incorrectly or the host ${ezjail_ftphost} does not provide that release build. Use the -r option to specify an existing release or the -h option to specify an alternative ftp server."
         ftp "${ezjail_ftphost}:${ezjail_path}/${ezjail_installarch}/${ezjail_release}/${pkg}/*" && break
       done
 
       # These actions are really ugly: sources want $1 to contain the set
       # of sources to install, base asks the user if he is sure, hence the
       # yes and the set -- all
+      [ "${pkg}" = "base" ] && echo "Ignore the next question, ezjail answers it for you."
       set -- all
       [ -f install.sh ] && yes | . install.sh
       [ $? = 0 ] || exerr "Package install script for ${pkg} failed."
