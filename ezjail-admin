@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.119 2006/05/16 10:50:48 erdgeist Exp $
+# $Id: ezjail-admin,v 1.120 2006/05/17 11:44:36 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -329,7 +329,7 @@ create)
   mkdir -p ${ezjail_jailcfgs}
   echo "# To specify the start up order of your ezjails, use these lines to" > ${ezjail_config}
   echo "# create a Jail dependency tree. See rcorder(8) for more details." >> ${ezjail_config}
-  echo -e "#\n# PROVIDE: \n# REQUIRE: \n# BEFORE: \n#\n" >> ${ezjail_config}
+  echo -e "#\n# PROVIDE: standard_ezjail\n# REQUIRE: \n# BEFORE: \n#\n" >> ${ezjail_config}
   echo export jail_${ezjail_safename}_hostname=\"${ezjail_hostname}\" >> ${ezjail_config}
   echo export jail_${ezjail_safename}_ip=\"${ezjail_ip}\" >> ${ezjail_config}
   echo export jail_${ezjail_safename}_rootdir=\"${ezjail_rootdir}\" >> ${ezjail_config}
