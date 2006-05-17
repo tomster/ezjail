@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.122 2006/05/17 13:07:32 erdgeist Exp $
+# $Id: ezjail-admin,v 1.123 2006/05/17 20:22:04 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -149,6 +149,25 @@ ezjail_updateports () {
     portsnap -p ${ezjail_jailbase}/usr/ports ${ezjail_portsnapaction:-"extract"}
   fi
   [ $? = 0 ] || exerr "Updating ports failed."
+}
+
+# Try to fetch the list of releases the server provides
+ezjail_queryftpserver () {
+  unset _ret
+  TIFS=${IFS}; IFS=
+  for ezjail_path in pub/FreeBSD/releases pub/FreeBSD/snapshot pub/FreeBSD releases snapshots NO; do
+    if [ ${ezjail_path} = "NO" ]; then
+      echo "Warning: I am having problems querying the ftp server you specified (${ezjail_ftphost})."
+      _ret=1; break
+    fi
+    ezjail_ftpresponse=`echo ls | ftp ${ezjail_ftphost}:${ezjail_path}/${ezjail_installarch}/ 2> /dev/null`
+    if [ $? -eq 0 ]; then
+      echo -e "The ftp server you specified (${ezjail_ftphost}) seems to provide the following builds:\n${ezjail_ftpresponse}\n."
+      _ret=0; break
+    fi
+  done
+  IFS=${TIFS}
+  return _ret
 }
 
 #############################
@@ -505,11 +524,12 @@ install)
   [ "${ezjail_dir%%[!/]*}" ] || ezjail_reldir=${PWD}
 
   # ftp servers normally wont provide non-RELEASE-builds
-  if [ -z "${ezjail_release}" ]; then
+  if [ -z "${ezjail_release}" -a "${ezjail_dir}" = "${ezjail_ftphost}" ]; then
     ezjail_release=`uname -r`
     case ${ezjail_release} in *-STABLE) ezjail_release="${ezjail_release%-STABLE}-RELEASE";; esac
-    if [ "${ezjail_release%-RELEASE}" = "${ezjail_release}" -a "${ezjail_dir}" = "${ezjail_ftphost}" ]; then
+    if [ "${ezjail_release%-RELEASE}" = "${ezjail_release}" ]; then
       echo "Your system is ${ezjail_release}. Normally FTP-servers don't provide non-RELEASE-builds."
+      ezjail_queryftpserver || echo "... I'll continue anyway."
       echo -n "Release [ ${ezjail_release} ]: "
       read ezjail_releasetmp
       [ "${ezjail_releasetmp}" ] && ezjail_release=${ezjail_releasetmp}
@@ -533,7 +553,10 @@ install)
 
       # Try all paths as stolen from sysinstall, break on success.
       for ezjail_path in pub/FreeBSD/releases pub/FreeBSD/snapshot pub/FreeBSD releases snapshots NO; do
-        [ "${ezjail_path}" = "NO" ] && exerr "Could not fetch ${pkg} from ${ezjail_ftphost}. Maybe your release (${ezjail_release}) is specified incorrectly or the host ${ezjail_ftphost} does not provide that release build. Use the -r option to specify an existing release or the -h option to specify an alternative ftp server."
+        if [ "${ezjail_path}" = "NO" ]; then
+          echo "Could not fetch ${pkg} from ${ezjail_ftphost}. Maybe your release (${ezjail_release}) is specified incorrectly or the host ${ezjail_ftphost} does not provide that release build. Use the -r option to specify an existing release or the -h option to specify an alternative ftp server." >&2
+          ezjail_queryftpserver; exit 1
+        fi
         ftp "${ezjail_ftphost}:${ezjail_path}/${ezjail_installarch}/${ezjail_release}/${pkg}/*" && break
       done
 
