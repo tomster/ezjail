@@ -37,6 +37,11 @@ Cvs root to use when checking out or updating the ports tree in base jail
 .br
 .I default: :pserver:anoncvs@anoncvs.at.FreeBSD.org:/home/ncvs
 .TP
+.B ezjail_ftphost (str)
+This is where the install sub command defaults to fetch its packages from
+.br
+.I default: ftp.freebsd.org
+.TP
 .B ezjail_uglyperlhack (bool)
 Set to YES, if ezjail should provide a soft link from /usr/bin/perl to /usr/local/bin/perl in base jail.
 .br

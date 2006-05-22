@@ -27,13 +27,14 @@ and
 It may be passed an additional list of jails. If no jail name is 
 specified (usually when the script is being called by rc.local at boot 
 and shutdown time), all jails in ezjails scope, except crypto image
-jails, are being started/stopped. To start all crytpo image jails, use
-the
+jails (or jails marked as blocking), are being started/stopped. To
+start all crytpo image jails (or those depending on them), use the
 .I startcrypto
 parameter.
 
-The script examines its config, sets variables for each jail in the
-jail_list before passing its command on to the
+The script examines its config, attaches and mounts images, sets
+variables for each jail in the jail_list before passing its command on
+to the
 .B /etc/rc.d/jail
 script.
 .SH NOTES

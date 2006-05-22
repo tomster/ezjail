@@ -16,7 +16,13 @@ ezjail-admin \- Administrate ezjail
 .B ezjail-admin list
 
 .T
-.B ezjail-admin install [-mps] [-h host] [-r release]
+.B ezjail-admin config
+[-r run|norun] [-i attach|detach]
+.I jailname
+
+.T
+.B ezjail-admin install
+[-mps] [-h host] [-r release]
 
 .T
 .B ezjail-admin update
@@ -105,6 +111,15 @@ stands for disabled jails (see
 
 Rest of the row is follow by jails jid (if available), its IP, hostname 
 and root directory.
+.SH ezjail-admin config
+manages existing specific ezjails.
+
+You can prevent an ezjail from being run at system start by the -r norun
+option and reenable it by -r run.
+
+You can attach image jails for administrative purposes by the -i attach
+option and detach them with -i detach. It is not possible to run or delete
+an attached jail.
 .SH ezjail-admin install
 fetches everything needed to setup a base jail from an FTP server and 
 installs it.
@@ -121,14 +136,16 @@ portsnap utility to fetch and extract a FreeBSD ports tree (ca. 475MB).
 Default OS version is, whatever uname -r returns. If this does not match
 "*-RELEASE", you will be prompted for a better guess. (Normally
 ftp-servers do not provide release candidates or CURRENT builds). You can
-use the -r option to specify a releas from command line.
+use the -r option to specify a release from command line.
 
 Default host to fetch packages from is ftp.freebsd.org, you may want to
-change this via the -h option. If the specified location begins with
-file://, your local copy of the release is used. That way you can do some
-modifications to install.sh scripts before executing them.
+change this via the -h option or in ezjail.conf(5).
 
-You can later update your world from CVS by
+If the specified location begins with file://, your local copy of the
+release is used. That way you can do some modifications to install.sh
+scripts before executing them.
+
+You can later update your world from CVS or update ports by
 .U ezjail-admin update
 or rerun this subcommand with another OS version.
 .SH ezjail-admin update

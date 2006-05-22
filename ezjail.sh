@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.33 2006/05/15 13:16:49 erdgeist Exp $
+# $Id: ezjail.sh,v 1.34 2006/05/22 00:20:45 erdgeist Exp $
 #
 # $FreeBSD$
 #
@@ -119,7 +119,7 @@ attach_detach_pre ()
       ;;
     eli)
       echo "Attaching eli device for image jail ${ezjail}..."
-      echo geli attach  ${ezjail_attachparams} /dev/${ezjail_device} | /bin/sh 
+      echo geli attach ${ezjail_attachparams} /dev/${ezjail_device} | /bin/sh
       if [ $? -ne 0 ]; then
         mdconfig -d -u ${ezjail_device} > /dev/null
         echo "Error: Attaching eli device failed."; return 1

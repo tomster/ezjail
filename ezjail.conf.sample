@@ -23,6 +23,9 @@
 # a cvsroot near you
 # ezjail_portscvsroot=:pserver:anoncvs@anoncvs.at.FreeBSD.org:/home/ncvs
 
+# This is where the install sub command defaults to fetch its packages from
+# ezjail_ftphost=ftp.freebsd.org
+
 # base jail will provide a soft link from /usr/bin/perl to /usr/local/bin/perl
 # to accomodate all scripts using '#!/usr/bin/perl'...
 # ezjail_uglyperlhack="YES"
