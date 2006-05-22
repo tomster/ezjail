@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.125 2006/05/22 00:20:44 erdgeist Exp $
+# $Id: ezjail-admin,v 1.126 2006/05/22 00:36:21 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -644,9 +644,12 @@ config)
         # Device to mount is not md anymore
         ezjail_device=${ezjail_imagedevice}.eli
         ;;
+      simple)
+        ezjail_device=${ezjail_imagedevice}
+        ;;
       esac
 
-      mount /dev/${ezjail_device} ${ezjail_rootdir} || detach_images keep || exerr "Error: Could not mount /dev/${ezjail_device} to ${ezjail_root}."
+      mount /dev/${ezjail_device} ${ezjail_rootdir} || detach_images keep || exerr "Error: Could not mount /dev/${ezjail_device} to ${ezjail_rootdir}."
       # relink image device
       ln -s /dev/${ezjail_device} ${ezjail_rootdir}.device
 
