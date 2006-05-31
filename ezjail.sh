@@ -1,10 +1,10 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.34 2006/05/22 00:20:45 erdgeist Exp $
+# $Id: ezjail.sh,v 1.35 2006/05/31 14:54:01 erdgeist Exp $
 #
 # $FreeBSD$
 #
 # PROVIDE: ezjail
-# REQUIRE: LOGIN cleanvar
+# REQUIRE: LOGIN cleanvar sshd
 # BEFORE: securelevel
 # KEYWORD: nojail shutdown
 #
