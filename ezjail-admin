@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.129 2006/05/31 14:18:49 erdgeist Exp $
+# $Id: ezjail-admin,v 1.130 2006/07/02 13:16:48 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -494,8 +494,8 @@ setup|update)
     mkdir -p ${ezjail_jailfull} || exerr "Cannot create temporary Jail directory."
 
     # make and setup our world, then split basejail and newjail
-    cd ${ezjail_sourcetree} && make ${ezjail_installaction} DESTDIR=${ezjail_jailfull} || exerr "make ${ezjail_installaction} failed."
-    cd ${ezjail_sourcetree}/etc && make distribution DESTDIR=${ezjail_jailfull} || exerr "make distribution failed."
+    cd ${ezjail_sourcetree} && env DESTDIR=${ezjail_jailfull} make ${ezjail_installaction} || exerr "make ${ezjail_installaction} failed."
+    cd ${ezjail_sourcetree}/etc && env DESTDIR=${ezjail_jailfull} make distribution || exerr "make distribution failed."
     ezjail_splitworld
 
   fi # installaction="none"
