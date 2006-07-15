@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.35 2006/05/31 14:54:01 erdgeist Exp $
+# $Id: ezjail.sh,v 1.36 2006/07/15 16:11:22 erdgeist Exp $
 #
 # $FreeBSD$
 #
@@ -41,7 +41,7 @@ do_cmd()
   # If a jail list is given on command line, process it
   # If not, fetch it from our config directory
   if [ -n "$*" ]; then
-    ezjail_list=`echo -n $* | tr -c "[:alnum:] " _` 
+    ezjail_list=`echo -n $* | tr -c '[:alnum:] ' '_'` 
     ezjail_fromrc="NO"
   else
     ezjail_list=`find -X ${ezjail_prefix}/etc/ezjail/ 2> /dev/null | xargs rcorder | xargs basename -a`
