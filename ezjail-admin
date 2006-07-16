@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.133 2006/07/16 12:02:46 erdgeist Exp $
+# $Id: ezjail-admin,v 1.134 2006/07/16 12:14:47 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -444,8 +444,9 @@ delete)
 ######################## ezjail-admin LIST ########################
 list)
   [ $# -eq 1 ] || exerr ${ezjail_usage_list}
+  unset ezjail_list
 
-  ezjail_list=`find -X ${ezjail_prefix}/etc/ezjail/ 2> /dev/null | xargs rcorder | xargs basename -a`
+  [ -d ${ezjail_prefix}/etc/ezjail/ ] && cd ${ezjail_prefix}/etc/ezjail/ && ezjail_list=`ls | xargs rcorder`
 
   printf "%-3s %-5s %-15s %-28s %s\\n" STA JID IP Hostname "Root Directory"
   echo   "--- ----- --------------- ---------------------------- -------------------------"
