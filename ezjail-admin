@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.131 2006/07/15 16:11:22 erdgeist Exp $
+# $Id: ezjail-admin,v 1.132 2006/07/16 11:29:46 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -507,7 +507,7 @@ setup|update)
 ######################## ezjail-admin INSTALL ########################
 install)
   # Clean variables, prevent polution
-  unset ezjail_release ezjail_ftphost ezjail_installmanpages ezjail_installports ezjail_installsources ezjail_dir ezjail_reldir ezjail_ftpserverqueried
+  unset ezjail_release ezjail_installmanpages ezjail_installports ezjail_installsources ezjail_dir ezjail_reldir ezjail_ftpserverqueried
 
   shift; while getopts :mpsh:r: arg; do case ${arg} in
     m) ezjail_installmanpages=" manpages";;
