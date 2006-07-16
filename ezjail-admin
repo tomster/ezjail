@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.132 2006/07/16 11:29:46 erdgeist Exp $
+# $Id: ezjail-admin,v 1.133 2006/07/16 12:02:46 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -210,7 +210,7 @@ create)
 
   # check for a sane image size and split it up in blocks
   if [ "${ezjail_imagesize}" ]; then
-    _val=`echo "${ezjail_imagesize}"|tr GMKBWX gmkbwx|sed -Ees:g:km:g -es:m:kk:g -es:k:*2b:g -es:b:*128w:g -es:w:*4\ :g -e"s:(^|[^0-9])0x:\1\0X:g" -ey:x:*:|bc`
+    _val=`echo "${ezjail_imagesize}"|tr GMKBWX gmkbwx|sed -Ees:g:km:g -es:m:kk:g -es:k:"*2b":g -es:b:"*128w":g -es:w:"*4 ":g -e"s:(^|[^0-9])0x:\1\0X:g" -ey:x:"*":|bc`
     [ $? -eq 0 -a ${_val} -gt 0 ] || exerr "Error: The image size you specified is somehow incomprehensible (you specified ${ezjail_imagesize})."
     ezjail_imageblockcount=`echo ${_val} / 1048576 | bc`
     ezjail_imagerestbytes=`echo ${_val} % 1048576 | bc`
@@ -393,10 +393,10 @@ create)
 
   # check, whether some host system services do listen on the Jails IP
   TIFS=${IFS}; IFS=_
-  ezjail_listener=`sockstat -4 -l | grep ${ezjail_ip}:[[:digit:]]`
+  ezjail_listener=`sockstat -4 -l | grep "${ezjail_ip}:[[:digit:]]"`
   [ $? = 0 ] && echo -e "Warning: Some services already seem to be listening on IP ${ezjail_ip}\n  This may cause some confusion, here they are:\n${ezjail_listener}"
 
-  ezjail_listener=`sockstat -4 -l | grep \*:[[:digit:]]`
+  ezjail_listener=`sockstat -4 -l | grep "*:[[:digit:]]"`
   [ $? = 0 ] && echo -e "Warning: Some services already seem to be listening on all IP, (including ${ezjail_ip})\n  This may cause some confusion, here they are:\n${ezjail_listener}"
   IFS=${TIFS}
 
