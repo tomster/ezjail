@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.134 2006/07/16 12:14:47 erdgeist Exp $
+# $Id: ezjail-admin,v 1.135 2006/08/27 00:29:03 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -184,7 +184,7 @@ case "$1" in
 ######################## ezjail-admin CREATE ########################
 create)
   # Clean variables, prevent polution
-  unset ezjail_rootdir ezjail_flavour ezjail_softlink ezjail_image ezjail_imagetype ezjail_imageparams ezjail_imagesize ezjail_device ezjail_config ezjail_attachparams ezjail_exists ezjail_attachblocking ezjail_forceblocking ezjail_sourcedevice
+  unset ezjail_rootdir ezjail_flavour ezjail_softlink ezjail_image ezjail_imagetype ezjail_imageparams ezjail_imagesize ezjail_device ezjail_config ezjail_attachparams ezjail_exists ezjail_attachblocking ezjail_forceblocking ezjail_sourcedevice ezjail_rootdirempty
   shift; while getopts :f:r:s:xbic:C: arg; do case ${arg} in
     x) ezjail_exists="YES";;
     r) ezjail_rootdir="${OPTARG}";;
@@ -235,7 +235,7 @@ create)
   # This scenario really will only lead to real troubles in the 'fulljail'
   # case, but I should still explain this to the user and not claim that
   # "an ezjail would already exist"
-  case ${ezjail_hostname} in basejail|newjail|fulljail|flavous|ezjailtemp) exerr "Error: ezjail needs the ${ezjail_hostname} directory for its own administrative purposes. Please rename the ezjail.";; esac
+  case ${ezjail_hostname} in basejail|newjail|fulljail|flavours|ezjailtemp) exerr "Error: ezjail needs the ${ezjail_hostname} directory for its own administrative purposes. Please rename the ezjail.";; esac
 
   # jail names may lead to identical configs, eg. foo.bar.com == foo-bar.com
   # so check, whether we might be running into problems
@@ -246,8 +246,10 @@ create)
   [ "${ezjail_rootdir%%[!/]*}" ] || ezjail_rootdir=${ezjail_jaildir}/${ezjail_rootdir}
 
   # if a directory at the specified jail root already exists, refuse to
-  # install
-  [ -e ${ezjail_rootdir} -a -z "${ezjail_exists}" ] && exerr "Error: the specified jail root ${ezjail_rootdir} alread exists."
+  # install. Empty root dirs are considered okay, sometimes they are
+  # mount points to be filled by ezjail.
+  [ -d ${ezjail_rootdir} ] && [ "`ls -A ${ezjail_rootdir} | wc -l`" -eq 0 ] && ezjail_rootdirempty="YES"
+  [ -e ${ezjail_rootdir} -a -z "${ezjail_rootdirempty}" -a -z "${ezjail_exists}" ] && exerr "Error: the specified jail root ${ezjail_rootdir} already exists."
 
   # if jail root specified on command line does not lie within our jail
   # directory, we need to create a softlink
