@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.135 2006/08/27 00:29:03 erdgeist Exp $
+# $Id: ezjail-admin,v 1.136 2006/08/28 19:53:44 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -321,7 +321,7 @@ create)
       esac
 
       # Format memory image
-      newfs /dev/${ezjail_device} || detach_images || exerr "Error: Could not newfs /dev/${ezjail_device}."
+      newfs -U /dev/${ezjail_device} || detach_images || exerr "Error: Could not newfs /dev/${ezjail_device}."
       # Create mount point and mount
       mkdir -p ${ezjail_rootdir} || detach_images || exerr "Error: Could not create jail root mount point ${ezjail_rootdir}."
       mount /dev/${ezjail_device} ${ezjail_rootdir} || detach_images || exerr "Error: Could not mount /dev/${ezjail_device} to ${ezjail_root}."
