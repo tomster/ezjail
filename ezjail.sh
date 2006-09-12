@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.37 2006/07/16 12:14:47 erdgeist Exp $
+# $Id: ezjail.sh,v 1.38 2006/09/12 11:17:02 erdgeist Exp $
 #
 # $FreeBSD$
 #
@@ -64,6 +64,9 @@ do_cmd()
     eval ezjail_attachparams=\"\$jail_${ezjail}_attachparams\"
     eval ezjail_attachblocking=\"\$jail_${ezjail}_attachblocking\"
     eval ezjail_forceblocking=\"\$jail_${ezjail}_forceblocking\"
+
+    # Do we still have a root to run in?
+    [ ! -d "${ezjail_rootdir}" ] && echo " Warning: root directory ${ezjail_rootdir} of ${ezjail} does not exist." && continue
 
     [ "${ezjail_attachblocking}" = "YES" -o "${ezjail_forceblocking}" = "YES" ] && ezjail_blocking="YES" || unset ezjail_blocking
 
