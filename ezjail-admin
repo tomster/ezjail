@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.143 2006/11/15 19:31:21 erdgeist Exp $
+# $Id: ezjail-admin,v 1.144 2006/11/15 19:46:37 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -652,11 +652,19 @@ config)
     # so check, whether we might be running into problems
     [ -e ${ezjail_new_config} -o -e ${ezjail_new_config}.norun ] && exerr "Error: an ezjail config already exists at ${ezjail_new_config}. Please rename the ezjail."
 
+    # since we just used the old rootdir prefix and added the new hostname,
+    # we might end up at an existing directory
+    [ -e ${ezjail_new_rootdir} ] && exerr "Error: An object already exists at ${ezjail_new_rootdir}, cant rename."
+
+    # prevent trouble with creating our softlink
+    [ -L ${ezjail_softlink} -a -e ${ezjail_new_softlink} ] && exerr "Error: An object already exists at ${ezjail_new_softlink}, cant create softlink there."
+
     # need to rename the image?
     if [ -n "${ezjail_image}" ]; then
       # Do we have an auto generated image name?
       if [ "${ezjail_rootdir}.img" = "${ezjail_image}" ]; then
         ezjail_new_image=${ezjail_new_rootdir}.img
+        [ -e ${ezjail_new_image} ] && exerr "Error: An object already exists at ${ezjail_new_image}, cant rename image."
         mv ${ezjail_image} ${ezjail_new_image}
       else
         ezjail_new_image=${ezjail_image}
