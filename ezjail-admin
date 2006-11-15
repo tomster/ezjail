@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.139 2006/11/15 19:07:09 erdgeist Exp $
+# $Id: ezjail-admin,v 1.140 2006/11/15 19:11:17 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -421,7 +421,7 @@ delete)
   fetchjailinfo $1
 
   # check for existence of jail in our records
-  [ -n "${ezjail_config}" ] || exerr "Error: Nothing known about jail ${ezjail_name}."
+  [ -z "${ezjail_config}" ] || exerr "Error: Nothing known about jail ${ezjail_name}."
 
   # if jail is still running, refuse to go any further
   [ -n "${ezjail_id}" ] && exerr "Error: Jail appears to be still running, stop it first."
@@ -609,7 +609,7 @@ config)
   fetchjailinfo $1
 
   # check for existence of jail in our records
-  [ -n "${ezjail_config}" ] || exerr "Error: Nothing known about jail ${ezjail_name}."
+  [ -z "${ezjail_config}" ] || exerr "Error: Nothing known about jail ${ezjail_name}."
 
   # Nothing to be configured?
   [ -z "${ezjail_setrunnable}" -a -z "${ezjail_new_name}" -a -z "${ezjail_imageaction}" ] && echo "Warning: No config option specified."
