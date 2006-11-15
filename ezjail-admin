@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.137 2006/11/15 18:51:22 erdgeist Exp $
+# $Id: ezjail-admin,v 1.138 2006/11/15 19:05:04 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -653,9 +653,9 @@ config)
     [ -e ${ezjail_new_config} -o -e ${ezjail_new_config}.norun ] && exerr "Error: an ezjail config already exists at ${ezjail_new_config}. Please rename the ezjail."
 
     # need to rename the image?
-    if [ -n "${ezjail_image}" ]
+    if [ -n "${ezjail_image}" ]; then
       # Do we have an auto generated image name?
-      if [ "${ezjail_rootdir}.img" = "${ezjail_image}" ]
+      if [ "${ezjail_rootdir}.img" = "${ezjail_image}" ]; then
         ezjail_newimage=${ezjail_newrootdir}.img}
         mv ${ezjail_image} ${ezjail_new_image}
       else
@@ -692,7 +692,7 @@ config)
     echo export jail_${ezjail_new_safename}_exec=\"${ezjail_new_exec}\"
     echo export jail_${ezjail_new_safename}_mount_enable=\"${ezjail_new_mount_enable}\"
     echo export jail_${ezjail_new_safename}_devfs_enable=\"${ezjail_new_devfs_enable}\"
-    echo export jail_${ezjail_new_safename}_devfs_ruleset=\"${ezjail_new_devfs_ruleset\"
+    echo export jail_${ezjail_new_safename}_devfs_ruleset=\"${ezjail_new_devfs_ruleset}\"
     echo export jail_${ezjail_new_safename}_procfs_enable=\"${ezjail_new_procfs_enable}\"
     echo export jail_${ezjail_new_safename}_fdescfs_enable=\"${ezjail_new_fdescfs_enable}\"
     echo export jail_${ezjail_new_safename}_image=\"${ezjail_new_image}\"
