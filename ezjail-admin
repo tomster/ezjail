@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.141 2006/11/15 19:13:21 erdgeist Exp $
+# $Id: ezjail-admin,v 1.142 2006/11/15 19:20:50 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -625,7 +625,7 @@ config)
     # The new values for the jail
     ezjail_new_hostname=`echo -n ${ezjail_new_name} | tr '/~' '__'`
     ezjail_new_safename=`echo -n "${ezjail_new_name}" | tr -c '[:alnum:]' _`
-    ezjail_new_rootdir=`basename -- ${ezjail_rootdir}`/${ezjail_new_hostname}
+    ezjail_new_rootdir=`dirname -- ${ezjail_rootdir}`/${ezjail_new_hostname}
     ezjail_new_config=${ezjail_jailcfgs}/${ezjail_new_safename}
     [ "${ezjail_config}" = "${ezjail_config%.norun}" ] || ezjail_new_config=${ezjail_jailcfgs}/${ezjail_new_safename}.norun
     ezjail_new_softlink=${ezjail_jaildir}/`basename -- ${ezjail_new_rootdir}`
