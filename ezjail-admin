@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.144 2006/11/15 19:46:37 erdgeist Exp $
+# $Id: ezjail-admin,v 1.145 2007/01/15 14:03:46 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -47,6 +47,34 @@ ezjail_usage_list="Usage: ${ezjail_admin} list"
 
 # define our bail out shortcut
 exerr () { echo -e "$*" >&2 ; exit 1; }
+
+# generic attach routine for image jails
+attach_images () {
+  # Create a memory disc from jail image
+  ezjail_imagedevice=`mdconfig -a -t vnode -f ${ezjail_image}` || exerr "Error: Could not attach memory disc."
+
+  # If this is a crypto jail, try to mount it, remind user, which jail
+  # this is. In this case, the device to mount is 
+  case ${ezjail_imagetype} in
+  crypto|bde)
+    echo "Attaching bde device for image jail ${ezjail}..."
+    echo gbde attach /dev/${ezjail_imagedevice} ${ezjail_attachparams} | /bin/sh
+    [ $? -eq 0 ] || detach_images keep || exerr "Error: Attaching bde device failed."
+    # Device to mount is not md anymore
+    ezjail_device=${ezjail_imagedevice}.bde
+    ;;
+  eli)
+    echo "Attaching eli device for image jail ${ezjail}..."
+    echo geli attach  ${ezjail_attachparams} /dev/${ezjail_imagedevice} | /bin/sh 
+    [ $? -eq 0 ] || detach_images keep || exerr "Error: Attaching eli device failed."
+    # Device to mount is not md anymore
+    ezjail_device=${ezjail_imagedevice}.eli
+    ;;
+  simple)
+    ezjail_device=${ezjail_imagedevice}
+    ;;
+  esac
+}
 
 # define detach strategy for image jails
 detach_images () {
@@ -735,30 +763,8 @@ config)
       [ -n "${ezjail_attached}" ] && exerr "Error: Jail image file ${ezjail_image} already attached as ${ezjail_device}."
       rm -f ${ezjail_rootdir}.device
 
-      # Create a memory disc from jail image
-      ezjail_imagedevice=`mdconfig -a -t vnode -f ${ezjail_image}` || exerr "Error: Could not attach memory disc."
-
-      # If this is a crypto jail, try to mount it, remind user, which jail
-      # this is. In this case, the device to mount is 
-      case ${ezjail_imagetype} in
-      crypto|bde)
-        echo "Attaching bde device for image jail ${ezjail}..."
-        echo gbde attach /dev/${ezjail_imagedevice} ${ezjail_attachparams} | /bin/sh
-        [ $? -eq 0 ] || detach_images keep || exerr "Error: Attaching bde device failed."
-        # Device to mount is not md anymore
-        ezjail_device=${ezjail_imagedevice}.bde
-        ;;
-      eli)
-        echo "Attaching eli device for image jail ${ezjail}..."
-        echo geli attach  ${ezjail_attachparams} /dev/${ezjail_imagedevice} | /bin/sh 
-        [ $? -eq 0 ] || detach_images keep || exerr "Error: Attaching eli device failed."
-        # Device to mount is not md anymore
-        ezjail_device=${ezjail_imagedevice}.eli
-        ;;
-      simple)
-        ezjail_device=${ezjail_imagedevice}
-        ;;
-      esac
+      # Attach images by type
+      attach_images
 
       mount /dev/${ezjail_device} ${ezjail_rootdir} || detach_images keep || exerr "Error: Could not mount /dev/${ezjail_device} to ${ezjail_rootdir}."
       # relink image device
@@ -779,6 +785,22 @@ config)
       esac
 
       # Unmount/detach everything
+      detach_images keep
+
+      # Remove soft link (which acts as a lock)
+      [ -e /dev/${ezjail_imagedevice} ] || rm -f ${ezjail_rootdir}.device
+      ;;
+    fsck)
+      # Check, if image already attached
+      [ -n "${ezjail_attached}" ] && exerr "Error: Jail image file ${ezjail_image} already attached as ${ezjail_device}."
+      rm -f ${ezjail_rootdir}.device
+
+      # Attach images by type
+      attach_images
+
+      fsck_ufs /dev/${ezjail_device}
+
+      # Detach images by type
       detach_images keep
 
       # Remove soft link (which acts as a lock)
