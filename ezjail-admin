@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.145 2007/01/15 14:03:46 erdgeist Exp $
+# $Id: ezjail-admin,v 1.146 2007/01/15 14:08:17 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -80,7 +80,7 @@ attach_images () {
 detach_images () {
   # unmount and detach memory disc
   if [ -n "${ezjail_imagedevice}" ]; then
-    umount ${ezjail_rootdir} > /dev/null
+    umount ${ezjail_rootdir} > /dev/null 2> /dev/null
     case ${ezjail_imagetype} in
       bde) gbde detach /dev/${ezjail_imagedevice} > /dev/null;;
       eli) geli detach /dev/${ezjail_imagedevice} > /dev/null;;
