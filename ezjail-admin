@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.146 2007/01/15 14:08:17 erdgeist Exp $
+# $Id: ezjail-admin,v 1.147 2007/01/16 14:15:21 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -165,6 +165,7 @@ ezjail_splitworld() {
 
 # The user may want to have a ports tree in basejail
 ezjail_updateports () {
+  local _portsnap_fetch="fetch"
   # if /usr/ports/CVS exists, assume cvs up is safe
   # this is legacy
   if [ -f ${ezjail_jailbase}/usr/ports/CVS/Root ]; then
@@ -173,7 +174,8 @@ ezjail_updateports () {
     echo "Gathering local information may take a while."
     cd ${ezjail_jailbase}/usr/ports/ && cvs -d ${ezjail_portscvsroot} up -Pd
   else
-    portsnap fetch
+    [ -z "$TERM" -o "$TERM" = dumb ] && _portsnap_fetch="cron"
+    portsnap ${_portsnap_fetch}
     [ -d ${ezjail_jailbase}/usr/ports ] && ezjail_portsnapaction=update
     portsnap -p ${ezjail_jailbase}/usr/ports ${ezjail_portsnapaction:-"extract"}
   fi
@@ -401,6 +403,9 @@ create)
     # install files and config to new jail
     cd ${ezjail_flavours}/${ezjail_flavour} && find * | cpio -p -u -v ${ezjail_rootdir} > /dev/null
     [ $? = 0 ] || echo "Warning: Could not fully install flavour."
+
+    # if the packages are links and not files we have to copy them now
+    find ${ezjail_rootdir}/pkg/ -type l -exec cp -r -f {} {}.ezjail \; -exec mv {}.ezjail {} \;
 
     # If a config is found, make it auto run on jails startup
     if [ -f ${ezjail_rootdir}/ezjail.flavour ]; then
