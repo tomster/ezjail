@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.147 2007/01/16 14:15:21 erdgeist Exp $
+# $Id: ezjail-admin,v 1.148 2007/01/24 11:31:04 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -523,6 +523,7 @@ setup|update)
     # Bump the user for some of the most common errors
     [ -d ${ezjail_sourcetree} ] || exerr "Cannot find your copy of the FreeBSD source tree in ${ezjail_sourcetree}."
     [ -e ${ezjail_sourcetree}/Makefile ] || exerr "Your source tree in ${ezjail_sourcetree} seems to be incomplete (Makefile missing)."
+    [ "`sysctl -n kern.securelevel`" -gt 0 ] || exerr "You're running in a secure level higher than 0. ezjail will not run correctly."
 
     # Normally fulljail should be renamed by past ezjail-admin commands.
     # However those may have failed
@@ -561,6 +562,8 @@ install)
   ezjail_ftphost=${ezjail_ftphost#ftp://}
   ezjail_dir=${ezjail_ftphost#file://}
   [ "${ezjail_dir%%[!/]*}" ] || ezjail_reldir=${PWD}
+
+  [ "`sysctl -n kern.securelevel`" -gt 0 ] || exerr "You're running in a secure level higher than 0. ezjail will not run correctly."
 
   # ftp servers normally wont provide non-RELEASE-builds
   if [ -z "${ezjail_release}" -a "${ezjail_dir}" = "${ezjail_ftphost}" ]; then
