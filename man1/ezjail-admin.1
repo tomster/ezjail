@@ -4,34 +4,26 @@ ezjail-admin \- Administrate ezjail
 .SH SYNOPSIS
 .T
 .B ezjail-admin create
-[-f flavour] [-r jailroot] [-s imagesize] [-ibx] [-c bde|eli] [-C attachargs]
-.I hostname jailip
+[-f flavour] [-r jailroot] [-s imagesize] [-ibx] [-c bde|eli] [-C attachargs]\fI hostname jailip
 
 .T
-.B ezjail-admin delete
-[-w]
-.I hostname
+.B ezjail-admin delete \fR[-w] \fI hostname
 
 .T
 .B ezjail-admin list
 
 .T
-.B ezjail-admin config
-[-r run|norun] [-n newname] [-i attach|detach]
-.I jailname
+.B ezjail-admin config\fR [-r run|norun] [-n newname] [-i attach|detach]\fI jailname
 
 .T
-.B ezjail-admin install
-[-mps] [-h host] [-r release]
+.B ezjail-admin install\fR [-mps] [-h host] [-r release]
 
 .T
-.B ezjail-admin update
-[-s sourcetree] [-i] [-pP]
+.B ezjail-admin update\fR [-s sourcetree] [-i] [-pP]
 .SH DESCRIPTION
-The
-.B ezjail-admin
-tool is used to manage jails inside the ezjail scope. It is not used 
-to start or stop ezjails jails. Refer to ezjail(5) for more details. 
+The \fB ezjail-admin\fR tool is used to manage jails inside the ezjail
+scope. It is not used to start or stop ezjails jails. Refer to \fIezjail(5)\fR
+for more details.
 .SH ezjail-admin create
 copies the template jail to the root of a new jail, whose name and IP
 address are provided as mandatory parameters.
@@ -39,17 +31,13 @@ address are provided as mandatory parameters.
 If no jail root is specified via the -r option, it is derived from
 the jails name. In this case or, if a jail root is given and does not
 start with a '/', it is interpreted relative to ezjails root dir
-(default:
-.I /usr/jails
-). If a specified jail root lies outside ezjail root dir, a soft link
-is created inside this root dir pointing to the newly created jails
-location.
+(default: \fI/usr/jails\fR). If a specified jail root lies outside
+ezjail root dir, a soft link is created inside this root dir pointing
+to the newly created jails location.
 
 The -i and the -c option both require a size passed via the -s option
 and create a file based jail image, gbde or geli encrypted for the -c 
-case. The image file is named as the jail root suffixed with
-.I .img
-.
+case. The image file is named as the jail root suffixed with \fI.img\fR.
 
 The -x (jail exists) option indicates, that an ezjail already exists
 at the jail root.
@@ -58,30 +46,20 @@ This is useful in situations where you just want to alter some of a
 jail properties and called ezjail-admin delete without the -w option
 before. However, sanity checks are being performed.
 
-The script creates an entry in its config and a
-.I /etc/fstab.hostname
+The script creates an entry in its config and a \Fi/etc/fstab.hostname\fR
 file allowing the jail to be brought up after next reboot (or) via
 the EZJAIL_PREFIX/etc/rc.d/ezjail.sh script.
 
 The newly created jail can perform some initializiation actions, if the
--f
-.I flavour
-option is given, where
-.I flavour
-is a directory tree under ezjails root dir (default:
-.I /usr/jails/flavours
-). See section
-.B FLAVOURS
-below for more details.
+-f \fIflavour\fR option is given, where \fIflavour\fR is a directory tree
+under ezjails root dir (default: \fI/usr/jails/flavours\fR). See section
+\fBFLAVOURS\fR below for more details.
 
-Options for newly created jails are read from
-.B ezjail.conf,
-refer to ezjail.conf(5) for more information.
+Options for newly created jails are read from \fBezjail.conf\fR, refer to
+ezjail.conf(5) for more information.
 .SH ezjail-admin delete
-removes a jail from ezjails config and the corresponding
-.I /etc/fstab.hostname
-file, thus preventing the jail from being brought
-up on next reboot.
+removes a jail from ezjails config and the corresponding \fI/etc/fstab.hostname\fR
+file, thus preventing the jail from being brought up on next reboot.
 
 If the -w (wipe) option is given, the directory pointed to by the jail
 root entry is removed as well as the soft link in ezjails root dir.
@@ -89,28 +67,13 @@ root entry is removed as well as the soft link in ezjails root dir.
 lists all jails inside ezjails scope. They are sorted by the order they 
 start up, as defined by rcorder. The list format is straight forward.
 
-A status flag consisting of 2 or 3 letters, the first meaning
-.B (D)irectory
-based,
-.B (I)mage
-based,
-.B (B)de
-crypto image based,
-.B (E)li
-crypto image based. The second one meaning
-.B (R)unning
-,
-.B (A)ttached
-but not running,
-.B (S)topped
-. An optional
-.B (N)orun
-stands for disabled jails (see
-.I ezjail-admin config
-).
+A status flag consisting of 2 or 3 letters, the first meaning \fB(D)irectory\fR
+based, \fB(I)mage\fR based, \fB(B)de\fR crypto image based, \fB(E)li\fR crypto
+image based. The second one meaning \fB(R)unning\fR, \fB(A)ttached\fR but not
+running, \fB(S)topped\fR. An optional \fB(N)orun\fR stands for disabled jails (see
+\fIezjail-admin config\fR).
 
-Rest of the row is follow by jails jid (if available), its IP, hostname 
-and root directory.
+Rest of the row is jails jid (if available), its IP, hostname and root directory.
 .SH ezjail-admin config
 manages existing specific ezjails.
 
@@ -128,10 +91,9 @@ an attached jail.
 fetches everything needed to setup a base jail from an FTP server and 
 installs it.
 
-Default location for ezjails base jail is
-.I /usr/jails
-, so be sure you have enough space there (a FreeBSD base without man 
-pages, sources and ports is around 120MB).
+Default location for ezjails base jail is \fI/usr/jails\fR, so be sure you
+have enough space there (a FreeBSD base without man pages, sources and ports
+is around 120MB).
 
 The -m and -s option will fetch and install man pages (ca. 10MB) and
 sources packages (ca. 450MB) respectively. The -p option invokes the
@@ -149,60 +111,45 @@ If the specified location begins with file://, your local copy of the
 release is used. That way you can do some modifications to install.sh
 scripts before executing them.
 
-You can later update your world from CVS or update ports by
-.U ezjail-admin update
-or rerun this subcommand with another OS version.
+You can later update your world from CVS or update ports by \fIezjail-admin
+update\fR or rerun this subcommand with another OS version.
 .SH ezjail-admin update
 creates or update ezjails basejail. Depending on the parameters
 given it will install a FreeBSD system from a source tree whose location
-is either provided in the
-.B ezjail.conf
-config file or via the -s option.
+is either provided in the \fBezjail.conf\fR config file or via the -s option.
 
 If the -p or -P options are given, the base jail also is given a copy of
 FreeBSDs ports tree, which is in turn linked into all newly created
 ezjails. The portsnap utility is invoked to do the actual work.
 
-If the -P option is given,
-.B only the ports tree will be updated,
-this can be done, while jails are running.
+If the -P option is given, \fBonly the ports tree will be updated,\fR this can
+be done, while jails are running.
 
-If the -i (install only) option is given,
-.B ezjail-admin update
-only performes a
-.I make installworld,
-otherwise
-.I make world
-is invoked.
+If the -i (install only) option is given, \fBezjail-admin update\fR only
+performes a \fImake installworld,\fR otherwise \fImake world\fR is invoked.
 
 .SH NOTES
-.B ezjail-admin update
-uses a temporary directory to install its world to, thus leaving intact
-all installed libraries, if a base jail already exists.
+.B ezjail-admin update\fR uses a temporary directory to install its world to,
+thus leaving intact all installed libraries, if a base jail already exists.
 
-When using the
-.B ezjail-admin update
-option, be careful to use the same FreeBSD source tree used to build the 
-host systems world, or at least its kernel. Combining a make world in the 
-host system with
-.B ezjail-admin update
+When using the \fBezjail-admin update\fR option, be careful to use the same
+FreeBSD source tree used to build the  host systems world, or at least its
+kernel. Combining a make world in the host system with \fBezjail-admin update\fR
 is considered a good idea.
 
 When a ports tree exists in base jail, a make.conf containing reasonable
 values for having ports in jails is created in the template jail.
 .SH FLAVOURS
-.B ezjail-admin
-provides an easy way to create many jails with similar or identical
-properties.
+.B ezjail-admin\fR provides an easy way to create many jails with similar or
+identical properties.
 
 A sample flavour config directory resides under
-.I EZJAIL_PREFIX/share/examples/ezjail/default/.
-Some typical Jail initialization actions are demonstrated and you are
-encouraged to use it as a template for your flavours.
+.I EZJAIL_PREFIX/share/examples/ezjail/default/.\fR Some typical Jail
+initialization actions are demonstrated and you are encouraged to use it as a
+template for your flavours.
 
 If a flavour is selected on jail creation, the flavour root is being
-copied to the new Jails root, mostly containing an
-.I /ezjail.flavour .
+copied to the new Jails root, mostly containing an \fI/ezjail.flavour\fR.
 If the Jail starts up for the first time this script is run.
 
 In its default form it will create some groups and users, change the
