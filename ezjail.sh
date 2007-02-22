@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.38 2006/09/12 11:17:02 erdgeist Exp $
+# $Id: ezjail.sh,v 1.39 2007/02/22 16:01:09 erdgeist Exp $
 #
 # $FreeBSD$
 #
@@ -133,7 +133,7 @@ attach_detach_pre ()
     esac
 
     # Clean image
-    fsck_ufs -F -p /dev/${ezjail_device}
+    fsck -t ufs -p -B /dev/${ezjail_device}
 
     # relink image device
     rm -f ${ezjail_rootdir}.device
