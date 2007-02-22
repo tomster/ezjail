@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.151 2007/02/22 16:01:09 erdgeist Exp $
+# $Id: ezjail-admin,v 1.152 2007/02/22 16:21:32 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -278,7 +278,7 @@ create)
   # if a directory at the specified jail root already exists, refuse to
   # install. Empty root dirs are considered okay, sometimes they are
   # mount points to be filled by ezjail.
-  [ -d ${ezjail_rootdir} -a -z "`ls -I ${ezjail_rootdir}`" ] && ezjail_rootdirempty="YES"
+  [ -d ${ezjail_rootdir} ] && [ -z "`ls -I ${ezjail_rootdir}`" ] && ezjail_rootdirempty="YES"
   [ -e ${ezjail_rootdir} -a -z "${ezjail_rootdirempty}" -a -z "${ezjail_exists}" ] && exerr "Error: the specified jail root ${ezjail_rootdir} already exists."
 
   # if jail root specified on command line does not lie within our jail
