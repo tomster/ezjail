@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.152 2007/02/22 16:21:32 erdgeist Exp $
+# $Id: ezjail-admin,v 1.153 2007/03/23 16:08:43 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -120,7 +120,12 @@ fetchjailinfo () {
   if [ -n "${ezjail_image}" -a -L "${ezjail_rootdir}.device" ]; then
     # Fetch destination of soft link
     ezjail_device=`stat -f "%Y" ${ezjail_rootdir}.device`
-    [ -e "${ezjail_device}" ] && ezjail_attached="YES"
+
+    mount -p -v | grep -q -E "^${ezjail_rootdir}.device.${ezjail_rootdir}" && ezjail_attached="YES"
+    mount -p -v | grep -q -E "^${ezjail_device}.${ezjail_rootdir}" && ezjail_attached="YES"
+
+    # Stale device link detected. Remove and clean.
+    [ -z "${ezjail_attached}" ] && unset ezjail_device && rm -f ${ezjail_rootdir}.device
   fi
 
   [ -f /var/run/jail_${ezjail_safename}.id ] && ezjail_id=`cat /var/run/jail_${ezjail_safename}.id` || return
