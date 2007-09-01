@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.41 2007/03/23 16:08:43 erdgeist Exp $
+# $Id: ezjail.sh,v 1.42 2007/09/01 13:10:41 erdgeist Exp $
 #
 # $FreeBSD$
 #
@@ -71,7 +71,7 @@ do_cmd()
     [ "${ezjail_attachblocking}" = "YES" -o "${ezjail_forceblocking}" = "YES" ] && ezjail_blocking="YES" || unset ezjail_blocking
 
     # Cannot auto mount blocking jails without interrupting boot process
-    [ "${ezjail_fromrc}" = "YES" -a "${action}" = "start" -a "${ezjail_blocking}" = "YES" ] && continue
+    [ "${ezjail_fromrc}" = "YES" -a "${action}" = "start" -a "${ezjail_blocking}" = "YES" ] && echo -n " ...skipping blocking jail ${ezjail}" && continue
 
     # Explicitely do only run blocking crypto jails when *crypto is requested
     [ "${action%crypto}" != "${action}" -a -z "${ezjail_blocking}" ] && continue
@@ -93,10 +93,11 @@ do_cmd()
 
 attach_detach_pre ()
 {
-  if [ "${action%crypto}" = "start" ]; then
+  case "${action%crypto}" in
+  start|restart)
     # If jail is running, do not mount devices, this is the same check as
     # /etc/rc.d/jail does
-    [ -e /var/run/jail_${ezjail}.id ] && return 1
+    [ -e /var/run/jail_${ezjail}.id ] && return 0
 
     if [ -L "${ezjail_rootdir}.device" ]; then
       # Fetch destination of soft link
@@ -143,7 +144,8 @@ attach_detach_pre ()
     # relink image device
     rm -f ${ezjail_rootdir}.device
     ln -s /dev/${ezjail_device} ${ezjail_rootdir}.device
-  else
+  ;;
+  stop)
     # If jail is not running, do not unmount devices, this is the same check
     # as /etc/rc.d/jail does
     [ -e /var/run/jail_${ezjail}.id ] || return 1
@@ -163,7 +165,8 @@ attach_detach_pre ()
 
     # Remove soft link (which acts as a lock)
     rm -f ${ezjail_rootdir}.device
-  fi
+  ;;
+  esac
 }
 
 attach_detach_post () {
