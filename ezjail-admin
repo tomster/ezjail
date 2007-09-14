@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.154 2007/04/26 21:35:45 erdgeist Exp $
+# $Id: ezjail-admin,v 1.155 2007/09/14 23:25:04 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -631,6 +631,13 @@ install)
   # Fill ports, if requested
   [ "${ezjail_installports}" = "YES" ] && ezjail_updateports
 
+  ;;
+######################## ezjail-admin SHORTCUT ########################
+*start|*stop)
+  [ -x "${ezjail_prefix}/etc/rc.d/ezjail" ] && exec "${ezjail_prefix}/etc/rc.d/ezjail" $@
+  [ -x "${ezjail_prefix}/etc/rc.d/ezjail.sh" ] && exec "${ezjail_prefix}/etc/rc.d/ezjail.sh" $@
+
+  exerr "Could not find ezjail's rc.d script in ${ezjail_prefix}/etc/rc.d/. You need to type it the long way."
   ;;
 ######################## ezjail-admin CONFIG ########################
 config)
