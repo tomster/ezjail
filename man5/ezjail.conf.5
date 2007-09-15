@@ -46,6 +46,11 @@ This is where the install sub command defaults to fetch its packages from
 Set to YES, if ezjail should provide a soft link from /usr/bin/perl to /usr/local/bin/perl in base jail.
 .br
 .I default: YES
+.TP
+.B ezjail_default_execute (str)
+This is the default command executed in a jail by ezjail-admin console.
+.br
+.I default: YES
 .SH JAIL CREATION OPTIONS
 Default options for newly created jails. Used by the
 .B ezjail-admin(1)

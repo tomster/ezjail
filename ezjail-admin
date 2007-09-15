@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.155 2007/09/14 23:25:04 erdgeist Exp $
+# $Id: ezjail-admin,v 1.156 2007/09/15 00:25:52 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -22,6 +22,7 @@ ezjail_flavours=${ezjail_flavours:-"${ezjail_jaildir}/flavours"}
 ezjail_portscvsroot=${ezjail_portscvsroot:-":pserver:anoncvs@anoncvs.at.FreeBSD.org:/home/ncvs"}
 ezjail_sourcetree=${ezjail_sourcetree:-"/usr/src"}
 ezjail_uglyperlhack=${ezjail_uglyperlhack:-"YES"}
+ezjail_default_execute=${ezjail_default_execute:-"/bin/sh"}
 
 ezjail_mount_enable=${ezjail_mount_enable:-"YES"}
 ezjail_devfs_enable=${ezjail_devfs_enable:-"YES"}
@@ -33,12 +34,13 @@ ezjail_dirlist="bin boot lib libexec rescue sbin usr/bin usr/games usr/include u
 case `uname -p` in amd64) ezjail_dirlist="${ezjail_dirlist} usr/lib32";; esac
 
 # Synopsis messages
-ezjail_usage_ezjailadmin="Usage: ${ezjail_admin} [config|create|delete|install|list|update] {params}"
+ezjail_usage_ezjailadmin="Usage: ${ezjail_admin} [config|console|create|delete|install|list|update] {params}"
 ezjail_usage_install="Usage: ${ezjail_admin} install [-mps] [-h host] [-r release]"
 ezjail_usage_create="Usage: ${ezjail_admin} create [-xbi] [-f flavour] [-r jailroot] [-s size] [-c bde|eli] [-C args] jailname jailip"
 ezjail_usage_delete="Usage: ${ezjail_admin} delete [-w] jailname"
 ezjail_usage_update="Usage: ${ezjail_admin} update [-s sourcetree] [-i] [-pP]"
 ezjail_usage_config="Usage: ${ezjail_admin} config [-r run|norun] [-n newname] [-i attach|detach|fsck] jailname"
+ezjail_usage_console="Usage: ${ezjail_admin} console [-f] [-e command] jailname"
 ezjail_usage_list="Usage: ${ezjail_admin} list"
 
 ################################
@@ -638,6 +640,53 @@ install)
   [ -x "${ezjail_prefix}/etc/rc.d/ezjail.sh" ] && exec "${ezjail_prefix}/etc/rc.d/ezjail.sh" $@
 
   exerr "Could not find ezjail's rc.d script in ${ezjail_prefix}/etc/rc.d/. You need to type it the long way."
+  ;;
+######################## ezjail-admin CONSOLE ########################
+console)
+  # Clean variables, prevent polution
+  unset ezjail_execute ezjail_forcestart
+
+  shift; while getopts :e:f arg; do case ${arg} in
+    e) ezjail_execute=${OPTARG};;
+    f) ezjail_forcestart="YES";;
+    ?) exerr ${ezjail_usage_console};;
+  esac; done; shift $(( $OPTIND - 1 ))
+
+  # we need name of jail to attach to
+  [ $# -eq 1 ] || exerr ${ezjail_usage_console}
+
+  # Get all info we have on that jail
+  fetchjailinfo $1
+
+  # check for existence of jail in our records
+  [ -n "${ezjail_config}" ] || exerr "Error: Nothing known about jail ${ezjail_name}."
+
+  # if jail is not running, we either try to force start it or fail
+  if [ -z "${ezjail_id}" ]; then
+
+    # If force start is requested, try that
+    [ -n "$ezjail_forcestart}" ] || exerr "Error: Jail ${ezjail_name} appears not to be running, start it first (or use console -f for force start)."
+
+    echo "Trying to bring up ${ezjail_name} ..."
+    # Try to locate and run ezjails rc.d script
+    if [ -x "${ezjail_prefix}/etc/rc.d/ezjail" ]; then
+      (exec "${ezjail_prefix}/etc/rc.d/ezjail" start ${ezjail_name});
+    elif [ -x "${ezjail_prefix}/etc/rc.d/ezjail.sh" ]; then
+      (exec "${ezjail_prefix}/etc/rc.d/ezjail.sh" start ${ezjail_name});
+    else
+      exerr "Could not find ezjail's rc.d script in ${ezjail_prefix}/etc/rc.d/. You need to start ${ezjail_name} by hand."
+    fi
+
+    # See, if it is running now
+    fetchjailinfo ${ezjail_name}
+
+    [ -n "${ezjail_id}" ] || exerr "Error: Could not start ${ezjail_name}. You need to start it by hand."
+  fi
+
+  # Try to attach to jail
+  [ -n "${ezjail_execute}" ] && exec jexec ${ezjail_id} ${ezjail_execute}
+
+  exec jexec ${ezjail_id} ${ezjail_default_execute}
   ;;
 ######################## ezjail-admin CONFIG ########################
 config)

@@ -16,14 +16,20 @@ ezjail-admin \- Administrate ezjail
 .B ezjail-admin config\fR [-r run|norun] [-n newname] [-i attach|detach|fsck]\fI jailname
 
 .T
+.B ezjail-admin console\fR [-f] [-e command]\fI jailname
+
+.T
 .B ezjail-admin install\fR [-mps] [-h host] [-r release]
 
 .T
 .B ezjail-admin update\fR [-s sourcetree] [-i] [-pP]
 .SH DESCRIPTION
 The \fB ezjail-admin\fR tool is used to manage jails inside the ezjail
-scope. It is not used to start or stop ezjails jails. Refer to \fIezjail(5)\fR
-for more details.
+scope.
+
+It can also be used to start or stop and to get a console in ezjails
+jails by proxying everything looking like
+\fBezjail-admin start\fR, \fBstop\fR or \fBrestart\fR to the ezjail rc.d script.
 .SH ezjail-admin create
 copies the template jail to the root of a new jail, whose name and IP
 address are provided as mandatory parameters.
@@ -87,6 +93,12 @@ renamed as well.
 You can attach image jails for administrative purposes by the -i attach
 option and detach them with -i detach. It is not possible to run or delete
 an attached jail. You can force fscking a jail image with the -i fsck command.
+.SH ezjail-admin console
+Attaches your console to a jail by executing a jexec with its jid.
+
+The command executed in that jail defaults to /bin/sh but can be set with the
+-e modifier or by the ezjail_default_execute config variable. A non-running
+jail is not started by default. If you want that, force it with -f.
 .SH ezjail-admin install
 fetches everything needed to setup a base jail from an FTP server and 
 installs it.
