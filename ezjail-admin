@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.157 2007/09/26 15:06:40 erdgeist Exp $
+# $Id: ezjail-admin,v 1.158 2007/09/26 15:13:02 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -724,7 +724,7 @@ archive)
   [ -n "${ezjail_id}" -a -z "${ezjail_force}" ] && exerr "Error: Jail appears to be still running, stop it first or [-f]orce archiving."
 
   # if no archive name was specified, make one up
-  [ -z "${ezjail_archive}" ] && ezjail_archive="${ezjail_safename}-`date +%Y%m%d%H%M.%S`.tar.bz2
+  [ -z "${ezjail_archive}" ] && ezjail_archive="${ezjail_safename}-`date +%Y%m%d%H%M.%S`.tar.bz2"
 
   # prepend archive directory
   ezjail_archive="${ezjail_archivedir%/}"/"${ezjail_archive}"
