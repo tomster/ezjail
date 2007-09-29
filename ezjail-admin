@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.159 2007/09/29 04:07:01 erdgeist Exp $
+# $Id: ezjail-admin,v 1.160 2007/09/29 04:11:03 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -727,7 +727,7 @@ archive)
   [ -z "${ezjail_archive}" ] && ezjail_archive="${ezjail_safename}-`date +%Y%m%d%H%M.%S`.tar.bz2"
 
   # prepend archive directory
-  ezjail_archive="${ezjail_archivedir%/}"/"${ezjail_archive}"
+  ezjail_archive="${ezjail_archivedir:-`pwd -P`}"/"${ezjail_archive}"
 
   case ${ezjail_archive} in
     *.tar.gz|*.tgz) ;;
@@ -735,7 +735,7 @@ archive)
   esac;
 
 # TODO:  tar cpf${ezjail_taroption} ${ezjail_archive} --atime-preserve --one-file-system  ${ezjail_config} -C ${ezjail_root} 
-  cd ${ezjail_root} || exerr "Error: can't cd to ${ezjail_root}
+  cd ${ezjail_root} || exerr "Error: can't cd to ${ezjail_root}."
   pax -wXtz -x ustar -f ${ezjail_archive} -s/^/ezjail\// . 
 
   ;;
