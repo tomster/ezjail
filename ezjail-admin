@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.158 2007/09/26 15:13:02 erdgeist Exp $
+# $Id: ezjail-admin,v 1.159 2007/09/29 04:07:01 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -703,7 +703,7 @@ console)
 ######################## ezjail-admin ARCHIVE ########################
 archive)
   # Clean variables, prevent polution
-  unset ezjail_archive ezjail_force ezjail_taroption
+  unset ezjail_archive ezjail_force
 
   shift; while getopts :fr:d: arg; do case ${arg} in
     f) ezjail_force=${OPTARG};;
@@ -730,13 +730,13 @@ archive)
   ezjail_archive="${ezjail_archivedir%/}"/"${ezjail_archive}"
 
   case ${ezjail_archive} in
-    *.tar.bz|*.tar.bz2|*.tbz|*.tar.bzip ) ezjail_taroption="j" ;;
-    *.tar.gz|*.tgz|*.tar.gzip)            ezjail_taroption="z" ;;
-    *.tar) ;;
-    *) ezjail_archive="${ezjail_archive}.tar" ;;
+    *.tar.gz|*.tgz) ;;
+    *) ezjail_archive="${ezjail_archive}.tar.gz" ;;
   esac;
 
 # TODO:  tar cpf${ezjail_taroption} ${ezjail_archive} --atime-preserve --one-file-system  ${ezjail_config} -C ${ezjail_root} 
+  cd ${ezjail_root} || exerr "Error: can't cd to ${ezjail_root}
+  pax -wXtz -x ustar -f ${ezjail_archive} -s/^/ezjail\// . 
 
   ;;
 ######################## ezjail-admin CONFIG ########################
