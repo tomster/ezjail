@@ -29,6 +29,9 @@
 # This is the command that is being executed by the console subcommand
 # ezjail_default_execute=/bin/sh
 
+# This is the default location where ezjail archives its jails to
+# ezjail_archivedir=`pwd -P`
+
 # base jail will provide a soft link from /usr/bin/perl to /usr/local/bin/perl
 # to accomodate all scripts using '#!/usr/bin/perl'...
 # ezjail_uglyperlhack="YES"
