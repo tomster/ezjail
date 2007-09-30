@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.161 2007/09/30 12:09:02 erdgeist Exp $
+# $Id: ezjail-admin,v 1.162 2007/09/30 13:13:08 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -41,7 +41,7 @@ ezjail_usage_delete="Usage: ${ezjail_admin} delete [-w] jailname"
 ezjail_usage_update="Usage: ${ezjail_admin} update [-s sourcetree] [-i] [-pP]"
 ezjail_usage_config="Usage: ${ezjail_admin} config [-r run|norun] [-n newname] [-i attach|detach|fsck] jailname"
 ezjail_usage_console="Usage: ${ezjail_admin} console [-f] [-e command] jailname"
-ezjail_usage_archive="Usage: ${ezjail_admin} archive [-f] [-r archive] [-d archivedir] jailname"
+ezjail_usage_archive="Usage: ${ezjail_admin} archive [-af] [-r archive] [-d archivedir] jailname [jailname...]"
 ezjail_usage_list="Usage: ${ezjail_admin} list"
 
 ################################
@@ -500,7 +500,7 @@ list)
   [ $# -eq 1 ] || exerr ${ezjail_usage_list}
   unset ezjail_list
 
-  [ -d ${ezjail_prefix}/etc/ezjail/ ] && cd ${ezjail_prefix}/etc/ezjail/ && ezjail_list=`ls | xargs rcorder`
+  [ -d "${ezjail_prefix}/etc/ezjail/" ] && cd "${ezjail_prefix}/etc/ezjail/" && ezjail_list=`ls | xargs rcorder`
 
   printf "%-3s %-5s %-15s %-28s %s\\n" STA JID IP Hostname "Root Directory"
   echo   "--- ----- --------------- ---------------------------- -------------------------"
@@ -703,53 +703,77 @@ console)
 ######################## ezjail-admin ARCHIVE ########################
 archive)
   # Clean variables, prevent polution
-  unset ezjail_archive ezjail_force
+  unset ezjail_archive ezjail_force ezjail_archivealljails
 
-  shift; while getopts :fr:d: arg; do case ${arg} in
+  shift; while getopts :afr:d: arg; do case ${arg} in
     f) ezjail_force="YES";;
     r) ezjail_archive=${OPTARG};;
     d) ezjail_archivedir=${OPTARG};;
+    a) ezjail_archivealljails="YES";;
     ?) exerr ${ezjail_usage_archive};;
   esac; done; shift $(( ${OPTIND} - 1 ))
 
-  [ $# -eq 1 ] || exerr ${ezjail_usage_archive}
+  # Specifying no jails only is acceptable if archiving all jails
+  [ $# -lt 1 -a -z "${ezjail_archivealljails}" ] && exerr ${ezjail_usage_archive}
 
-  # Jail name mandatory
-  fetchjailinfo $1
+  # Default archive directory to .
+  ezjail_archivedir="${ezjail_archivedir:-`pwd -P`}"
 
-  # check for existence of jail in our records
-  [ -n "${ezjail_config}" ] || exerr "Error: Nothing known about jail ${ezjail_name}."
+  # Will not backup more than one jail per archive
+  [ "${ezjail_archive}" -a "${ezjail_archivealljails}" ] && exerr "Error: Must not specify an archive location for multiple archives."
 
-  # if jail is still running, refuse to go any further - unless forced
-  [ -n "${ezjail_id}" -a -z "${ezjail_force}" ] && exerr "Error: Jail appears to be still running, stop it first or [-f]orce archiving."
+  # Will not backup more than one jail per archive
+  [ $# -gt 1 -a "${ezjail_archive}" ] && exerr "Error: Must not specify an archive location for multiple archives."
 
-  # if no archive name was specified, make one up
-  [ -z "${ezjail_archive}" ] && ezjail_archive="${ezjail_safename}-`date +%Y%m%d%H%M.%S`.tar.gz"
+  # Either all or only some. Decide.
+  [ $# -gt 0 -a "${ezjail_archivealljails}" ] && exerr "Error: Must not specify an ezjail to backup with -a."
 
-  # if archive location is not absolute, prepend archive directory
-  [ "${ezjail_archive%%[!/]*}" ] || ezjail_archive="${ezjail_archivedir:-`pwd -P`}"/"${ezjail_archive}"
+  # Fetch list of all ezjails
+  if [ "${ezjail_archivealljails}" ]; then
+    [ -d "${ezjail_prefix}/etc/ezjail/" ] && cd "${ezjail_prefix}/etc/ezjail/" && set - `ls | xargs rcorder`
+  fi
 
-  # It's a tar archive, after all
-  case ${ezjail_archive} in
-    *.tar.gz|*.tgz) ;;
-    *) ezjail_archive="${ezjail_archive}.tar.gz" ;;
-  esac;
+  while [ $# -gt 0 ]; do
+    # Jail name mandatory
+    fetchjailinfo ${1%.norun}
 
-  cd "${ezjail_rootdir}" || exerr "Error: can't cd to ${ezjail_root}."
-  pax -wXtz -x ustar -f ${ezjail_archive} \
-	-s:"^[^\\.].*/ezjail\\.conf\$":ezjail.conf: \
-	-s:"^[^\\.].*/${ezjail_safename}\$":prop.ezjail: \
-	-s:"^[^\\.].*/${ezjail_safename}.norun\$":prop.ezjail: \
-	-s:"etc/fstab.${ezjail_safename}\$":fstab.ezjail: \
-	-s:"^\\.":ezjail: \
-	"/etc/fstab.${ezjail_safename}" "${ezjail_config}" "${ezjail_etc}/ezjail.conf" .
+    # check for existence of jail in our records
+    [ -n "${ezjail_config}" ] || exerr "Error: Nothing known about jail ${ezjail_name}."
 
-  # An error on a jail not running is bad
-  [ $? != "0" -a -z "${ezjail_force}" ] && exerr "Error: Archiving jail failed. You might want to check ${ezjail_archive}."
+    # if jail is still running, refuse to go any further - unless forced
+    [ -n "${ezjail_id}" -a -z "${ezjail_force}" ] && exerr "Error: Jail appears to be still running, stop it first or [-f]orce archiving."
 
-  # When archiving a running jail, some errors might occur
-  [ $? = "0" ] || exerr "Warning: Archiving jail was not completely successful. For a running jail this is not unusual. You might want to check ${ezjail_archive}."
+    # if no archive name was specified, make one up
+    [ -z "${ezjail_archive}" ] && ezjail_archive="${ezjail_safename}-`date +%Y%m%d%H%M.%S`.tar.gz"
 
+    # if archive location is not absolute, prepend archive directory
+    [ "${ezjail_archive%%[!/]*}" ] || ezjail_archive="${ezjail_archivedir}"/"${ezjail_archive}"
+
+    # It's a tar archive, after all
+    case ${ezjail_archive} in
+      *.tar.gz|*.tgz) ;;
+      *) ezjail_archive="${ezjail_archive}.tar.gz" ;;
+    esac;
+
+    cd "${ezjail_rootdir}" || exerr "Error: can't cd to ${ezjail_root}."
+    pax -wXtz -x ustar -f ${ezjail_archive} \
+      -s:"^[^\\.].*/ezjail\\.conf\$":ezjail.conf: \
+      -s:"^[^\\.].*/${ezjail_safename}\$":prop.ezjail: \
+      -s:"^[^\\.].*/${ezjail_safename}.norun\$":prop.ezjail: \
+      -s:"etc/fstab.${ezjail_safename}\$":fstab.ezjail: \
+      -s:"^\\.":ezjail: \
+      "/etc/fstab.${ezjail_safename}" "${ezjail_config}" "${ezjail_etc}/ezjail.conf" . 2> /dev/null
+
+    # An error on a jail not running is bad
+    [ $? != "0" -a -z "${ezjail_force}" ] && exerr "Error: Archiving jail failed. You might want to check ${ezjail_archive}."
+
+    # When archiving a running jail, some errors might occur
+    [ $? = "0" ] || echo "Warning: Archiving jail ${ezjail_name} was not completely successful. For a running jail this is not unusual. You might want to check ${ezjail_archive}."
+
+    # To the next jail on command line
+    shift 1;
+    unset ezjail_archive
+  done
   ;;
 ######################## ezjail-admin CONFIG ########################
 config)
