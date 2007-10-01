@@ -88,11 +88,14 @@ creates a backup of one, multiple or all ezjails.
 
 Unless an archive name is given via -a switch, the archive's name is derived from
 jailname, date and time. It is being saved to a directory provided by -d switch
-or the .fIezjail_archivedir.fR variable in \fBezjail.conf\fR and defaults to
-.fI``.''.fR
+or the \fIezjail_archivedir\fR variable in \fBezjail.conf\fR and defaults to
+\fI.\fR .
 
-Use -A with no further parameters to archive all jails or specify one or more
-ezjails.
+Use -A with no further parameters to archive all jails \fBor\fR specify one or more
+ezjails as parameters.
+
+Use \fIezjail-admin create -a archive\fR to restore an archive. A restore command
+that automatically restores jails from a list of archives is on the way.
 .SH ezjail-admin config
 manages existing specific ezjails.
 
