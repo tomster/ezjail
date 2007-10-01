@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.162 2007/09/30 13:13:08 erdgeist Exp $
+# $Id: ezjail-admin,v 1.163 2007/10/01 01:02:45 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -36,12 +36,12 @@ case `uname -p` in amd64) ezjail_dirlist="${ezjail_dirlist} usr/lib32";; esac
 # Synopsis messages
 ezjail_usage_ezjailadmin="Usage: ${ezjail_admin} [archive|config|console|create|delete|install|list|update] {params}"
 ezjail_usage_install="Usage: ${ezjail_admin} install [-mps] [-h host] [-r release]"
-ezjail_usage_create="Usage: ${ezjail_admin} create [-xbi] [-f flavour] [-r jailroot] [-s size] [-c bde|eli] [-C args] [-r archive] jailname jailip"
+ezjail_usage_create="Usage: ${ezjail_admin} create [-xbi] [-f flavour] [-r jailroot] [-s size] [-c bde|eli] [-C args] [-a archive] jailname jailip"
 ezjail_usage_delete="Usage: ${ezjail_admin} delete [-w] jailname"
 ezjail_usage_update="Usage: ${ezjail_admin} update [-s sourcetree] [-i] [-pP]"
 ezjail_usage_config="Usage: ${ezjail_admin} config [-r run|norun] [-n newname] [-i attach|detach|fsck] jailname"
 ezjail_usage_console="Usage: ${ezjail_admin} console [-f] [-e command] jailname"
-ezjail_usage_archive="Usage: ${ezjail_admin} archive [-af] [-r archive] [-d archivedir] jailname [jailname...]"
+ezjail_usage_archive="Usage: ${ezjail_admin} archive [-Af] [-a archive] [-d archivedir] jailname [jailname...]"
 ezjail_usage_list="Usage: ${ezjail_admin} list"
 
 ################################
@@ -223,11 +223,11 @@ case "$1" in
 create)
   # Clean variables, prevent polution
   unset ezjail_rootdir ezjail_flavour ezjail_softlink ezjail_image ezjail_imagetype ezjail_imageparams ezjail_imagesize ezjail_device ezjail_config ezjail_attachparams ezjail_exists ezjail_attachblocking ezjail_forceblocking ezjail_sourcedevice ezjail_rootdirempty ezjail_fromarchive
-  shift; while getopts :f:r:s:xbic:C:r: arg; do case ${arg} in
+  shift; while getopts :f:r:s:xbic:C:a: arg; do case ${arg} in
     x) ezjail_exists="YES";;
     r) ezjail_rootdir="${OPTARG}";;
     f) ezjail_flavour="${OPTARG}";;
-    r) ezjail_fromarchive="${OPTARG}";;
+    a) ezjail_fromarchive="${OPTARG}";;
     c) ezjail_imagetype="${OPTARG}";;
     C) ezjail_imageparams="${OPTARG}";;
     b) ezjail_forceblocking="YES";;
@@ -705,11 +705,11 @@ archive)
   # Clean variables, prevent polution
   unset ezjail_archive ezjail_force ezjail_archivealljails
 
-  shift; while getopts :afr:d: arg; do case ${arg} in
+  shift; while getopts :Afa:d: arg; do case ${arg} in
     f) ezjail_force="YES";;
-    r) ezjail_archive=${OPTARG};;
+    a) ezjail_archive=${OPTARG};;
     d) ezjail_archivedir=${OPTARG};;
-    a) ezjail_archivealljails="YES";;
+    A) ezjail_archivealljails="YES";;
     ?) exerr ${ezjail_usage_archive};;
   esac; done; shift $(( ${OPTIND} - 1 ))
 
