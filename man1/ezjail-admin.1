@@ -4,7 +4,7 @@ ezjail-admin \- Administrate ezjail
 .SH SYNOPSIS
 .T
 .B ezjail-admin create
-[-f flavour] [-r jailroot] [-s imagesize] [-ibx] [-c bde|eli] [-C attachargs]\fI hostname jailip
+[-f flavour] [-r jailroot] [-s imagesize] [-ibx] [-c bde|eli] [-C attachargs] [-a archive]\fI hostname jailip
 
 .T
 .B ezjail-admin delete \fR[-w] \fI hostname
@@ -17,6 +17,9 @@ ezjail-admin \- Administrate ezjail
 
 .T
 .B ezjail-admin console\fR [-f] [-e command]\fI jailname
+
+.T
+.B ezjail-admin archive\fR [-Af] [-a archive] [-d archivedir]\fI [jailname...]
 
 .T
 .B ezjail-admin install\fR [-mps] [-h host] [-r release]
@@ -80,6 +83,16 @@ running, \fB(S)topped\fR. An optional \fB(N)orun\fR stands for disabled jails (s
 \fIezjail-admin config\fR).
 
 Rest of the row is jails jid (if available), its IP, hostname and root directory.
+.SH ezjail-admin archive
+creates a backup of one, multiple or all ezjails.
+
+Unless an archive name is given via -a switch, the archive's name is derived from
+jailname, date and time. It is being saved to a directory provided by -d switch
+or the .fIezjail_archivedir.fR variable in \fBezjail.conf\fR and defaults to
+.fI``.''.fR
+
+Use -A with no further parameters to archive all jails or specify one or more
+ezjails.
 .SH ezjail-admin config
 manages existing specific ezjails.
 
