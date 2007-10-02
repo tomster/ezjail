@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.164 2007/10/02 00:51:38 erdgeist Exp $
+# $Id: ezjail-admin,v 1.165 2007/10/02 20:20:05 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -303,7 +303,7 @@ create)
   # check for restore circumstances, normally this is invoked by the restore command
   [ "${ezjail_fromarchive}" -a "${ezjail_exists}" ] && exerr "Error: Cannot restore a jail that exists."
   [ "${ezjail_fromarchive}" -a "${ezjail_flavour}" ] && exerr "Error: Cannot apply flavours to a restored jail."
-  [ "${ezjail_fromarchive}" -a ! -r ${ezjail_fromarchive} ] & exerr "Error: Cannot restore from non existin garchive: ${ezjail_fromarchive}."
+  [ "${ezjail_fromarchive}" -a ! -r ${ezjail_fromarchive} ] && exerr "Error: Cannot restore from non existing archive: ${ezjail_fromarchive}."
 
   #
   # All sanity checks that may lead to errors are hopefully passed here
@@ -376,7 +376,7 @@ create)
     fi
   fi
 
-  if [ -z "${ezjail_fromarchive}" ]; then
+  if [ "${ezjail_fromarchive}" ]; then
     mkdir -p ${ezjail_rootdir} && tar xfp ${ezjail_fromarchive} -C ${ezjail_rootdir} --strip-components 1 ezjail
     [ $? = 0 ] || detach_images || exerr "Error: Could not extract archive from ${ezjail_fromarchive}."
   elif [ -z "${ezjail_exists}" ]; then
