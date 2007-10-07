@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.166 2007/10/07 21:22:28 erdgeist Exp $
+# $Id: ezjail-admin,v 1.167 2007/10/07 23:11:24 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -495,7 +495,7 @@ delete)
   # Clean variables, prevent polution
   unset ezjail_wipeme ezjail_forcestop
 
-  shift; while getopts :w arg; do case ${arg} in
+  shift; while getopts :wf arg; do case ${arg} in
     w) ezjail_wipeme="YES";;
     f) ezjail_forcestop="YES";;
     ?) exerr ${ezjail_usage_delete};;
