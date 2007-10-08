@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.44 2007/10/08 02:19:41 erdgeist Exp $
+# $Id: ezjail.sh,v 1.45 2007/10/08 02:24:26 erdgeist Exp $
 #
 # $FreeBSD$
 #
@@ -42,7 +42,7 @@ do_cmd()
   # If not, fetch it from our config directory
   if [ "$*" ]; then
     ezjail_list=`echo -n $* | tr -c '[:alnum:] ' '_'` 
-    ezjail_fromrc="NO"
+    unset ezjail_fromrc
   else
     [ -d "${ezjail_prefix}/etc/ezjail/" ] && cd "${ezjail_prefix}/etc/ezjail/" && ezjail_list=`ls | xargs rcorder`
     echo -n "${message##_}"
