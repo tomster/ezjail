@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.42 2007/09/01 13:10:41 erdgeist Exp $
+# $Id: ezjail.sh,v 1.43 2007/10/08 01:41:02 erdgeist Exp $
 #
 # $FreeBSD$
 #
@@ -40,23 +40,23 @@ do_cmd()
 
   # If a jail list is given on command line, process it
   # If not, fetch it from our config directory
-  if [ -n "$*" ]; then
+  if [ "$*" ]; then
     ezjail_list=`echo -n $* | tr -c '[:alnum:] ' '_'` 
     ezjail_fromrc="NO"
   else
-    [ -d ${ezjail_prefix}/etc/ezjail/ ] && cd ${ezjail_prefix}/etc/ezjail/ && ezjail_list=`ls | xargs rcorder`
+    [ -d "${ezjail_prefix}/etc/ezjail/" ] && cd "${ezjail_prefix}/etc/ezjail/" && ezjail_list=`ls | xargs rcorder`
     echo -n "${message##_}"
   fi
 
   for ezjail in ${ezjail_list}; do
     # If jail is temporary disabled (dot in name), skip it
-    [ "${ezjail%.*}" != "${ezjail}" ] && continue
+    [ -f "${ezjail_prefix}/etc/ezjail/${ezjail}.norun" -o "${ezjail%.*}" != "${ezjail}" ] && echo -n " skipping ${ezjail}" && continue
 
     # Check for jails config
-    [ ! -r ${ezjail_prefix}/etc/ezjail/${ezjail} ] && echo " Warning: Jail ${ezjail} not found." && continue
+    [ ! -r "${ezjail_prefix}/etc/ezjail/${ezjail}" ] && echo " Warning: Jail ${ezjail} not found." && continue
 
     # Read config file
-    . ${ezjail_prefix}/etc/ezjail/${ezjail}
+    . "${ezjail_prefix}/etc/ezjail/${ezjail}"
 
     eval ezjail_rootdir=\"\$jail_${ezjail}_rootdir\"
     eval ezjail_image=\"\$jail_${ezjail}_image\"
@@ -68,16 +68,16 @@ do_cmd()
     # Do we still have a root to run in?
     [ ! -d "${ezjail_rootdir}" ] && echo " Warning: root directory ${ezjail_rootdir} of ${ezjail} does not exist." && continue
 
-    [ "${ezjail_attachblocking}" = "YES" -o "${ezjail_forceblocking}" = "YES" ] && ezjail_blocking="YES" || unset ezjail_blocking
+    [ "${ezjail_attachblocking}" -o "${ezjail_forceblocking}" ] && ezjail_blocking="YES" || unset ezjail_blocking
 
     # Cannot auto mount blocking jails without interrupting boot process
-    [ "${ezjail_fromrc}" = "YES" -a "${action}" = "start" -a "${ezjail_blocking}" = "YES" ] && echo -n " ...skipping blocking jail ${ezjail}" && continue
+    [ "${ezjail_fromrc}" -a "${action}" = "start" -a "${ezjail_blocking}" ] && echo -n " ...skipping blocking jail ${ezjail}" && continue
 
     # Explicitely do only run blocking crypto jails when *crypto is requested
-    [ "${action%crypto}" != "${action}" -a -z "${ezjail_blocking}" ] && continue
+    [ "${action%crypto}" != "${action}" -a "${ezjail_blocking}" ] && continue
 
     # Try to attach (crypto) devices
-    if [ -n "${ezjail_image}" ]; then
+    if [ "${ezjail_image}" ]; then
       attach_detach_pre || continue
     fi
 
@@ -97,7 +97,7 @@ attach_detach_pre ()
   start|restart)
     # If jail is running, do not mount devices, this is the same check as
     # /etc/rc.d/jail does
-    [ -e /var/run/jail_${ezjail}.id ] && return 0
+    [ -e "/var/run/jail_${ezjail}.id" ] && return 0
 
     if [ -L "${ezjail_rootdir}.device" ]; then
       # Fetch destination of soft link
@@ -107,7 +107,7 @@ attach_detach_pre ()
       mount -p -v | grep -E "^${ezjail_device}.${ezjail_rootdir}" && echo "Warning: Skipping jail. Jail image file ${ezjail} already attached as ${ezjail_device}. 'ezjail-admin config -i detach' it first." && return 1
 
       # Remove stale device link
-      rm -f ${ezjail_rootdir}.device
+      rm -f "${ezjail_rootdir}.device"
     fi
 
     # Create a memory disc from jail image
@@ -118,43 +118,43 @@ attach_detach_pre ()
     case ${ezjail_imagetype} in
     crypto|bde)
       echo "Attaching bde device for image jail ${ezjail}..."
-      echo gbde attach /dev/${ezjail_device} ${ezjail_attachparams} | /bin/sh 
+      echo gbde attach "/dev/${ezjail_device}" ${ezjail_attachparams} | /bin/sh 
       if [ $? -ne 0 ]; then
-        mdconfig -d -u ${ezjail_device} > /dev/null
+        mdconfig -d -u "${ezjail_device}" > /dev/null
         echo "Error: Attaching bde device failed."; return 1
       fi
       # Device to mount is not md anymore
-      ezjail_device=${ezjail_device}.bde
+      ezjail_device="${ezjail_device}.bde"
       ;;
     eli)
       echo "Attaching eli device for image jail ${ezjail}..."
-      echo geli attach ${ezjail_attachparams} /dev/${ezjail_device} | /bin/sh
+      echo geli attach ${ezjail_attachparams} "/dev/${ezjail_device}" | /bin/sh
       if [ $? -ne 0 ]; then
-        mdconfig -d -u ${ezjail_device} > /dev/null
+        mdconfig -d -u "${ezjail_device}" > /dev/null
         echo "Error: Attaching eli device failed."; return 1
       fi
       # Device to mount is not md anymore
-      ezjail_device=${ezjail_device}.eli
+      ezjail_device="${ezjail_device}.eli"
       ;;
     esac
 
     # Clean image
-    fsck -t ufs -p -B /dev/${ezjail_device}
+    fsck -t ufs -p -B "/dev/${ezjail_device}"
 
     # relink image device
-    rm -f ${ezjail_rootdir}.device
-    ln -s /dev/${ezjail_device} ${ezjail_rootdir}.device
+    rm -f "${ezjail_rootdir}.device"
+    ln -s "/dev/${ezjail_device}" "${ezjail_rootdir}.device"
   ;;
   stop)
     # If jail is not running, do not unmount devices, this is the same check
     # as /etc/rc.d/jail does
-    [ -e /var/run/jail_${ezjail}.id ] || return 1
+    [ -e "/var/run/jail_${ezjail}.id" ] || return 1
 
     # If soft link to device is not set, we cannot unmount
-    [ -e ${ezjail_rootdir}.device ] || return
+    [ -e "${ezjail_rootdir}.device" ] || return
 
     # Fetch destination of soft link
-    ezjail_device=`stat -f "%Y" ${ezjail_rootdir}.device`
+    ezjail_device=`stat -f "%Y" "${ezjail_rootdir}.device"`
 
     # Add this device to the list of devices to be unmounted
     case ${ezjail_imagetype} in
@@ -164,7 +164,7 @@ attach_detach_pre ()
     esac
 
     # Remove soft link (which acts as a lock)
-    rm -f ${ezjail_rootdir}.device
+    rm -f "${ezjail_rootdir}.device"
   ;;
   esac
 }
@@ -172,9 +172,9 @@ attach_detach_pre ()
 attach_detach_post () {
   # In case of a stop, unmount image devices after stopping jails
   for md in ${ezjail_mds}; do
-    [ -e ${md}.bde ] && gbde detach ${md}
-    [ -e ${md}.eli ] && geli detach ${md}
-    mdconfig -d -u ${md#/dev/}
+    [ -e "${md}.bde" ] && gbde detach "${md}"
+    [ -e "${md}.eli" ] && geli detach "${md}"
+    mdconfig -d -u "${md#/dev/}"
   done
 }
 
