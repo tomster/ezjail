@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.43 2007/10/08 01:41:02 erdgeist Exp $
+# $Id: ezjail.sh,v 1.44 2007/10/08 02:19:41 erdgeist Exp $
 #
 # $FreeBSD$
 #
@@ -74,7 +74,7 @@ do_cmd()
     [ "${ezjail_fromrc}" -a "${action}" = "start" -a "${ezjail_blocking}" ] && echo -n " ...skipping blocking jail ${ezjail}" && continue
 
     # Explicitely do only run blocking crypto jails when *crypto is requested
-    [ "${action%crypto}" != "${action}" -a "${ezjail_blocking}" ] && continue
+    [ "${action%crypto}" = "${action}" -o "${ezjail_blocking}" ] || continue
 
     # Try to attach (crypto) devices
     if [ "${ezjail_image}" ]; then
