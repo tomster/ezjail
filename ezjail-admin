@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.170 2007/10/08 02:04:59 erdgeist Exp $
+# $Id: ezjail-admin,v 1.171 2007/10/08 02:11:35 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -376,34 +376,34 @@ create)
     fi
 
     case ${ezjail_imagetype} in
-      bde|eli)
-        # parse imageparams, generate attachparams
-        ezjail_attachblocking="YES"
-        if [ "${ezjail_imageparams}" ]; then
-          ezjail_attachparams=`echo $0 _parse_g${ezjail_imagetype}_attach_args_ ${ezjail_imageparams} | /bin/sh`
-          [ 5 -eq $? ] && exerr "processing of ezjail_imageparams failed"
-          [ 3 -eq $? ] && unset ezjail_attachblocking
-        fi
-        case ${ezjail_imagetype} in
-          bde) init_cmd="gbde init /dev/${ezjail_imagedevice} ${ezjail_imageparams}"
-               attach_cmd="gbde attach /dev/${ezjail_imagedevice} ${ezjail_attachparams}";;
-          eli) init_cmd="geli init ${ezjail_imageparams} /dev/${ezjail_imagedevice}"
-               attach_cmd="geli attach ${ezjail_attachparams} /dev/${ezjail_imagedevice}";;
-        esac
+    bde|eli)
+      # parse imageparams, generate attachparams
+      ezjail_attachblocking="YES"
+      if [ "${ezjail_imageparams}" ]; then
+        ezjail_attachparams=`echo $0 _parse_g${ezjail_imagetype}_attach_args_ ${ezjail_imageparams} | /bin/sh`
+        [ 5 -eq $? ] && exerr "processing of ezjail_imageparams failed"
+        [ 3 -eq $? ] && unset ezjail_attachblocking
+      fi
+      case ${ezjail_imagetype} in
+      bde) init_cmd="gbde init /dev/${ezjail_imagedevice} ${ezjail_imageparams}"
+           attach_cmd="gbde attach /dev/${ezjail_imagedevice} ${ezjail_attachparams}";;
+      eli) init_cmd="geli init ${ezjail_imageparams} /dev/${ezjail_imagedevice}"
+           attach_cmd="geli attach ${ezjail_attachparams} /dev/${ezjail_imagedevice}";;
+      esac
 
-        if [ -z "${ezjail_exists} ]; then
-          [ "${ezjail_attachblocking}" ] && echo "Initialising crypto device. You will be asked to enter a new passphrase twice... "
-          ( echo ${init_cmd} | /bin/sh ) || detach_images || exerr "Error: Could not initialise crypto image."
+      if [ -z "${ezjail_exists} ]; then
+        [ "${ezjail_attachblocking}" ] && echo "Initialising crypto device. You will be asked to enter a new passphrase twice... "
+        ( echo ${init_cmd} | /bin/sh ) || detach_images || exerr "Error: Could not initialise crypto image."
 
-          [ "${ezjail_attachblocking}" ] && echo "Attaching crypto device. You will be asked to enter the new passphrase... "
-          ( echo ${attach_cmd} | /bin/sh ) || detach_images || exerr "Error: Could not attach crypto image."
-        fi
+        [ "${ezjail_attachblocking}" ] && echo "Attaching crypto device. You will be asked to enter the new passphrase... "
+        ( echo ${attach_cmd} | /bin/sh ) || detach_images || exerr "Error: Could not attach crypto image."
+      fi
 
-        ezjail_device="${ezjail_imagedevice}.${ezjail_imagetype}"
-        ;;
-      simple)
-        ezjail_device=${ezjail_imagedevice}
-        ;;
+      ezjail_device="${ezjail_imagedevice}.${ezjail_imagetype}"
+      ;;
+    simple)
+      ezjail_device=${ezjail_imagedevice}
+      ;;
     esac
 
     if [ -z "${ezjail_exists} ]; then
