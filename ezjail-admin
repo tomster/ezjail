@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.173 2007/10/08 05:02:50 erdgeist Exp $
+# $Id: ezjail-admin,v 1.174 2007/10/08 05:24:45 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -250,7 +250,6 @@ parse_geli_attach_args () {
   #    everything else is dicarded
   #  exit values: 0->NO PASSWORD SET, 1->PASSWORD SET
   _exit=0
-  shift
   while getopts :bPva:i:K:l:s: arg; do
     case ${arg} in
       b|v|a|i|l|s);; # ignore these
@@ -270,7 +269,6 @@ parse_gbde_attach_args () {
   #   everything else is discarded
   #  exit values: 0->NO PASSWORD SET, 1->PASSWORD SET
   _exit=0
-  shift
   while getopts :iK:f:L:P: arg; do
     case ${arg} in
       i|f);; # ignore these
