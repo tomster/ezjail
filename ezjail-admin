@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.172 2007/10/08 02:15:21 erdgeist Exp $
+# $Id: ezjail-admin,v 1.173 2007/10/08 05:02:50 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -244,6 +244,45 @@ ezjail_queryftpserver () {
   return ${_ret}
 }
 
+parse_geli_attach_args () {
+  # create geli(8) attach arguments from geli(8) init arguments:
+  #    -P becomes -p if present, -K newkeyfile becomes -k newkeyfile if present, 
+  #    everything else is dicarded
+  #  exit values: 0->NO PASSWORD SET, 1->PASSWORD SET
+  _exit=0
+  shift
+  while getopts :bPva:i:K:l:s: arg; do
+    case ${arg} in
+      b|v|a|i|l|s);; # ignore these
+      P) echo -n "-p "; _exit=1 ;;
+      K) echo -n "-k '$OPTARG' ";;
+      ?) exerr "Error: Processing of attach params failed.";;
+    esac
+  done
+  return ${_exit}
+}
+
+parse_gbde_attach_args () {
+  # create gbde(8) attach arguments from gbde(8) init arguments:
+  #   -L lockfile becomes -l lockfile if present
+  #   -K keyfile becomes -k keyfile if present
+  #   -P passphrase becomes -p passphrase if present
+  #   everything else is discarded
+  #  exit values: 0->NO PASSWORD SET, 1->PASSWORD SET
+  _exit=0
+  shift
+  while getopts :iK:f:L:P: arg; do
+    case ${arg} in
+      i|f);; # ignore these
+      P) echo -n "-p '$OPTARG' "; _exit=1;;
+      K) echo -n "-k '$OPTARG' ";;
+      L) echo -n "-l '$OPTARG' ";;
+      ?) exerr "Error: Processing of attach params failed.";;
+    esac
+  done
+  return ${_exit}
+}
+
 #############################
 # End of function definitions
 #
@@ -380,9 +419,7 @@ create)
       # parse imageparams, generate attachparams
       ezjail_attachblocking="YES"
       if [ "${ezjail_imageparams}" ]; then
-        ezjail_attachparams=`echo $0 _parse_g${ezjail_imagetype}_attach_args_ ${ezjail_imageparams} | /bin/sh`
-        [ 5 -eq $? ] && exerr "processing of ezjail_imageparams failed"
-        [ 3 -eq $? ] && unset ezjail_attachblocking
+        ezjail_attachparams=`eval parse_g${ezjail_imagetype}_attach_args ${ezjail_imageparams}` || unset ezjail_attachblocking
       fi
       case ${ezjail_imagetype} in
       bde) init_cmd="gbde init /dev/${ezjail_imagedevice} ${ezjail_imageparams}"
@@ -1018,46 +1055,6 @@ config)
       ;;
     esac
   ;;
-
-##############################################################################
-# ezjail_imageparams HACK starts here
-#
-#  
-_parse_geli_attach_args_)
-  # create geli(8) attach arguments from geli(8) init arguments:
-  #    -P becomes -p if present, -K newkeyfile becomes -k newkeyfile if present, 
-  #    everything else is dicarded
-  #  exit values: 2->NO_ERROR, 3->NO_ERROR,PASSWORD_SET, 5->PARSER_ERROR
-  _exit=2
-  shift; while getopts :bPva:i:K:l:s: arg; do case ${arg} in
-      b|v|a|i|l|s);; # ignore these
-      P) echo -n "-p "; _exit=3 ;;
-      K) echo -n "-k '$OPTARG' ";;
-      ?) exit 5;;
-  esac; done
-  exit ${_exit}
-  ;;
-_parse_gbde_attach_args_)
-  # create gbde(8) attach arguments from gbde(8) init arguments:
-  #   -L lockfile becomes -l lockfile if present
-  #   -K keyfile becomes -k keyfile if present
-  #   -P passphrase becomes -p passphrase if present
-  #   everything else is discarded
-  #  exit values: 2->NO_ERROR, 3->NO_ERROR+PASSWORD_SET, 5->PARSER_ERROR  
-  _exit=2
-  shift; while getopts :iK:f:L:P: arg; do case ${arg} in
-      i|f);; # ignore these
-      P) echo -n "-p '$OPTARG' "; _exit=3;;
-      K) echo -n "-k '$OPTARG' ";;
-      L) echo -n "-l '$OPTARG' ";;
-      ?) exit 5;;
-  esac; done
-  exit ${_exit}
-  ;;
-#
-# ezjail_imageparams HACK ends here (thank god)
-##############################################################################
-
 *)
   exerr ${ezjail_usage_ezjailadmin}
   ;;
