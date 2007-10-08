@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.171 2007/10/08 02:11:35 erdgeist Exp $
+# $Id: ezjail-admin,v 1.172 2007/10/08 02:15:21 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -391,7 +391,7 @@ create)
            attach_cmd="geli attach ${ezjail_attachparams} /dev/${ezjail_imagedevice}";;
       esac
 
-      if [ -z "${ezjail_exists} ]; then
+      if [ -z "${ezjail_exists}" ]; then
         [ "${ezjail_attachblocking}" ] && echo "Initialising crypto device. You will be asked to enter a new passphrase twice... "
         ( echo ${init_cmd} | /bin/sh ) || detach_images || exerr "Error: Could not initialise crypto image."
 
@@ -406,7 +406,7 @@ create)
       ;;
     esac
 
-    if [ -z "${ezjail_exists} ]; then
+    if [ -z "${ezjail_exists}" ]; then
       # Format memory image
       newfs -U "/dev/${ezjail_device}" || detach_images || exerr "Error: Could not newfs /dev/${ezjail_device}."
       # Create mount point and mount
