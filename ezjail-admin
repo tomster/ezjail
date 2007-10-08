@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.167 2007/10/07 23:11:24 erdgeist Exp $
+# $Id: ezjail-admin,v 1.168 2007/10/08 01:32:22 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -695,7 +695,7 @@ install)
 
   ;;
 ######################## ezjail-admin SHORTCUT ########################
-*start|*stop)
+*start|*stop|*startcrypto)
   [ -x "${ezjail_prefix}/etc/rc.d/ezjail" ] && exec "${ezjail_prefix}/etc/rc.d/ezjail" $@
   [ -x "${ezjail_prefix}/etc/rc.d/ezjail.sh" ] && exec "${ezjail_prefix}/etc/rc.d/ezjail.sh" $@
 
