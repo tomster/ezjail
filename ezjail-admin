@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.174 2007/10/08 05:24:45 erdgeist Exp $
+# $Id: ezjail-admin,v 1.175 2007/10/14 20:26:53 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -804,12 +804,10 @@ archive)
   [ $# -gt 1 -a "${ezjail_archive}" ] && exerr "Error: Must not specify an archive location for multiple archives."
 
   # Either all or only some. Decide.
-  [ $# -gt 0 -a "${ezjail_archivealljails}" ] && exerr "Error: Must not specify an ezjail to backup with -a."
+  [ $# -gt 0 -a "${ezjail_archivealljails}" ] && exerr "Error: Must not specify an ezjail to backup with -A."
 
   # Fetch list of all ezjails
-  if [ "${ezjail_archivealljails}" ]; then
-    [ -d "${ezjail_prefix}/etc/ezjail/" ] && cd "${ezjail_prefix}/etc/ezjail/" && set - `ls | xargs rcorder`
-  fi
+  [ "${ezjail_archivealljails}" -a -d "${ezjail_prefix}/etc/ezjail/" ] && cd "${ezjail_prefix}/etc/ezjail/" && set - `ls | xargs rcorder`
 
   while [ $# -gt 0 ]; do
     # Jail name mandatory
