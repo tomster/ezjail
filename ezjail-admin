@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.175 2007/10/14 20:26:53 erdgeist Exp $
+# $Id: ezjail-admin,v 1.176 2007/11/27 21:51:48 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -866,7 +866,7 @@ restore)
     ?) exerr ${ezjail_usage_restore};;
   esac; done; shift $(( ${OPTIND} - 1 ))
 
-  [ $# -eq 0 ] || exerr ${ezjail_usage_restore}
+  [ $# -eq 0 ] && exerr ${ezjail_usage_restore}
 
   # Jail name mandatory
   fetchjailinfo $1
