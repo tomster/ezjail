@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.177 2007/11/27 22:11:59 erdgeist Exp $
+# $Id: ezjail-admin,v 1.178 2007/11/27 23:01:32 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -826,18 +826,19 @@ archive)
     [ "${ezjail_archive}" ] || ezjail_archive="${ezjail_archive_tag}.tar.gz"
 
     # if archive location is not absolute, prepend archive directory
-    [ "${ezjail_archive%%[!/]*}" -a ${ezjail_archive} != "-" ] || ezjail_archive="${ezjail_archivedir}/${ezjail_archive}"
+    [ "${ezjail_archive%%[!/]*}" -o ${ezjail_archive} = "-" ] || ezjail_archive="${ezjail_archivedir}/${ezjail_archive}"
 
     # It's a tar archive, after all
     case ${ezjail_archive} in
-      -) unset ezjail_archive_opt;;
-      *) ezjail_archive="${ezjail_archive}.tar.gz"
-    # Fall through intended
-      *.tar.gz|*.tgz) ezjail_archive_opt="-f ${ezjail_archive}";;
+      *.tar.gz|*.tgz|-) ;;
+      *) ezjail_archive="${ezjail_archive}.tar.gz";;
     esac
 
+    # For stdout do specify nothing
+    [ "${ezjail_archive}" = "-" ] && unset ezjail_archive_opt || ezjail_archive_opt="-f ${ezjail_archive}"
+
     cd "${ezjail_rootdir}" || exerr "Error: can't cd to ${ezjail_root}."
-    pax -wXtz -x ustar "${ezjail_archive_opt}" \
+    pax -wXtz -x ustar ${ezjail_archive_opt} \
       -s:"^[^\\.].*/ezjail\\.conf\$":ezjail.conf: \
       -s:"^[^\\.].*/${ezjail_safename}\$":prop.ezjail_${ezjail_archive_tag}: \
       -s:"^[^\\.].*/${ezjail_safename}.norun\$":prop.ezjail_${ezjail_archive_tag}.norun: \
@@ -853,7 +854,7 @@ archive)
 
     # To the next jail on command line
     shift 1
-    unset ezjail_archive
+    unset ezjail_archive ezjail_archive_opt
   done
   ;;
 ####################### ezjail-admin RESTORE ########################
