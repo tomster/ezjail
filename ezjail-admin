@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.178 2007/11/27 23:01:32 erdgeist Exp $
+# $Id: ezjail-admin,v 1.179 2008/01/02 06:28:04 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -373,7 +373,7 @@ create)
   # check for restore circumstances, normally this is invoked by the restore command
   [ "${ezjail_fromarchive}" -a "${ezjail_exists}" ] && exerr "Error: Cannot restore a jail that exists."
   [ "${ezjail_fromarchive}" -a "${ezjail_flavour}" ] && exerr "Error: Cannot apply flavours to a restored jail."
-  [ "${ezjail_fromarchive}" -a ! -r "${ezjail_fromarchive}" ] && exerr "Error: Cannot restore from non existing archive: ${ezjail_fromarchive}."
+  [ "${ezjail_fromarchive}" -a "${ezjail_fromarchive}" != "-" -a ! -r "${ezjail_fromarchive}" ] && exerr "Error: Cannot restore from non existing archive: ${ezjail_fromarchive}."
 
   #
   # All sanity checks that may lead to errors are hopefully passed here
