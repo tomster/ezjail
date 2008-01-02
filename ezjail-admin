@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.179 2008/01/02 06:28:04 erdgeist Exp $
+# $Id: ezjail-admin,v 1.180 2008/01/02 07:03:59 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -860,7 +860,7 @@ archive)
 ####################### ezjail-admin RESTORE ########################
 restore)
   # Clean variables, prevent polution
-  unset ezjail_fromarchive ezjail_archivedir
+  unset ezjail_archivedir
 
 #ezjail_usage_restore="Usage: ${ezjail_admin} restore [-d archivedir] (archive|jailname)..."
 
@@ -871,9 +871,27 @@ restore)
 
   [ $# -eq 0 ] && exerr ${ezjail_usage_restore}
 
-  # Jail name mandatory
-  fetchjailinfo $1
+  # Default archive directory to .
+  ezjail_archivedir=${ezjail_archivedir:-`pwd -P`}
 
+  while [ $# -gt 0 ]; do
+    ezjail_fromarchive=$1
+
+    # if archive location is absolute and doesn't exist, fail
+    [ "${ezjail_fromarchive%%[!/]*}" -a ! -f "${ezjail_fromarchive}" ] && exerr "Error: File for archive ${ezjail_fromarchive} not found."
+    if [ -z "${ezjail_fromarchive%%[!/]*}" ]; then
+      # Try archive location
+      if [ -r "${ezjail_archivedir}/${ezjail_fromarchive}" ]; then
+        ezjail_fromarchive="${ezjail_archivedir}/${ezjail_fromarchive}"
+      else
+        # If archive is not found, try guessing by jail name
+        ezjail_safename=`echo -n "$1" | tr -c '[:alnum:]' _`
+        ezjail_fromarchive=`ls -tr ${ezjail_archivedir}/${ezjail_safename}* | head -n 1`
+        [ -f "${ezjail_fromarchive}" ] || exerr "Error: No archive for pattern $1 can be found."
+      fi
+    fi
+    echo ${ezjail_fromarchive}
+  done
   ;;
 ######################## ezjail-admin CONFIG ########################
 config)
