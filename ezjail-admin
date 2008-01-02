@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.180 2008/01/02 07:03:59 erdgeist Exp $
+# $Id: ezjail-admin,v 1.181 2008/01/02 07:44:32 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -875,6 +875,7 @@ restore)
   ezjail_archivedir=${ezjail_archivedir:-`pwd -P`}
 
   while [ $# -gt 0 ]; do
+    unset ezjail_safename
     ezjail_fromarchive=$1
 
     # if archive location is absolute and doesn't exist, fail
@@ -885,12 +886,21 @@ restore)
         ezjail_fromarchive="${ezjail_archivedir}/${ezjail_fromarchive}"
       else
         # If archive is not found, try guessing by jail name
-        ezjail_safename=`echo -n "$1" | tr -c '[:alnum:]' _`
-        ezjail_fromarchive=`ls -tr ${ezjail_archivedir}/${ezjail_safename}* | head -n 1`
+        ezjail_safename=`echo -n "${ezjail_fromarchive}" | tr -c '[:alnum:]' _`
+        unset ezjail_fromarchive
+        for ezjail_archive in "${ezjail_archivedir}/${ezjail_safename}"*; do
+          [ -z "${ezjail_fromarchive}" -a -f "${ezjail_archive}" ] && ezjail_fromarchive=${ezjail_archive}
+          [ "${ezjail_archive}" -nt "${ezjail_fromarchive}" ] && ezjail_fromarchive=${ezjail_archive}
+        done
         [ -f "${ezjail_fromarchive}" ] || exerr "Error: No archive for pattern $1 can be found."
       fi
     fi
-    echo ${ezjail_fromarchive}
+
+    ezjail_nameprop=`tar tzf ${ezjail_fromarchive} --fast-read prop.ezjail_\*`
+    [ $? -eq 0 -a "${ezjail_nameprop}" ] || exerr "Error: File ${ezjail_fromarchive} is not an ezjail archive."
+    
+
+    shift 1
   done
   ;;
 ######################## ezjail-admin CONFIG ########################
