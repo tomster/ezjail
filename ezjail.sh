@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.45 2007/10/08 02:24:26 erdgeist Exp $
+# $Id: ezjail.sh,v 1.46 2008/01/08 03:34:49 erdgeist Exp $
 #
 # $FreeBSD$
 #
@@ -44,7 +44,8 @@ do_cmd()
     ezjail_list=`echo -n $* | tr -c '[:alnum:] ' '_'` 
     unset ezjail_fromrc
   else
-    [ -d "${ezjail_prefix}/etc/ezjail/" ] && cd "${ezjail_prefix}/etc/ezjail/" && ezjail_list=`ls | xargs rcorder`
+    case "${action}" in *stop) reverse_command="tail -r";; *) reverse_command="cat";; esac
+    [ -d "${ezjail_prefix}/etc/ezjail/" ] && cd "${ezjail_prefix}/etc/ezjail/" && ezjail_list=`ls | xargs rcorder | ${reverse_command}`
     echo -n "${message##_}"
   fi
 
