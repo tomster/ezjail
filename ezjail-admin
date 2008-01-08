@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.181 2008/01/02 07:44:32 erdgeist Exp $
+# $Id: ezjail-admin,v 1.182 2008/01/08 03:34:48 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -840,8 +840,8 @@ archive)
     cd "${ezjail_rootdir}" || exerr "Error: can't cd to ${ezjail_root}."
     pax -wXtz -x ustar ${ezjail_archive_opt} \
       -s:"^[^\\.].*/ezjail\\.conf\$":ezjail.conf: \
-      -s:"^[^\\.].*/${ezjail_safename}\$":prop.ezjail_${ezjail_archive_tag}: \
-      -s:"^[^\\.].*/${ezjail_safename}.norun\$":prop.ezjail_${ezjail_archive_tag}.norun: \
+      -s:"^[^\\.].*/${ezjail_safename}\$":prop.ezjail-${ezjail_archive_tag}: \
+      -s:"^[^\\.].*/${ezjail_safename}.norun\$":prop.ezjail-${ezjail_archive_tag}.norun: \
       -s:"etc/fstab.${ezjail_safename}\$":fstab.ezjail: \
       -s:"^\\.":ezjail: \
       "/etc/fstab.${ezjail_safename}" "${ezjail_config}" "${ezjail_etc}/ezjail.conf" . 2> /dev/null
@@ -898,6 +898,8 @@ restore)
 
     ezjail_nameprop=`tar tzf ${ezjail_fromarchive} --fast-read prop.ezjail_\*`
     [ $? -eq 0 -a "${ezjail_nameprop}" ] || exerr "Error: File ${ezjail_fromarchive} is not an ezjail archive."
+
+    echo "${ezjail_nameprop}"
     
 
     shift 1
