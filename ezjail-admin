@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.182 2008/01/08 03:34:48 erdgeist Exp $
+# $Id: ezjail-admin,v 1.183 2008/03/14 00:17:22 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -244,6 +244,12 @@ ezjail_queryftpserver () {
   return ${_ret}
 }
 
+# Make a path absolute, if it isn't already
+ezjail_makeabsolute ( ) {
+  [ $# -eq 1 ] && path=`pwd -P` || path=$2
+  eval [ \"\${$1%%[!/]*}\" -o "\${$1}" = "-" ] || eval export ${1}="${path}/\${$1}"
+}
+
 parse_geli_attach_args () {
   # create geli(8) attach arguments from geli(8) init arguments:
   #    -P becomes -p if present, -K newkeyfile becomes -k newkeyfile if present, 
@@ -352,7 +358,7 @@ create)
 
   # if jail root specified on command line is not absolute, make it absolute
   # inside our jail directory
-  [ "${ezjail_rootdir%%[!/]*}" ] || ezjail_rootdir="${ezjail_jaildir}/${ezjail_rootdir}"
+  ezjail_makeabsolute ezjail_rootdir ${ezjail_jaildir}
 
   # if a directory at the specified jail root already exists, refuse to
   # install. Empty root dirs are considered okay, sometimes they are
@@ -454,7 +460,10 @@ create)
   fi
 
   if [ "${ezjail_fromarchive}" ]; then
-    mkdir -p "${ezjail_rootdir}" && tar xfp "${ezjail_fromarchive}" -C "${ezjail_rootdir}" --strip-components 1 ezjail
+    unset ezjail_archive_opt
+    ezjail_makeabsolute ezjail_fromarchive
+    [ "${ezjail_fromarchive}" = "-" ] && unset ezjail_archive_opt || ezjail_archive_opt="-f ${ezjail_fromarchive}"
+    mkdir -p "${ezjail_rootdir}" && cd "${ezjail_rootdir}" && pax -rz -pe "${ezjail_archive_opt}" -s:^ezjail/:: ezjail/*
     [ $? -eq 0 ] || detach_images || exerr "Error: Could not extract archive from ${ezjail_fromarchive}."
   elif [ -z "${ezjail_exists}" ]; then
     # now take a copy of our template jail
@@ -670,7 +679,7 @@ install)
   ezjail_ftphost=${ezjail_ftphost:-"ftp.freebsd.org"}
   ezjail_ftphost=${ezjail_ftphost#ftp://}
   ezjail_dir=${ezjail_ftphost#file://}
-  [ "${ezjail_dir%%[!/]*}" ] || ezjail_reldir=${PWD}
+  [ "${ezjail_dir%%[!/]*}" ] || ezjail_reldir=`pdw -P`
 
   [ "`sysctl -n kern.securelevel`" -gt 0 ] && exerr "You're running in a secure level higher than 0. ezjail will not run correctly."
 
@@ -781,7 +790,7 @@ console)
 ######################## ezjail-admin ARCHIVE ########################
 archive)
   # Clean variables, prevent polution
-  unset ezjail_archive ezjail_archive_tag ezjail_force ezjail_archivealljails
+  unset ezjail_archive ezjail_archive_tag ezjail_force ezjail_archivealljails ezjail_addfiles
 
   shift; while getopts :Afa:d: arg; do case ${arg} in
     f) ezjail_force="YES";;
@@ -826,7 +835,7 @@ archive)
     [ "${ezjail_archive}" ] || ezjail_archive="${ezjail_archive_tag}.tar.gz"
 
     # if archive location is not absolute, prepend archive directory
-    [ "${ezjail_archive%%[!/]*}" -o ${ezjail_archive} = "-" ] || ezjail_archive="${ezjail_archivedir}/${ezjail_archive}"
+    ezjail_makeabsolute ezjail_archive ${ezjail_archivedir}
 
     # It's a tar archive, after all
     case ${ezjail_archive} in
@@ -837,6 +846,9 @@ archive)
     # For stdout do specify nothing
     [ "${ezjail_archive}" = "-" ] && unset ezjail_archive_opt || ezjail_archive_opt="-f ${ezjail_archive}"
 
+    [ -f "${ezjail_etc}/ezjail.conf" ] && ezjail_addfiles="${ezjail_etc}/ezjail.conf"
+    [ -f "/etc/fstab.${ezjail_safename}" ] && ezjail_addfiles="${ezjail_addfiles} /etc/fstab.${ezjail_safename}"
+
     cd "${ezjail_rootdir}" || exerr "Error: can't cd to ${ezjail_root}."
     pax -wXtz -x ustar ${ezjail_archive_opt} \
       -s:"^[^\\.].*/ezjail\\.conf\$":ezjail.conf: \
@@ -844,7 +856,7 @@ archive)
       -s:"^[^\\.].*/${ezjail_safename}.norun\$":prop.ezjail-${ezjail_archive_tag}.norun: \
       -s:"etc/fstab.${ezjail_safename}\$":fstab.ezjail: \
       -s:"^\\.":ezjail: \
-      "/etc/fstab.${ezjail_safename}" "${ezjail_config}" "${ezjail_etc}/ezjail.conf" . 2> /dev/null
+      "${ezjail_config}" ${ezjail_addfiles} .
 
     # An error on a jail not running is bad
     [ $? -eq 0 -o "${ezjail_force}" ] || exerr "Error: Archiving jail failed. You might want to check ${ezjail_archive}."
@@ -854,7 +866,7 @@ archive)
 
     # To the next jail on command line
     shift 1
-    unset ezjail_archive ezjail_archive_opt
+    unset ezjail_archive ezjail_archive_opt ezjail_addfiles
   done
   ;;
 ####################### ezjail-admin RESTORE ########################
