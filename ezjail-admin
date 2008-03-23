@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.185 2008/03/22 11:35:07 erdgeist Exp $
+# $Id: ezjail-admin,v 1.186 2008/03/23 02:56:38 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -22,7 +22,7 @@ ezjail_flavours=${ezjail_flavours:-"${ezjail_jaildir}/flavours"}
 ezjail_portscvsroot=${ezjail_portscvsroot:-":pserver:anoncvs@anoncvs.at.FreeBSD.org:/home/ncvs"}
 ezjail_sourcetree=${ezjail_sourcetree:-"/usr/src"}
 ezjail_uglyperlhack=${ezjail_uglyperlhack:-"YES"}
-ezjail_default_execute=${ezjail_default_execute:-"/bin/sh"}
+ezjail_default_execute=${ezjail_default_execute:-"/usr/bin/login -f root"}
 
 ezjail_mount_enable=${ezjail_mount_enable:-"YES"}
 ezjail_devfs_enable=${ezjail_devfs_enable:-"YES"}

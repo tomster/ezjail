@@ -27,7 +27,7 @@
 # ezjail_ftphost=ftp.freebsd.org
 
 # This is the command that is being executed by the console subcommand
-# ezjail_default_execute=/bin/sh
+# ezjail_default_execute=/usr/bin/login -f root
 
 # This is the default location where ezjail archives its jails to
 # ezjail_archivedir=`pwd -P`
