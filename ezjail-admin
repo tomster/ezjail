@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.188 2008/05/11 03:04:46 erdgeist Exp $
+# $Id: ezjail-admin,v 1.189 2008/05/19 09:33:38 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -948,17 +948,8 @@ restore)
 
     # Catch all errors that will likely create a broken backup
     [ "${ezjail_safename}" -a "${ezjail_safename}" != "${ezjail_nameprop_safename}" ] && exerr "Error: Archive name ${ezjail_fromarchive} does not match archived jail ${ezjail_nameprop_safename}."
-    [ "${ezjail_hsname}" != "${ezjail_nameprop_hsname}" ] && exerr "Error: Can only use restore on the same machine. Consider using \"ezjail-admin create -a\" when migrating ezjails."
-    [ "${ezjail_hscpu} != "${ezjail_nameprop_hscpu}" ] && exerr Error: Archive was created on a different cpu Can not restore. Consider using \"ezjail-admin create -a\" when migrating ezjails."
-
-    # BIG security hole here. Must trust content of archive
-#    pax -wzXt -x ustar ${ezjail_fromarchive} \
-#      -s:prop.ezjail(): \
-#      -s:"^[^\\.].*/${ezjail_safename}.norun\$":prop.ezjail-${ezjail_archive_tag}.norun: \
-#      -s:"etc/fstab.${ezjail_safename}\$":fstab.ezjail: \
-#      -s:"^\\.":ezjail: \
-#      "${ezjail_config}" ${ezjail_addfiles} .
-
+    [ "${ezjail_hsname}" != "${ezjail_nameprop_hsname}" ] && exerr "Error: Archive was created on host named ${ezjail_hsname}. Can only use restore on the same machine. Consider using \"ezjail-admin create -a\" when migrating ezjails."
+    [ "${ezjail_hscpu}" != "${ezjail_nameprop_hscpu}" ] && exerr "Error: Archive was created on a different CPU. Can not restore. Consider using \"ezjail-admin create -a\" when migrating ezjails."
 
     shift 1
   done
