@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.189 2008/05/19 09:33:38 erdgeist Exp $
+# $Id: ezjail-admin,v 1.190 2008/06/01 01:22:05 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -950,6 +950,13 @@ restore)
     [ "${ezjail_safename}" -a "${ezjail_safename}" != "${ezjail_nameprop_safename}" ] && exerr "Error: Archive name ${ezjail_fromarchive} does not match archived jail ${ezjail_nameprop_safename}."
     [ "${ezjail_hsname}" != "${ezjail_nameprop_hsname}" ] && exerr "Error: Archive was created on host named ${ezjail_hsname}. Can only use restore on the same machine. Consider using \"ezjail-admin create -a\" when migrating ezjails."
     [ "${ezjail_hscpu}" != "${ezjail_nameprop_hscpu}" ] && exerr "Error: Archive was created on a different CPU. Can not restore. Consider using \"ezjail-admin create -a\" when migrating ezjails."
+
+    # Save config to tempfile and source it
+    tmpfile=`mktemp /tmp/ezjail.prop.XXXXXXXX`
+    [ $? -ne 0 ] && exerr "Error: Can't create temporary file."
+    pax -rzn -s:${ezjail_nameprop}:${tmpfile}: -f ${ezjail_fromarchive} ${ezjail_nameprop}
+    . "${tmpfile}"
+    rm -f "${tmpfile}"
 
     shift 1
   done
