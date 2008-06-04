@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.190 2008/06/01 01:22:05 erdgeist Exp $
+# $Id: ezjail-admin,v 1.191 2008/06/04 01:02:54 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -593,7 +593,7 @@ delete)
   rm -f "${ezjail_config}" "/etc/fstab.${ezjail_safename}"
 
   # if there is a soft link pointing to the jail root, remove it
-  [ -L "${ezjail_softlink}" ] && rm "${ezjail_softlink}"
+  [ -L "${ezjail_softlink}" ] && rm -f "${ezjail_softlink}"
 
   # if wiping the jail was requested, remove it
   if [ "${ezjail_wipeme}" ]; then
@@ -952,11 +952,11 @@ restore)
     [ "${ezjail_hscpu}" != "${ezjail_nameprop_hscpu}" ] && exerr "Error: Archive was created on a different CPU. Can not restore. Consider using \"ezjail-admin create -a\" when migrating ezjails."
 
     # Save config to tempfile and source it
-    tmpfile=`mktemp /tmp/ezjail.prop.XXXXXXXX`
+    ezjail_tmpfile=`mktemp /tmp/ezjail.prop.XXXXXXXX`
     [ $? -ne 0 ] && exerr "Error: Can't create temporary file."
-    pax -rzn -s:${ezjail_nameprop}:${tmpfile}: -f ${ezjail_fromarchive} ${ezjail_nameprop}
-    . "${tmpfile}"
-    rm -f "${tmpfile}"
+    pax -rzn -s:${ezjail_nameprop}:${ezjail_tmpfile}: -f ${ezjail_fromarchive} ${ezjail_nameprop}
+    . "${ezjail_tmpfile}"
+    rm -f "${ezjail_tmpfile}"
 
     shift 1
   done
@@ -1046,7 +1046,7 @@ config)
 
     # adjust softlink
     if [ -L "${ezjail_softlink}" ]; then
-      rm "${ezjail_softlink}"
+      rm -f "${ezjail_softlink}"
       ln -s "${ezjail_new_rootdir}" "${ezjail_new_softlink}"
     fi
 
@@ -1058,7 +1058,7 @@ config)
     [ "${ezjail_new_imagetype}" ] && \
     echo ${ezjail_new_rootdir}.device ${ezjail_new_rootdir} ufs rw 0 0 >> "/etc/fstab.${ezjail_new_safename}"
     echo ${ezjail_jailbase} ${ezjail_new_rootdir}/basejail nullfs ro 0 0 >> "/etc/fstab.${ezjail_new_safename}"
-    rm "/etc/fstab.${ezjail_safename}"
+    rm -f "/etc/fstab.${ezjail_safename}"
 
     # rename config file, preserve comments
     (
@@ -1081,7 +1081,7 @@ config)
     ) > "${ezjail_new_config}"
 
     # remove old config
-    rm "${ezjail_config}"
+    rm -f "${ezjail_config}"
 
     # usually that doesnt go smoothly, but the user wanted it
     # that way ;)
