@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.191 2008/06/04 01:02:54 erdgeist Exp $
+# $Id: ezjail-admin,v 1.192 2008/07/06 18:17:36 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -471,7 +471,7 @@ create)
     unset ezjail_archive_opt
     ezjail_makeabsolute ezjail_fromarchive
     [ "${ezjail_fromarchive}" = "-" ] && unset ezjail_archive_opt || ezjail_archive_opt="-f ${ezjail_fromarchive}"
-    mkdir -p "${ezjail_rootdir}" && cd "${ezjail_rootdir}" && pax -rz -pe ${ezjail_archive_opt} -s:^ezjail/:: ezjail/*
+    mkdir -p "${ezjail_rootdir}" && cd "${ezjail_rootdir}" && pax -rz -pe ${ezjail_archive_opt} -s:^ezjail:.: ezjail/*
     [ $? -eq 0 ] || detach_images || exerr "Error: Could not extract archive from ${ezjail_fromarchive}."
   elif [ -z "${ezjail_exists}" ]; then
     # now take a copy of our template jail
