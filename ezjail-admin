@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.192 2008/07/06 18:17:36 erdgeist Exp $
+# $Id: ezjail-admin,v 1.193 2008/07/06 18:54:56 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -933,13 +933,10 @@ restore)
     ezjail_nameprop=`pax -zn -f ${ezjail_fromarchive} prop.ezjail-\*`
     [ $? -eq 0 -a "${ezjail_nameprop}" ] || exerr "Error: File ${ezjail_fromarchive} is not an ezjail archive."
 
-    # Figure out, what archive believes it contains
-    ezjail_nameprop_safename=`echo ${ezjail_nameprop} | cut -d '-' -f 2`
-
-    # Figure out system environment when archive was created
-    ezjail_nameprop_hsname=`echo ${ezjail_nameprop} | cut -d '-' -f 4`
-    ezjail_nameprop_hsversion=`echo ${ezjail_nameprop} | cut -d '-' -f 5`
-    ezjail_nameprop_hscpu=`echo ${ezjail_nameprop} | cut -d '-' -f 6`
+    # Figure out, what jail and jail enviroment archive claims to contain
+    TIFS=${IFS}; IFS=-; set - ${ezjail_nameprop}
+    ezjail_nameprop_safename=$2 ezjail_nameprop_hsname=$4 ezjail_nameprop_hsversion=$5 ezjail_nameprop_hscpu=$6
+    IFS=${TIFS}
 
     # Figure out current system environment
     ezjail_hsname=$( echo -n `uname -n` | tr -c '[:alnum:].' _ )
