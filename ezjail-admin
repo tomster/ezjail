@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.193 2008/07/06 18:54:56 erdgeist Exp $
+# $Id: ezjail-admin,v 1.194 2008/07/06 22:24:56 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -249,13 +249,9 @@ ezjail_queryftpserver () {
 
 # Make a path absolute, if it isn't already
 ezjail_makeabsolute ( ) {
-  if [ $# -eq 1 ]; then
-    path=`pwd -P`
-  else
-    path=$2
-    ezjail_makeabsolute path
-  fi
-  eval [ \"\${$1%%[!/]*}\" -o "\${$1}" = "-" ] || eval export ${1}="${path}/\${$1}"
+  eval [ \"\${$1%%[!/]*}\" -o "\${$1}" = "-" ] && return
+  [ "${2%%[!/]*}" ] && path=${2} || path=`pwd -P`/${2}
+  eval export ${1}="${path}/\${$1}"
 }
 
 parse_geli_attach_args () {
@@ -826,9 +822,9 @@ archive)
   # Fetch list of all ezjails
   [ "${ezjail_archivealljails}" -a -d "${ezjail_prefix}/etc/ezjail/" ] && cd "${ezjail_prefix}/etc/ezjail/" && set - `ls | xargs rcorder`
 
-  while [ $# -gt 0 ]; do
+  for ezjail in $@; do
     # Jail name mandatory
-    fetchjailinfo ${1%.norun}
+    fetchjailinfo ${ezjail%.norun}
 
     # Check for existence of jail in our records
     [ "${ezjail_config}" ] || exerr "Error: Nothing known about jail ${ezjail_name}."
@@ -854,7 +850,7 @@ archive)
 
     # If archive location is not absolute, prepend archive directory
     ezjail_makeabsolute ezjail_archive ${ezjail_archivedir}
-
+echo ${ezjail_archive}
     # It's a tar archive, after all
     case ${ezjail_archive} in
       *.tar.gz|*.tgz|-) ;;
@@ -880,8 +876,6 @@ archive)
     # When archiving a running jail, some errors might occur
     [ $? -eq 0 ] || echo "Warning: Archiving jail ${ezjail_name} was not completely successful. For a running jail this is not unusual. You might want to check ${ezjail_archive}."
 
-    # To the next jail on command line
-    shift 1
     unset ezjail_archive ezjail_archive_opt ezjail_addfiles
   done
   ;;
@@ -900,9 +894,8 @@ restore)
   # Default archive directory to .
   ezjail_archivedir=${ezjail_archivedir:-`pwd -P`}
 
-  while [ $# -gt 0 ]; do
+  for ezjail_fromarchive in $@; do
     unset ezjail_safename
-    ezjail_fromarchive=$1
 
     # if archive location is absolute and doesn't exist, fail
     [ "${ezjail_fromarchive%%[!/]*}" -a ! -f "${ezjail_fromarchive}" ] && exerr "Error: File for archive ${ezjail_fromarchive} not found."
@@ -955,7 +948,6 @@ restore)
     . "${ezjail_tmpfile}"
     rm -f "${ezjail_tmpfile}"
 
-    shift 1
   done
   ;;
 ######################## ezjail-admin CONFIG ########################
