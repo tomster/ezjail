@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.195 2008/07/07 04:29:32 erdgeist Exp $
+# $Id: ezjail-admin,v 1.196 2008/07/07 12:36:45 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -309,7 +309,7 @@ case "$1" in
 ######################## ezjail-admin CREATE ########################
 create)
   # Clean variables, prevent polution
-  unset ezjail_rootdir ezjail_flavour ezjail_softlink ezjail_image ezjail_imagetype ezjail_imageparams ezjail_imagesize ezjail_device ezjail_devicelink ezjail_config ezjail_attachparams ezjail_exists ezjail_attachblocking ezjail_forceblocking ezjail_sourcedevice ezjail_rootdirempty ezjail_fromarchive
+  unset ezjail_rootdir ezjail_flavour ezjail_softlink ezjail_image ezjail_imagetype ezjail_imageparams ezjail_imagesize ezjail_device ezjail_devicelink ezjail_config ezjail_attachparams ezjail_exists ezjail_attachblocking ezjail_forceblocking ezjail_sourcedevice ezjail_rootdirempty ezjail_fromarchive ezjail_fromarchive_config
   shift; while getopts :f:r:s:xbic:C:a:A: arg; do case ${arg} in
     x) ezjail_exists="YES";;
     r) ezjail_rootdir=${OPTARG};;
@@ -496,8 +496,13 @@ create)
   # now, where everything seems to have gone right, create control file in
   # ezjails config dir
   mkdir -p "${ezjail_jailcfgs}" || exerr "Error: can't create ezjails control directory (${ezjail_jailcfgs})."
-  ( echo -e "# To specify the start up order of your ezjails, use these lines to\n# create a Jail dependency tree. See rcorder(8) for more details."
-  echo -e "#\n# PROVIDE: standard_ezjail\n# REQUIRE: \n# BEFORE: \n#\n"
+  (
+  if [ "${ezjail_fromarchive_config}" ]; then
+    grep -E ^\# ${ezjail_fromarchive_config}; echo
+  else
+    echo -e "# To specify the start up order of your ezjails, use these lines to\n# create a Jail dependency tree. See rcorder(8) for more details."
+    echo -e "#\n# PROVIDE: standard_ezjail\n# REQUIRE: \n# BEFORE: \n#\n"
+  fi
   echo export jail_${ezjail_safename}_hostname=\"${ezjail_hostname}\"
   echo export jail_${ezjail_safename}_ip=\"${ezjail_ip}\"
   echo export jail_${ezjail_safename}_rootdir=\"${ezjail_rootdir}\"
