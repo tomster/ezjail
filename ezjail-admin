@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.196 2008/07/07 12:36:45 erdgeist Exp $
+# $Id: ezjail-admin,v 1.197 2008/07/07 23:17:28 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -961,7 +961,7 @@ restore)
 
     # Figure out, what jail and jail enviroment archive claims to contain
     TIFS=${IFS}; IFS=-; set - ${ezjail_nameprop}
-    ezjail_nameprop_safename=$2 ezjail_nameprop_hsname=$4 ezjail_nameprop_hsversion=$5 ezjail_nameprop_hscpu=$6 ezjail_nameporp_imgagesize=$7
+    ezjail_nameprop_safename=$2 ezjail_nameprop_hsname=$4 ezjail_nameprop_hsversion=$5 ezjail_nameprop_hscpu=$6 ezjail_nameprop_imgagesize=$7
     IFS=${TIFS}
 
     # Figure out current system environment
@@ -982,7 +982,7 @@ restore)
 
     # Now all parameters are here, invoke ezjail-admin create
     if [ "${ezjail_imagetype}" ]; then
-      ezjail_imagedata="-c ${ezjail_imagetype} -C '${ezjail_attachparams}' -s ${ezjail_nameporp_imgagesize}"
+      ezjail_imagedata="-c ${ezjail_imagetype} -C '${ezjail_attachparams}' -s ${ezjail_nameprop_imgagesize}"
     fi
 
     echo $0 create -a "${ezjail_fromarchive}" -A "${ezjail_config}" ${ezjail_imagedata} -r "${ezjail_rootdir}" "${ezjail_hostname}" "${ezjail_ip}"
