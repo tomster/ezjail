@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.199 2008/07/08 20:11:24 erdgeist Exp $
+# $Id: ezjail-admin,v 1.200 2008/07/08 23:09:51 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -211,7 +211,7 @@ ezjail_splitworld() {
 
   # The ugly perl hack[tm]. Note: we wont do such things for any given
   # port :(
-  [ "${ezjail_uglyperlhack}" = "YES" -a ! -L "${ezjail_jailbase}/usr/bin/perl" ] && ln -s /usr/local/bin/perl "${ezjail_jailbase}/usr/bin/perl"
+  [ "${ezjail_uglyperlhack}" -a ! -L "${ezjail_jailbase}/usr/bin/perl" ] && ln -s /usr/local/bin/perl "${ezjail_jailbase}/usr/bin/perl"
 }
 
 # The user may want to have a ports tree in basejail
@@ -479,7 +479,7 @@ create)
     [ $? -eq 0 ] || detach_images || exerr "Error: Could not extract archive from ${ezjail_fromarchive}."
   elif [ -z "${ezjail_exists}" ]; then
     # now take a copy of our template jail
-    mkdir -p "${ezjail_rootdir}" && cd "${ezjail_jailtemplate}" && find * | cpio -p -v "${ezjail_rootdir}" > /dev/null
+    mkdir -p "${ezjail_rootdir}" && cd "${ezjail_jailtemplate}" && find . | cpio -p -v "${ezjail_rootdir}" > /dev/null
     [ $? -eq 0 ] || detach_images || exerr "Error: Could not copy template jail."
   fi
 
@@ -522,7 +522,7 @@ create)
   # Final steps for flavour installation
   if [ -z "${ezjail_exists}" -a "${ezjail_flavour}" ]; then
     # install files and config to new jail
-    cd "${ezjail_flavours}/${ezjail_flavour}" && find * | cpio -p -u -v "${ezjail_rootdir}" > /dev/null
+    cd "${ezjail_flavours}/${ezjail_flavour}" && find . | cpio -p -u -v "${ezjail_rootdir}" > /dev/null
     [ $? -eq 0 ] || echo "Warning: Could not fully install flavour."
 
     # if the packages are links and not files we have to copy them now
@@ -673,7 +673,7 @@ setup|update)
   fi # installaction="none"
 
   # Provide a copy of ports tree in basejail
-  [ "${ezjail_provideports}" = "YES" ] && ezjail_updateports
+  [ "${ezjail_provideports}" ] && ezjail_updateports
 
   ;;
 ######################## ezjail-admin INSTALL ########################
@@ -759,7 +759,7 @@ install)
   ezjail_splitworld
 
   # Fill ports, if requested
-  [ "${ezjail_installports}" = "YES" ] && ezjail_updateports
+  [ "${ezjail_installports}" ] && ezjail_updateports
 
   ;;
 ######################## ezjail-admin SHORTCUT ########################
