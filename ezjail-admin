@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.197 2008/07/07 23:17:28 erdgeist Exp $
+# $Id: ezjail-admin,v 1.198 2008/07/08 18:30:06 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -45,7 +45,7 @@ ezjail_usage_update="Usage: ${ezjail_admin} update [-s sourcetree] [-i] [-pP]"
 ezjail_usage_config="Usage: ${ezjail_admin} config [-r run|norun] [-n newname] [-i attach|detach|fsck] jailname"
 ezjail_usage_console="Usage: ${ezjail_admin} console [-f] [-e command] jailname"
 ezjail_usage_archive="Usage: ${ezjail_admin} archive [-Af] [-a archive] [-d archivedir] jailname [jailname...]"
-ezjail_usage_restore="Usage: ${ezjail_admin} restore [-d archivedir] (archive|jailname)..."
+ezjail_usage_restore="Usage: ${ezjail_admin} restore [-f] [-d archivedir] (archive|jailname)..."
 ezjail_usage_list="Usage: ${ezjail_admin} list"
 
 ################################
@@ -867,7 +867,7 @@ archive)
     # If no archive name was specified, make one up
     [ "${ezjail_archive}" ] || ezjail_archive="${ezjail_archive_tag}.tar.gz"
 
-    # Archives need to now, where they came from. Restore by default only
+    # Archives need to know, where they came from. Restore by default only
     # reinstalls jails on the same machine. We also warn on OS upgrades and
     # processor type changes
     ezjail_hostsystem_name=$( echo -n `uname -n` | tr -c '[:alnum:].' _ )
@@ -915,10 +915,11 @@ archive)
 ####################### ezjail-admin RESTORE ########################
 restore)
   # Clean variables, prevent polution
-  unset ezjail_archivedir ezjail_safename
+  unset ezjail_archivedir ezjail_safename ezjail_forcerestore
 
-  shift; while getopts :d: arg; do case ${arg} in
+  shift; while getopts :d:f arg; do case ${arg} in
     d) ezjail_archivedir=${OPTARG};;
+    f) ezjail_forcerestore="YES";;
     ?) exerr ${ezjail_usage_restore};;
   esac; done; shift $(( ${OPTIND} - 1 ))
 
@@ -944,7 +945,7 @@ restore)
           [ -z "${ezjail_fromarchive}" -a -f "${ezjail_archive}" ] && ezjail_fromarchive=${ezjail_archive}
           [ "${ezjail_archive}" -nt "${ezjail_fromarchive}" ] && ezjail_fromarchive=${ezjail_archive}
         done
-        [ -f "${ezjail_fromarchive}" ] || exerr "Error: No archive for pattern $1 can be found."
+        [ -f "${ezjail_fromarchive}" ] || exerr "Error: No archive for pattern ${ezjail_safename} can be found."
       fi
     fi
 
@@ -971,8 +972,8 @@ restore)
 
     # Catch all errors that will likely create a broken backup
     [ "${ezjail_safename}" -a "${ezjail_safename}" != "${ezjail_nameprop_safename}" ] && exerr "Error: Archive name ${ezjail_fromarchive} does not match archived jail ${ezjail_nameprop_safename}."
-    [ "${ezjail_hsname}" != "${ezjail_nameprop_hsname}" ] && exerr "Error: Archive was created on host named ${ezjail_hsname}. Can only use restore on the same machine. Consider using \"ezjail-admin create -a\" when migrating ezjails."
-    [ "${ezjail_hscpu}" != "${ezjail_nameprop_hscpu}" ] && exerr "Error: Archive was created on a different CPU. Can not restore. Consider using \"ezjail-admin create -a\" when migrating ezjails."
+    [ "${ezjail_hsname}" != "${ezjail_nameprop_hsname}" && -z "${ezjail_forcerestore}" ] && exerr "Error: Archive was created on host named ${ezjail_hsname}. Consider using \"ezjail-admin create -a\" when migrating ezjails or -f to force restore."
+    [ "${ezjail_hscpu}" != "${ezjail_nameprop_hscpu}" && -z "${ezjail_forcerestore}" ] && exerr "Error: Archive was created on a different CPU. Can not restore. Consider using \"ezjail-admin create -a\" when migrating ezjails or -f to force restore."
 
     # Save config to tempfile and source it
     ezjail_config=`mktemp /tmp/ezjail.prop.XXXXXXXX`
@@ -981,11 +982,11 @@ restore)
     fetchjailinfo ${ezjail_safename} ${ezjail_config}
 
     # Now all parameters are here, invoke ezjail-admin create
+    [ "${ezjail_rootdir}" -a "$ezjail_ip}" -a "${ezjail_hostname}" ] || exerr "Error: Archive does not contain a valid ezjail properties file."
     if [ "${ezjail_imagetype}" ]; then
       ezjail_imagedata="-c ${ezjail_imagetype} -C '${ezjail_attachparams}' -s ${ezjail_nameprop_imgagesize}"
     fi
 
-    echo $0 create -a "${ezjail_fromarchive}" -A "${ezjail_config}" ${ezjail_imagedata} -r "${ezjail_rootdir}" "${ezjail_hostname}" "${ezjail_ip}"
     $0 create -a "${ezjail_fromarchive}" -A "${ezjail_config}" ${ezjail_imagedata} -r "${ezjail_rootdir}" "${ezjail_hostname}" "${ezjail_ip}" || exerr "Error: create failed."
     rm -f "${ezjail_config}"
 
