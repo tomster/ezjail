@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.198 2008/07/08 18:30:06 erdgeist Exp $
+# $Id: ezjail-admin,v 1.199 2008/07/08 20:11:24 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -696,7 +696,7 @@ install)
   ezjail_ftphost=${ezjail_ftphost:-"ftp.freebsd.org"}
   ezjail_ftphost=${ezjail_ftphost#ftp://}
   ezjail_dir=${ezjail_ftphost#file://}
-  [ "${ezjail_dir%%[!/]*}" ] || ezjail_reldir=`pdw -P`
+  [ "${ezjail_dir%%[!/]*}" ] || ezjail_reldir=`pwd -P`
 
   [ "`sysctl -n kern.securelevel`" -gt 0 ] && exerr "You're running in a secure level higher than 0. ezjail will not run correctly."
 
