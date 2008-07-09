@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.200 2008/07/08 23:09:51 erdgeist Exp $
+# $Id: ezjail-admin,v 1.201 2008/07/09 10:37:11 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -83,7 +83,22 @@ attach_images () {
   esac
 }
 
-# define detach strategy for image jails
+# generic mount routine for image jails
+mount_images () {
+  rm -f "${ezjail_devicelink}"
+
+  # Attach images by type
+  attach_images
+
+  # Clean image
+  fsck -t ffs -p "/dev/${ezjail_device}"
+
+  mount "/dev/${ezjail_device}" "${ezjail_rootdir}" || detach_images keep || exerr "Error: Could not mount /dev/${ezjail_device} to ${ezjail_rootdir}."
+  # relink image device
+  ln -s "/dev/${ezjail_device}" "${ezjail_devicelink}"
+}
+
+# generic detach routine for image jails
 detach_images () {
   # Avoid ending up inside mount point
   cd /
@@ -857,8 +872,8 @@ archive)
         echo "         Use ezjail-admin config -i attach ${ezjail_name} to attach it first."
         continue
       fi
-      $0 config -i attach ${ezjail_name} || exerr "Error: Can not attach ${ezjail_image} for ${ezjail_name}"
-      ezjail_imagesize=-`stat -f %z ${ezjail_image}`
+      mount_images
+      ezjail_imagesize=-`stat -Lf %z ${ezjail_image}`
     fi
 
     # This one goes into archive to identify jail by name and restore date
@@ -901,7 +916,7 @@ archive)
     ezjail_paxresult=$?
 
     # Detach previously attached jail
-    [ "${ezjail_imagesize}" ] && cd / && $0 config -i detach ${ezjail_name}
+    [ "${ezjail_imagesize}" ] && detach_images keep
 
     # An error on a jail not running is bad
     [ ${ezjail_paxresult} -eq 0 -o "${ezjail_force}" ] || exerr "Error: Archiving jail failed. You might want to check ${ezjail_archive}."
@@ -1134,18 +1149,9 @@ config)
     attach)
       # Check, if image already attached
       [ "${ezjail_attached}" ] && exerr "Error: Jail image file ${ezjail_image} already attached as ${ezjail_device}."
-      rm -f "${ezjail_devicelink}"
 
-      # Attach images by type
-      attach_images
-
-      # Clean image
-      fsck -t ufs -p -B "/dev/${ezjail_device}"
-
-      mount "/dev/${ezjail_device}" "${ezjail_rootdir}" || detach_images keep || exerr "Error: Could not mount /dev/${ezjail_device} to ${ezjail_rootdir}."
-      # relink image device
-      ln -s "/dev/${ezjail_device}" "${ezjail_devicelink}"
-
+      # Actually, just "attaching" is not enough, we need to mount
+      mount_images
       ;;
     detach)
       # Check, if image really attached or running
