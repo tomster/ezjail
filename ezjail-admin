@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.201 2008/07/09 10:37:11 erdgeist Exp $
+# $Id: ezjail-admin,v 1.202 2008/07/09 21:59:28 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -987,8 +987,8 @@ restore)
 
     # Catch all errors that will likely create a broken backup
     [ "${ezjail_safename}" -a "${ezjail_safename}" != "${ezjail_nameprop_safename}" ] && exerr "Error: Archive name ${ezjail_fromarchive} does not match archived jail ${ezjail_nameprop_safename}."
-    [ "${ezjail_hsname}" != "${ezjail_nameprop_hsname}" && -z "${ezjail_forcerestore}" ] && exerr "Error: Archive was created on host named ${ezjail_hsname}. Consider using \"ezjail-admin create -a\" when migrating ezjails or -f to force restore."
-    [ "${ezjail_hscpu}" != "${ezjail_nameprop_hscpu}" && -z "${ezjail_forcerestore}" ] && exerr "Error: Archive was created on a different CPU. Can not restore. Consider using \"ezjail-admin create -a\" when migrating ezjails or -f to force restore."
+    [ "${ezjail_hsname}" != "${ezjail_nameprop_hsname}" -a -z "${ezjail_forcerestore}" ] && exerr "Error: Archive was created on host named ${ezjail_hsname}. Consider using \"ezjail-admin create -a\" when migrating ezjails or -f to force restore."
+    [ "${ezjail_hscpu}" != "${ezjail_nameprop_hscpu}" -a -z "${ezjail_forcerestore}" ] && exerr "Error: Archive was created on a different CPU. Can not restore. Consider using \"ezjail-admin create -a\" when migrating ezjails or -f to force restore."
 
     # Save config to tempfile and source it
     ezjail_config=`mktemp /tmp/ezjail.prop.XXXXXXXX`
