@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.203 2008/07/09 22:03:29 erdgeist Exp $
+# $Id: ezjail-admin,v 1.204 2008/07/10 18:55:39 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -37,8 +37,8 @@ ezjail_basesystem="base"
 case `uname -p` in amd64) ezjail_dirlist="${ezjail_dirlist} usr/lib32"; ezjail_basesystem="${ezjail_basesystem} lib32";; esac
 
 # Synopsis messages
-ezjail_usage_ezjailadmin="ezjail-admin v3.0b\nUsage: ${ezjail_admin} [archive|config|console|create|delete|install|list|restore|update] {params}"
-ezjail_usage_install="Usage: ${ezjail_admin} install [-mps] [-h host] [-r release]"
+ezjail_usage_ezjailadmin="${ezjail_admin} v3.0b\nUsage: ${ezjail_admin} [archive|config|console|create|delete|install|list|restore|update] {params}"
+ezjail_usage_install="Usage: ${ezjail_admin} install [-mMpPsS] [-h host] [-r release]"
 ezjail_usage_create="Usage: ${ezjail_admin} create [-xbi] [-f flavour] [-r jailroot] [-s size] [-c bde|eli] [-C args] [-a archive] jailname jailip"
 ezjail_usage_delete="Usage: ${ezjail_admin} delete [-w] jailname"
 ezjail_usage_update="Usage: ${ezjail_admin} update [-s sourcetree] [-i] [-pP]"
@@ -132,12 +132,12 @@ start_stop_jail_by_script () {
   elif [ -x "${ezjail_prefix}/etc/rc.d/ezjail.sh" ]; then
     (exec "${ezjail_prefix}/etc/rc.d/ezjail.sh" ${ezjail_action} ${ezjail_name});
   else
-    exerr "Could not find ezjail's rc.d script in ${ezjail_prefix}/etc/rc.d/. You need to ${ezjail_action} ${ezjail_name} by hand."
+    exerr "Error: Could not find ezjail's rc.d script in ${ezjail_prefix}/etc/rc.d/.\n  You need to ${ezjail_action} ${ezjail_name} by hand."
   fi
 
   # Check for success of our operation
   fetchjailinfo ${ezjail_name}
-  [ ${ezjail_success_check} "${ezjail_id}" ] || exerr "Error: Could not ${ezjail_action} ${ezjail_name}. You need to ${ezjail_action} it by hand."
+  [ ${ezjail_success_check} "${ezjail_id}" ] || exerr "Error: Could not ${ezjail_action} ${ezjail_name}.\n  You need to ${ezjail_action} it by hand."
 }
 
 # fetch everything we need to know about an ezjail from config
@@ -196,13 +196,13 @@ fetchjailinfo () {
 # fill the base jail - this function is used by install and update
 ezjail_splitworld() {
   # Fill basejail from installed world
-  cd "${ezjail_jailfull}" || exerr "Cant access temporary Jail directory."
+  cd "${ezjail_jailfull}" || exerr "Error: Cant access temporary Jail directory."
 
   # This mkdir is important, since cpio will create intermediate
   # directories with permission 0700 which is bad
   mkdir -p "${ezjail_jailbase}/usr"
   for dir in ${ezjail_dirlist}; do
-    find ${dir} | cpio -d -p -v "${ezjail_jailbase}" || exerr "Installation of ${dir} failed."
+    find ${dir} | cpio -d -p -v "${ezjail_jailbase}" || exerr "Error: Installation of ${dir} failed."
     chflags -R noschg ${dir}; rm -r ${dir}; ln -s /basejail/${dir} ${dir}
   done
   mkdir basejail
@@ -245,7 +245,7 @@ ezjail_updateports () {
     [ -d "${ezjail_jailbase}/usr/ports" ] && ezjail_portsnapaction="update"
     portsnap -p "${ezjail_jailbase}/usr/ports" ${ezjail_portsnapaction:-"extract"}
   fi
-  [ $? -eq 0 ] || exerr "Updating ports failed."
+  [ $? -eq 0 ] || exerr "Error: Updating ports failed."
 }
 
 # Try to fetch the list of releases the server provides
@@ -345,7 +345,7 @@ create)
   [ "${ezjail_name}" -a "${ezjail_ip}" -a $# -eq 2 ] || exerr ${ezjail_usage_create}
 
   # check for sanity of settings concerning the image feature
-  [ -z "${ezjail_imagetype}" -o "${ezjail_exists}" -o "${ezjail_imagesize}" ] || exerr "Image jails need an image size."
+  [ -z "${ezjail_imagetype}" -o "${ezjail_exists}" -o "${ezjail_imagesize}" ] || exerr "Error: Image jails need an image size."
 
   # check for a sane image type
   case ${ezjail_imagetype} in ""|simple|bde|eli) ;; *) exerr ${ezjail_usage_create};; esac
@@ -360,10 +360,10 @@ create)
 
   # check, whether ezjail has been set up correctly. existence of
   # ezjail_jailbase is our indicator
-  [ -d "${ezjail_jailbase}" ] || exerr "Error: base jail does not exist. Please run '${ezjail_admin} install' or '${ezjail_admin} update' first."
+  [ -d "${ezjail_jailbase}" ] || exerr "Error: base jail does not exist.\n  Please run '${ezjail_admin} install' or '${ezjail_admin} update' first."
 
   # relative paths don't make sense in rc.scripts
-  [ "${ezjail_jaildir%%[!/]*}" ] || exerr "Error: Need an absolute path in ezjail_jaildir, it currently is set to: ${ezjail_jaildir}."
+  [ "${ezjail_jaildir%%[!/]*}" ] || exerr "Error: Need an absolute path in ezjail_jaildir.\n  It is currently set to: ${ezjail_jaildir}."
 
   # jail names must not irritate file systems, excluding dots from this list
   # was done intentionally to permit foo.com style directory names, however,
@@ -377,11 +377,11 @@ create)
   # This scenario really will only lead to real troubles in the 'fulljail'
   # case, but I should still explain this to the user and not claim that
   # "an ezjail would already exist"
-  case ${ezjail_hostname} in basejail|newjail|fulljail|flavours|ezjailtemp) exerr "Error: ezjail needs the ${ezjail_hostname} directory for its own administrative purposes. Please rename the ezjail.";; esac
+  case ${ezjail_hostname} in basejail|newjail|fulljail|flavours|ezjailtemp) exerr "Error: Cannot name the jail ${ezjail_hostname}.\n  ezjail needs the ${ezjail_hostname} directory for its own administrative purposes.\n  Please rename the ezjail.";; esac
 
   # jail names may lead to identical configs, eg. foo.bar.com == foo-bar.com
   # so check, whether we might be running into problems
-  [ -e "${ezjail_config}" -o -e "${ezjail_config}.norun" ] && exerr "Error: an ezjail config already exists at ${ezjail_config}. Please rename the ezjail."
+  if [ -e "${ezjail_config}" -o -e "${ezjail_config}.norun" ] && exerr "Error: An ezjail config already exists at ${ezjail_config}.\n  This can happen because ezjail converts non alphanumeric characters in jail names to '_'.\n  Please rename the ezjail."
 
   # if jail root specified on command line is not absolute, make it absolute
   # inside our jail directory
@@ -391,22 +391,25 @@ create)
   # install. Empty root dirs are considered okay, sometimes they are
   # mount points to be filled by ezjail.
   [ -d "${ezjail_rootdir}" ] && [ -z "`ls -I ${ezjail_rootdir}`" ] && ezjail_rootdirempty="YES"
-  [ -e "${ezjail_rootdir}" -a -z "${ezjail_rootdirempty}" -a -z "${ezjail_exists}" ] && exerr "Error: the specified jail root ${ezjail_rootdir} already exists."
+  [ -e "${ezjail_rootdir}" -a -z "${ezjail_rootdirempty}" -a -z "${ezjail_exists}" ] && exerr "Error: A file or a non empty directory already exists at the specified jail root ${ezjail_rootdir}.\n  Maybe you want to '${ezjail_admin} create -x' an existing jail?\n  Please specify another jail root with the -r switch."
 
   # if jail root specified on command line does not lie within our jail
   # directory, we need to create a softlink
   if [ "${ezjail_rootdir##${ezjail_jaildir}}" = "${ezjail_rootdir}" ]; then
     ezjail_softlink=${ezjail_jaildir}/`basename -- "${ezjail_rootdir}"`
-    [ -e "${ezjail_softlink}" ] && exerr "Error: an ezjail already exists at ${ezjail_softlink}."
+    [ -e "${ezjail_softlink}" ] && exerr "Error: An ezjail already exists at ${ezjail_softlink}.\n  Please specify another jail root with the -r switch."
   fi
 
   # do some sanity checks on the selected flavour (if any)
-  [ "${ezjail_flavour}" -a ! -d "${ezjail_flavours}/${ezjail_flavour}" ] && exerr "Error: Flavour config directory ${ezjail_flavours}/${ezjail_flavour} not found."
+  [ "${ezjail_flavour}" -a ! -d "${ezjail_flavours}/${ezjail_flavour}" ] && exerr "Error: Flavour config directory ${ezjail_flavours}/${ezjail_flavour} not found.\n  Refer to ${ezjail_admin}s man page for details on flavours."
 
   # check for restore circumstances, normally this is invoked by the restore command
-  [ "${ezjail_fromarchive}" -a "${ezjail_exists}" ] && exerr "Error: Cannot restore a jail that exists."
-  [ "${ezjail_fromarchive}" -a "${ezjail_flavour}" ] && exerr "Error: Cannot apply flavours to a restored jail."
-  [ "${ezjail_fromarchive}" -a "${ezjail_fromarchive}" != "-" -a ! -r "${ezjail_fromarchive}" ] && exerr "Error: Cannot restore from non existing archive: ${ezjail_fromarchive}."
+  [ "${ezjail_fromarchive}" -a "${ezjail_exists}" ] && exerr "Error: You can not restore an archive over an existing jail.\n  '${ezjail_admin} delete -w ${ezjail_name}' the old version first."
+  [ "${ezjail_fromarchive}" -a "${ezjail_flavour}" ] && exerr "Error: Cannot apply flavours to a jail being restored."
+  [ "${ezjail_fromarchive}" -a "${ezjail_fromarchive}" != "-" -a ! -r "${ezjail_fromarchive}" ] && exerr "Error: No archive found at ${ezjail_fromarchive}."
+
+  # Ensure existence of our control directory
+  mkdir -p "${ezjail_jailcfgs}" || exerr "Error: ezjail can not create its control directory ${ezjail_jailcfgs}."
 
   #
   # All sanity checks that may lead to errors are hopefully passed here
@@ -415,7 +418,7 @@ create)
   if [ "${ezjail_imagetype}" ]; then
     # Strip trailing slashes from jail root, those would confuse image path
     ezjail_image=${ezjail_rootdir%/}; while [ "${ezjail_image}" -a -z "${ezjail_image%%*/}" ]; do ezjail_image=${ezjail_image%/}; done
-    [ "${ezjail_image}" ] || exerr "Error: Could not determine image file name, something is wrong with the jail root: ${ezjail_rootdir}."
+    [ "${ezjail_image}" ] || exerr "Error: Could not determine image file name.\n  Something is wrong with the jail root: ${ezjail_rootdir}."
 
     # Location of our image file
     ezjail_image="${ezjail_image}.img"
@@ -426,23 +429,23 @@ create)
 
     # If NOT exist, create image
     if [ -z "${ezjail_exists}" ]; then
-      [ -e "${ezjail_image}" ] && exerr "Error: a file exists at the location ${ezjail_image}, preventing our own image file to be created."
+      [ -e "${ezjail_image}" ] && exerr "Error: A file exists at ${ezjail_image}.\n  Won't overwrite an existing image."
 
       # Now create jail disc image
       touch "${ezjail_image}"
       echo "Creating jail image ${ezjail_image}. This may take a while."
       if [ "${ezjail_imageblockcount}" -gt 0 ]; then
-        dd if="${ezjail_sourcedevice}" of="${ezjail_image}" bs=1m count=${ezjail_imageblockcount} || exerr "Error: Could not (or not fully) create the image file. You might want to check (and possibly remove) the file ${ezjail_image}. The image size provided was ${ezjail_imagesize}."
+        dd if="${ezjail_sourcedevice}" of="${ezjail_image}" bs=1m count=${ezjail_imageblockcount} || exerr "Error: Could not (or not fully) create the image file.\n  You might want to check (and possibly remove) the file ${ezjail_image}.\n  The image size provided was ${ezjail_imagesize}."
       fi
       if [ "${ezjail_imagerestbytes}" -gt 0  ]; then
-        ( dd if="${ezjail_sourcedevice}" bs=${ezjail_imagerestbytes} count=1 >> "${ezjail_image}" ) || exerr "Error: Could not (or not fully) create the image file. You might want to check (and possibly remove) the file ${ezjail_image}. The image size provided was ${ezjail_imagesize}."
+        ( dd if="${ezjail_sourcedevice}" bs=${ezjail_imagerestbytes} count=1 >> "${ezjail_image}" ) || exerr "Error: Could not (or not fully) create the image file.\n  You might want to check (and possibly remove) the file ${ezjail_image}.\n  The image size provided was ${ezjail_imagesize}."
       fi
 
       # Attach device
       ezjail_imagedevice=`mdconfig -a -t vnode -f "${ezjail_image}"`
       ezjail_devicelink="${ezjail_rootdir}.device"
 
-      [ $? -eq 0 ] || detach_images || exerr "Error: Could not attach image device. (Command failed was 'mdconfig -a -t vnode -f ${ezjail_image}')"
+      [ $? -eq 0 ] || detach_images || exerr "Error: Could not attach image device.\n  Command failed was 'mdconfig -a -t vnode -f ${ezjail_image}'."
     fi
 
     case ${ezjail_imagetype} in
@@ -481,7 +484,10 @@ create)
       mkdir -p "${ezjail_rootdir}" || detach_images || exerr "Error: Could not create jail root mount point ${ezjail_rootdir}."
       mount "/dev/${ezjail_device}" "${ezjail_rootdir}" || detach_images || exerr "Error: Could not mount /dev/${ezjail_device} to ${ezjail_root}."
     else
-      [ -e "${ezjail_rootdir}" -a ! -d "${ezjail_rootdir}" ] && exerr "Error: Could not create mount point for your jail image. A file exists at its location. (For existing image jails, call this tool without the .img suffix when specifying jail root.)"
+      if [ -e "${ezjail_rootdir}" -a ! -d "${ezjail_rootdir}" ]; then
+        [ "${ezjail_rootdir%%*.img}" ] || exerr "Error: Could not create mount point for your jails image.\n  A file exists at its location.\n  Try '${ezjail_admin} create -x -r ${ezjail_rootdir%%.img} ${ezjail_name} ${ezjail_ip}' instead."
+        exerr "Error: Could not create mount point for your jails image.\n  A file exists at its location."
+      fi
       [ -d "${ezjail_rootdir}" ] || mkdir -p "${ezjail_rootdir}"
     fi
   fi
@@ -510,7 +516,6 @@ create)
 
   # now, where everything seems to have gone right, create control file in
   # ezjails config dir
-  mkdir -p "${ezjail_jailcfgs}" || exerr "Error: can't create ezjails control directory (${ezjail_jailcfgs})."
   (
   if [ "${ezjail_fromarchive_config}" ]; then
     grep -E ^\# ${ezjail_fromarchive_config}; echo
@@ -595,7 +600,7 @@ delete)
 
   if [ "${ezjail_id}" ]; then
     # if jail is still running, refuse to go any further
-    [ "${ezjail_forcestop}" ] || exerr "Error: Jail appears to be still running, stop it first (or use delete -f for force stop)."
+    [ "${ezjail_forcestop}" ] || exerr "Error: Jail appears to be still running.\n  '${ezjail_admin} stop ${ezjail_name}' it first or use '${ezjail_admin} delete -f ${ezjail_name}' to force stop."
 
     # This one will also exerr on failure
     start_stop_jail_by_script stop
@@ -603,13 +608,13 @@ delete)
 
   if [ "${ezjail_attached}" ]; then
     # if jail is attached and detach is not forced, refuse to go any further
-    [ "${ezjail_forcestop}" ] || exerr "Error: Jail image file ${ezjail_image} is attached as ${ezjail_device}. '${ezjail_admin} config -i detach' it first, or (or use delete -f for force detach)."
+    [ "${ezjail_forcestop}" ] || exerr "Error: Jail image file ${ezjail_image} is attached as ${ezjail_device}.\n  '${ezjail_admin} config -i detach ${ezjail_name}' it first, or use '${ezjail_admin} delete -f ${ezjail_name}' to force detach."
 
     detach_images keep
 
     # See, if it successfully detached
     fetchjailinfo ${ezjail_name}
-    [ "${ezjail_attached}" ] && exerr "Error: Could not detach ${ezjail_name}. You need to detach it by hand."
+    [ "${ezjail_attached}" ] && exerr "Error: Could not detach ${ezjail_name}.\n  You need to detach it by hand."
   fi
 
   # now we know everything we need to let the jail be gone. remove entry
@@ -668,21 +673,21 @@ setup|update)
   if [ "${ezjail_installaction}" = "none" ]; then
     # check, whether ezjail has been setup correctly. existence of
     # ezjail_jailbase is our indicator
-    [ -d "${ezjail_jailbase}" ] || exerr "Error: base jail does not exist. You cannot fill base jails ports tree before creating it. Please run '${ezjail_admin} update' or '${ezjail_admin} install' first."
+    [ -d "${ezjail_jailbase}" ] || exerr "Error: base jail does not exist.\n  You cannot fill base jails ports tree before creating it.\n  Please run '${ezjail_admin} update' or '${ezjail_admin} install' first."
   else
     # Bump the user for some of the most common errors
-    [ -d "${ezjail_sourcetree}" ] || exerr "Cannot find your copy of the FreeBSD source tree in ${ezjail_sourcetree}."
-    [ -e "${ezjail_sourcetree}/Makefile" ] || exerr "Your source tree in ${ezjail_sourcetree} seems to be incomplete (Makefile missing)."
-    [ "`sysctl -n kern.securelevel`" -gt 0 ] && exerr "You're running in a secure level higher than 0. ezjail will not run correctly."
+    [ -d "${ezjail_sourcetree}" ] || exerr "Error: Cannot find your copy of the FreeBSD source tree in ${ezjail_sourcetree}.\n  Consider using '${ezjail_admin} install' to create the base jail from an ftp server."
+    [ -e "${ezjail_sourcetree}/Makefile" ] || exerr "Error: Your source tree in ${ezjail_sourcetree} seems to be incomplete (Makefile is missing)."
+    [ "`sysctl -n kern.securelevel`" -gt 0 ] && exerr "Error: You are running in a secure level higher than 0.\n  ${ezjail_admin} will not update correctly.\n  Please reboot into a lower secure level."
 
     # Normally fulljail should be renamed by past ezjail-admin commands.
     # However those may have failed
     [ -d "${ezjail_jailfull}" ] && chflags -R noschg "${ezjail_jailfull}" && rm -rf "${ezjail_jailfull}"
-    mkdir -p "${ezjail_jailfull}" || exerr "Cannot create temporary Jail directory."
+    mkdir -p "${ezjail_jailfull}" || exerr "Error: Cannot create temporary Jail directory."
 
     # make and setup our world, then split basejail and newjail
-    cd "${ezjail_sourcetree}" && env DESTDIR="${ezjail_jailfull}" make ${ezjail_installaction} || exerr "make ${ezjail_installaction} failed."
-    cd "${ezjail_sourcetree}/etc" && env DESTDIR="${ezjail_jailfull}" make distribution || exerr "make distribution failed."
+    cd "${ezjail_sourcetree}" && env DESTDIR="${ezjail_jailfull}" make ${ezjail_installaction} || exerr "Error: The command 'make ${ezjail_installaction}' failed.\n  Refer to the error report(s) above."
+    cd "${ezjail_sourcetree}/etc" && env DESTDIR="${ezjail_jailfull}" make distribution || exerr "Error: The command 'make distribution' failed.\n  Refer to the error report(s) above."
     ezjail_splitworld
 
   fi # installaction="none"
@@ -696,10 +701,13 @@ install)
   # Clean variables, prevent polution
   unset ezjail_release ezjail_installmanpages ezjail_installports ezjail_installsources ezjail_dir ezjail_reldir ezjail_ftpserverqueried
 
-  shift; while getopts :mpsh:r: arg; do case ${arg} in
+  shift; while getopts :mMpPsSh:r: arg; do case ${arg} in
     m) ezjail_installmanpages=" manpages";;
+    M) ezjail_installmanpages=" manpages"; unset ezjail_basesystem;;
     s) ezjail_installsources=" src";;
+    S) ezjail_installsources=" src"; unset ezjail_basesystem;;
     p) ezjail_installports="YES";;
+    P) ezjail_installports="YES"; unset ezjail_basesystem;;
     h) ezjail_ftphost=${OPTARG};;
     r) ezjail_release=${OPTARG};;
     ?) exerr ${ezjail_usage_install};;
@@ -713,7 +721,10 @@ install)
   ezjail_dir=${ezjail_ftphost#file://}
   [ "${ezjail_dir%%[!/]*}" ] || ezjail_reldir=`pwd -P`
 
-  [ "`sysctl -n kern.securelevel`" -gt 0 ] && exerr "You're running in a secure level higher than 0. ezjail will not run correctly."
+  [ "`sysctl -n kern.securelevel`" -gt 0 ] && exerr "Error: You are running in a secure level higher than 0.\n  ${ezjail_admin} will not install correctly.\n  Please reboot into a lower secure level."
+
+  # Check for basejail when not installing base jail
+  [ "${ezjail_basesystem}" -o -d "${ezjail_jailbase}" ] || exerr "Error: The basejail does not exist.\n  You cannot install distribution packages before creating ezjails environment.\n  Please run '${ezjail_admin} update' or '${ezjail_admin} install' using lower case parameters first."
 
   # ftp servers normally wont provide non-RELEASE-builds
   if [ -z "${ezjail_release}" -a "${ezjail_dir}" = "${ezjail_ftphost}" ]; then
@@ -731,7 +742,7 @@ install)
   # Normally fulljail should be renamed by past ezjail-admin commands.
   # However those may have failed
   [ -d "${ezjail_jailfull}" ] && chflags -R noschg "${ezjail_jailfull}" && rm -rf "${ezjail_jailfull}"
-  mkdir -p "${ezjail_jailfull}" || exerr "Cannot create temporary Jail directory."
+  mkdir -p "${ezjail_jailfull}" || exerr "Error: Cannot create temporary jail directory."
   DESTDIR=${ezjail_jailfull}
 
   rm -rf "${ezjail_jailtemp}"
@@ -740,13 +751,13 @@ install)
     # The first case means, that a remote host has been specified.
     if [ "${ezjail_dir}" = "${ezjail_ftphost}" ]; then
       # Create and try to access temp dir
-      mkdir -p "${ezjail_jailtemp}" || exerr "Could not create temporary base jail directory ${ezjail_jailtemp}."
-      cd "${ezjail_jailtemp}" || exerr "Could not cd to ${ezjail_jailtemp}."
+      mkdir -p "${ezjail_jailtemp}" || exerr "Error: Could not create temporary base jail directory ${ezjail_jailtemp}."
+      cd "${ezjail_jailtemp}" || exerr "Error: Could not cd to ${ezjail_jailtemp}."
 
       # Try all paths as stolen from sysinstall, break on success.
       for ezjail_path in pub/FreeBSD/releases pub/FreeBSD/snapshot pub/FreeBSD releases snapshots NO; do
         if [ "${ezjail_path}" = "NO" ]; then
-          echo -e "\nCould not fetch ${pkg} from ${ezjail_ftphost}.\nMaybe your release (${ezjail_release}) is specified incorrectly or the host ${ezjail_ftphost} does not provide that release build.\nUse the -r option to specify an existing release or the -h option to specify an alternative ftp server." >&2
+          echo -e "\nCould not fetch ${pkg} from ${ezjail_ftphost}.\n  Maybe your release (${ezjail_release}) is specified incorrectly or the host ${ezjail_ftphost} does not provide that release build.\n  Use the -r option to specify an existing release or the -h option to specify an alternative ftp server." >&2
           [ "${ezjail_ftpserverqueried}" ] || ezjail_queryftpserver
           exit 1
         fi
@@ -759,19 +770,19 @@ install)
       [ "${pkg}" = "base" ] && echo "Ignore the next question, ezjail answers it for you."
       set -- all
       [ -f install.sh ] && yes | . install.sh
-      [ $? -eq 0 ] || exerr "Package install script for ${pkg} failed."
+      [ $? -eq 0 ] || exerr "Error: Package install script for ${pkg} failed."
 
       rm -rf "${ezjail_jailtemp}"
     else
-      cd "${ezjail_reldir}/${ezjail_dir}/${pkg}" || exerr "Could not cd to ${ezjail_dir}."
+      cd "${ezjail_reldir}/${ezjail_dir}/${pkg}" || exerr "Error: Could not cd to ${ezjail_dir}."
       set -- all
       [ -f install.sh ] && yes | . install.sh
-      [ $? -eq 0 ] || exerr "Package install script for ${pkg} failed."
+      [ $? -eq 0 ] || exerr "Error: Package install script for ${pkg} failed."
     fi
   done
 
   # Split basejail and newjail
-  ezjail_splitworld
+  [ "${ezjail_basesystem}" ] && ezjail_splitworld
 
   # Fill ports, if requested
   [ "${ezjail_installports}" ] && ezjail_updateports
@@ -782,7 +793,7 @@ install)
   [ -x "${ezjail_prefix}/etc/rc.d/ezjail" ] && exec "${ezjail_prefix}/etc/rc.d/ezjail" $@
   [ -x "${ezjail_prefix}/etc/rc.d/ezjail.sh" ] && exec "${ezjail_prefix}/etc/rc.d/ezjail.sh" $@
 
-  exerr "Could not find ezjail's rc.d script in ${ezjail_prefix}/etc/rc.d/. You need to type it the long way."
+  exerr "Error: Could not find ezjail's rc.d script in ${ezjail_prefix}/etc/rc.d/.\n  You need to type it the long way."
   ;;
 ######################## ezjail-admin CONSOLE ########################
 console)
@@ -808,7 +819,7 @@ console)
   if [ -z "${ezjail_id}" ]; then
 
     # If force start is requested, try that
-    [ "$ezjail_forcestart}" ] || exerr "Error: Jail ${ezjail_name} appears not to be running, start it first (or use console -f for force start)."
+    [ "$ezjail_forcestart}" ] || exerr "Error: Jail ${ezjail_name} appears not to be running\n  Start it first, or use '${ezjail_admin} console -f ${ezjail_name}' to force start."
 
     # This one will also exerr on failure
     start_stop_jail_by_script start
@@ -839,13 +850,13 @@ archive)
   ezjail_archivedir=${ezjail_archivedir:-`pwd -P`}
 
   # Will not backup more than one jail per archive
-  [ "${ezjail_archive}" -a "${ezjail_archivealljails}" ] && exerr "Error: Must not specify an archive location for multiple archives."
+  [ "${ezjail_archive}" -a "${ezjail_archivealljails}" ] && exerr "Error: Must not specify an archive location for multiple archives.\n  Can not archive multiple jails into one archive."
 
   # Will not backup more than one jail per archive
-  [ $# -gt 1 -a "${ezjail_archive}" ] && exerr "Error: Must not specify an archive location for multiple archives."
+  [ $# -gt 1 -a "${ezjail_archive}" ] && exerr "Error: Must not specify an archive location for multiple archives.\n  Can not archive multiple jails into one archive."
 
   # Either all or only some. Decide.
-  [ $# -gt 0 -a "${ezjail_archivealljails}" ] && exerr "Error: Must not specify an ezjail to backup with -A."
+  [ $# -gt 0 -a "${ezjail_archivealljails}" ] && exerr "Error: Must not specify an ezjail to backup with -A.\n  Please use either '${ezjail_admin} archive -A' or '${ezjail_admin} archive $*'."
 
   # Fetch list of all ezjails
   [ "${ezjail_archivealljails}" -a -d "${ezjail_prefix}/etc/ezjail/" ] && cd "${ezjail_prefix}/etc/ezjail/" && set - `ls | xargs rcorder`
@@ -861,7 +872,7 @@ archive)
 
     # If jail is still running, refuse to go any further - unless forced
     if [ "${ezjail_id}" -a -z "${ezjail_force}" ]; then
-      echo "Warning: Jail ${ezjail_name} appears to be still running, stop it first or [-f]orce archiving."
+      echo "Warning: Jail ${ezjail_name} appears to be still running.\n  Stop it first, or use '${ezjail_admin} -f ${ezjail_name}' to force archiving."
       continue
     fi
 
@@ -869,11 +880,11 @@ archive)
     if [ "${ezjail_imagetype}" -a -z "${ezjail_attached}" ]; then
       if [ "${ezjail_attachblocking}" ]; then
         echo "Warning: Jail ${ezjail_name} is an image jail and can not be attached automatically."
-        echo "         Use ezjail-admin config -i attach ${ezjail_name} to attach it first."
+        echo "         Use '${ezjail_admin} config -i attach ${ezjail_name}' to attach it first."
         continue
       fi
       mount_images
-      ezjail_imagesize=-`stat -Lf %z ${ezjail_image}`
+      ezjail_imagesize=-`stat -Lf %z "${ezjail_image}"`
     fi
 
     # This one goes into archive to identify jail by name and restore date
@@ -905,7 +916,7 @@ archive)
 
     [ -f "/etc/fstab.${ezjail_safename}" ] && ezjail_addfiles=/etc/fstab.${ezjail_safename}
 
-    cd "${ezjail_rootdir}" || exerr "Error: can't cd to ${ezjail_root}."
+    cd "${ezjail_rootdir}" || exerr "Error: Can't cd to ${ezjail_root}."
     pax -wzXt -x ustar ${ezjail_archive_opt} \
       -s:"^[^\\.].*/${ezjail_safename}\$":prop.ezjail-${ezjail_archive_tag}: \
       -s:"^[^\\.].*/${ezjail_safename}.norun\$":prop.ezjail-${ezjail_archive_tag}.norun: \
@@ -919,10 +930,10 @@ archive)
     [ "${ezjail_imagesize}" ] && detach_images keep
 
     # An error on a jail not running is bad
-    [ ${ezjail_paxresult} -eq 0 -o "${ezjail_force}" ] || exerr "Error: Archiving jail failed. You might want to check ${ezjail_archive}."
+    [ ${ezjail_paxresult} -eq 0 -o "${ezjail_force}" ] || exerr "Error: Archiving jail failed.\n  You might want to check and remove ${ezjail_archive}."
 
     # When archiving a running jail, some errors might occur
-    [ ${ezjail_paxresult} -eq 0 ] || echo "Warning: Archiving jail ${ezjail_name} was not completely successful. For a running jail this is not unusual. You might want to check ${ezjail_archive}."
+    [ ${ezjail_paxresult} -eq 0 ] || echo "Warning: Archiving jail ${ezjail_name} was not completely successful. For a running jail this is not unusual."
 
     unset ezjail_archive ezjail_archive_opt ezjail_addfiles
   done
@@ -947,7 +958,7 @@ restore)
     unset ezjail_safename ezjail_imagedata ezjail_nameprop
 
     # if archive location is absolute and doesn't exist, fail
-    [ "${ezjail_fromarchive%%[!/]*}" -a ! -f "${ezjail_fromarchive}" ] && exerr "Error: File for archive ${ezjail_fromarchive} not found."
+    [ "${ezjail_fromarchive%%[!/]*}" -a ! -f "${ezjail_fromarchive}" ] && exerr "Error: Archive ${ezjail_fromarchive} not found."
     if [ -z "${ezjail_fromarchive%%[!/]*}" ]; then
       # Try archive location
       if [ -r "${ezjail_archivedir}/${ezjail_fromarchive}" ]; then
@@ -969,8 +980,8 @@ restore)
     #
     # However, this does not protect against admins transporting
     # archives over insecure lines over the net.
-    [ `stat -f %u "${ezjail_fromarchive}"` -eq 0 ] || exerr "Error: Insecure ownership of archive ${ezjail_fromarchive}. Please check the file and chown it to root if you trust its source."
-    [ $(( `stat -f %OLp "${ezjail_fromarchive}"` & 0022 )) -eq 0 ] || exerr "Error: Insecure permissions for archive ${ezjail_fromarchive}. Please check the file and fix permission (chmod og-w) if you trust its source."
+    [ `stat -f %u "${ezjail_fromarchive}"` -eq 0 ] || exerr "Error: Insecure ownership of archive ${ezjail_fromarchive}.\n  Please check the file and chown it to root if you trust its source."
+    [ $(( `stat -f %OLp "${ezjail_fromarchive}"` & 0022 )) -eq 0 ] || exerr "Error: Insecure permissions for archive ${ezjail_fromarchive}.\n  Please check the file and fix permission (chmod og-w) if you trust its source."
 
     ezjail_nameprop=`pax -zn -f ${ezjail_fromarchive} prop.ezjail-\*`
     [ $? -eq 0 -a "${ezjail_nameprop}" ] || exerr "Error: File ${ezjail_fromarchive} is not an ezjail archive."
@@ -987,8 +998,8 @@ restore)
 
     # Catch all errors that will likely create a broken backup
     [ "${ezjail_safename}" -a "${ezjail_safename}" != "${ezjail_nameprop_safename}" ] && exerr "Error: Archive name ${ezjail_fromarchive} does not match archived jail ${ezjail_nameprop_safename}."
-    [ "${ezjail_hsname}" != "${ezjail_nameprop_hsname}" -a -z "${ezjail_forcerestore}" ] && exerr "Error: Archive was created on host named ${ezjail_nameprop_hsname}. Consider using \"ezjail-admin create -a\" when migrating ezjails or -f to force restore."
-    [ "${ezjail_hscpu}" != "${ezjail_nameprop_hscpu}" -a -z "${ezjail_forcerestore}" ] && exerr "Error: Archive was created on a different CPU. Can not restore. Consider using \"ezjail-admin create -a\" when migrating ezjails or -f to force restore."
+    [ "${ezjail_hsname}" != "${ezjail_nameprop_hsname}" -a -z "${ezjail_forcerestore}" ] && exerr "Error: Archive was created on host named ${ezjail_nameprop_hsname}.\n  Consider using '${ezjail_admin} create -a ${ezjail_fromarchive}' when migrating ezjails, or '${ezjail_admin} restore -f ${ezjail_fromarchive}' to force restore."
+    [ "${ezjail_hscpu}" != "${ezjail_nameprop_hscpu}" -a -z "${ezjail_forcerestore}" ] && exerr "Error: Archive was created on a different CPU. Can not restore.\n  Consider using '${ezjail_admin} create -a ${ezjail_fromarchive}' when migrating ezjails, or '${ezjail_admin} restore -f ${ezjail_fromarchive}' to force restore."
 
     # Save config to tempfile and source it
     ezjail_config=`mktemp /tmp/ezjail.prop.XXXXXXXX`
@@ -997,10 +1008,10 @@ restore)
     fetchjailinfo ${ezjail_safename} ${ezjail_config}
 
     # Now all parameters are here, invoke ezjail-admin create
-    [ "${ezjail_rootdir}" -a "${ezjail_ip}" -a "${ezjail_hostname}" ] || exerr "Error: Archive does not contain a valid ezjail properties file."
+    [ "${ezjail_rootdir}" -a "${ezjail_ip}" -a "${ezjail_hostname}" ] || exerr "Error: Archive does not contain a valid ezjail properties file.\n  Some jails properties are missing."
     [ "${ezjail_imagetype}" ] && ezjail_imagedata="-c ${ezjail_imagetype} -C '${ezjail_attachparams}' -s ${ezjail_nameprop_imgagesize}"
 
-    $0 create -a "${ezjail_fromarchive}" -A "${ezjail_config}" ${ezjail_imagedata} -r "${ezjail_rootdir}" "${ezjail_hostname}" "${ezjail_ip}" || exerr "Error: create failed."
+    $0 create -a "${ezjail_fromarchive}" -A "${ezjail_config}" ${ezjail_imagedata} -r "${ezjail_rootdir}" "${ezjail_hostname}" "${ezjail_ip}" || exerr "Error: Create failed."
     rm -f "${ezjail_config}"
 
   done
@@ -1031,10 +1042,10 @@ config)
   # Do we want a new name for our jail?
   if [ "${ezjail_new_name}" ]; then
     # if jail is still running, refuse to go any further
-    [ "${ezjail_id}" ] && exerr "Error: Jail appears to be still running, stop it first."
+    [ "${ezjail_id}" ] && exerr "Error: Jail appears to be still running.\n  '${ezjail_admin} stop ${ezjail_name}' it first ."
 
     # Cannot rename an attached jail
-    [ "${ezjail_attached}" ] && exerr "Error: Jail image file ${ezjail_image} is attached as ${ezjail_device}. '${ezjail_admin} config -i detach' it first."
+    [ "${ezjail_attached}" ] && exerr "Error: Jail image file ${ezjail_image} is attached as ${ezjail_device}.\n  '${ezjail_admin} config -i detach ${ezjail_name}' it first."
 
     # The new values for the jail
     ezjail_new_hostname=`echo -n ${ezjail_new_name} | tr '/~' '__'`
@@ -1060,11 +1071,11 @@ config)
     # This scenario really will only lead to real troubles in the 'fulljail'
     # case, but I should still explain this to the user and not claim that
     # "an ezjail would already exist"
-    case ${ezjail_new_hostname} in basejail|newjail|fulljail|flavours|ezjailtemp) exerr "Error: ezjail needs the ${ezjail_new_hostname} directory for its own administrative purposes. Please rename the ezjail.";; esac
+    case ${ezjail_new_hostname} in basejail|newjail|fulljail|flavours|ezjailtemp) exerr "Error: ezjail needs the ${ezjail_new_hostname} directory for its own administrative purposes.\n  Please chose another name.";; esac
   
     # jail names may lead to identical configs, eg. foo.bar.com == foo-bar.com
     # so check, whether we might be running into problems
-    [ -e "${ezjail_new_config}" -o -e "${ezjail_new_config}.norun" ] && exerr "Error: an ezjail config already exists at ${ezjail_new_config}. Please rename the ezjail."
+    [ -e "${ezjail_new_config}" -o -e "${ezjail_new_config}.norun" ] && exerr "Error: An ezjail config already exists at ${ezjail_new_config}.\n  Please chose another name."
 
     # since we just used the old rootdir prefix and added the new hostname,
     # we might end up at an existing directory
@@ -1153,7 +1164,7 @@ config)
       ;;
     detach)
       # Check, if image really attached or running
-      [ "${ezjail_id}" ] && exerr "Error: Jail ${ezjail_name} still running. Can not detach."
+      [ "${ezjail_id}" ] && exerr "Error: Jail ${ezjail_name} still running\n  Can not detach.\n  '${ezjail_admin} stop ${ezjail_name}' it first."
       [ "${ezjail_attached}" ] || exerr "Error: Jail image file ${ezjail_name} is not attached."
 
       # Unmount/detach everything

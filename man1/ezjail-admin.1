@@ -3,7 +3,7 @@
 ezjail-admin \- Administrate ezjail
 .SH SYNOPSIS
 .T
-.B ezjail-admin install\fR [-mps] [-h host] [-r release]
+.B ezjail-admin install\fR [-mMpPsS] [-h host] [-r release]
 
 .T
 .B ezjail-admin create
@@ -48,6 +48,8 @@ is around 120MB).
 The -m and -s option will fetch and install man pages (ca. 10MB) and
 sources packages (ca. 450MB) respectively. The -p option invokes the
 portsnap utility to fetch and extract a FreeBSD ports tree (ca. 475MB).
+Parameters -M, -P or -S behave like their lower case pendants, plus they
+disable (re)installing your basejail.
 
 Default OS version is, whatever uname -r returns. If this does not match
 "*-RELEASE", you will be prompted for a better guess. (Normally
