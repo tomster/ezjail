@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.204 2008/07/10 18:55:39 erdgeist Exp $
+# $Id: ezjail-admin,v 1.205 2008/07/13 21:15:42 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -381,7 +381,7 @@ create)
 
   # jail names may lead to identical configs, eg. foo.bar.com == foo-bar.com
   # so check, whether we might be running into problems
-  if [ -e "${ezjail_config}" -o -e "${ezjail_config}.norun" ] && exerr "Error: An ezjail config already exists at ${ezjail_config}.\n  This can happen because ezjail converts non alphanumeric characters in jail names to '_'.\n  Please rename the ezjail."
+  [ -e "${ezjail_config}" -o -e "${ezjail_config}.norun" ] && exerr "Error: An ezjail config already exists at ${ezjail_config}.\n  This can happen because ezjail converts non alphanumeric characters in jail names to '_'.\n  Please rename the ezjail."
 
   # if jail root specified on command line is not absolute, make it absolute
   # inside our jail directory
