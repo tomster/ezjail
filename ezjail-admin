@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.205 2008/07/13 21:15:42 erdgeist Exp $
+# $Id: ezjail-admin,v 1.206 2008/07/13 21:21:10 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -872,7 +872,7 @@ archive)
 
     # If jail is still running, refuse to go any further - unless forced
     if [ "${ezjail_id}" -a -z "${ezjail_force}" ]; then
-      echo "Warning: Jail ${ezjail_name} appears to be still running.\n  Stop it first, or use '${ezjail_admin} -f ${ezjail_name}' to force archiving."
+      echo -e "Warning: Jail ${ezjail_name} appears to be still running.\n  Stop it first, or use '${ezjail_admin} -f ${ezjail_name}' to force archiving."
       continue
     fi
 
