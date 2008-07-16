@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.206 2008/07/13 21:21:10 erdgeist Exp $
+# $Id: ezjail-admin,v 1.207 2008/07/16 04:25:35 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -41,7 +41,7 @@ ezjail_usage_ezjailadmin="${ezjail_admin} v3.0b\nUsage: ${ezjail_admin} [archive
 ezjail_usage_install="Usage: ${ezjail_admin} install [-mMpPsS] [-h host] [-r release]"
 ezjail_usage_create="Usage: ${ezjail_admin} create [-xbi] [-f flavour] [-r jailroot] [-s size] [-c bde|eli] [-C args] [-a archive] jailname jailip"
 ezjail_usage_delete="Usage: ${ezjail_admin} delete [-w] jailname"
-ezjail_usage_update="Usage: ${ezjail_admin} update [-s sourcetree] [-i] [-pP]"
+ezjail_usage_update="Usage: ${ezjail_admin} update [-s sourcetree] [-p] (-b|-i|-u|-P)"
 ezjail_usage_config="Usage: ${ezjail_admin} config [-r run|norun] [-n newname] [-i attach|detach|fsck] jailname"
 ezjail_usage_console="Usage: ${ezjail_admin} console [-f] [-e command] jailname"
 ezjail_usage_archive="Usage: ${ezjail_admin} archive [-Af] [-a archive] [-d archivedir] jailname [jailname...]"
@@ -657,23 +657,33 @@ list)
 ######################## ezjail-admin UPDATE ########################
 setup|update)
   # Clean variables, prevent polution
-  unset ezjail_provideports
-  ezjail_installaction="world"
+  unset ezjail_provideports ezjail_installaction
 
-  shift; while getopts :ipPs: arg; do case ${arg} in
+  shift; while getopts :biupPs: arg; do case ${arg} in
+    b) ezjail_installaction="buildworld installword";;
     i) ezjail_installaction="installworld";;
+    u) ezjail_installaction="freebsd-update";;
     s) ezjail_sourcetree=${OPTARG};;
-    p) ezjail_provideports="YES";;
     P) ezjail_provideports="YES"; ezjail_installaction="none";;
+    p) ezjail_provideports="YES";;
     ?) exerr ${ezjail_usage_update};;
   esac; done; shift $(( ${OPTIND} - 1 ))
 
   [ $# -eq 0 ] || exerr ${ezjail_usage_update}
 
+  # Check if some action was requested
+  [ "${ezjail_installaction}" ] || exerr "Error: No install action has been chosen.\n  Please note that ezjails behaviour changed. Rebuilding the world no longer is default.\n  Run '${ezjail_admin} update -b' to build and install a world from source or '${ezjail_admin} update -i' to install an already built world."
+
   if [ "${ezjail_installaction}" = "none" ]; then
     # check, whether ezjail has been setup correctly. existence of
     # ezjail_jailbase is our indicator
     [ -d "${ezjail_jailbase}" ] || exerr "Error: base jail does not exist.\n  You cannot fill base jails ports tree before creating it.\n  Please run '${ezjail_admin} update' or '${ezjail_admin} install' first."
+  elif [ "${ezjail_installaction}" = "freebsd-update" ]; then
+    [ -d "${ezjail_jailbase}" ] || exerr "Error: base jail does not exist.\n  You cannot update a base jail until it is created.\n  Please run '${ezjail_admin} update' or '${ezjail_admin} install' first."
+    
+    # If ran from cron be kind to freebsds update servers and sleep first
+    [ -z "$TERM" -o "$TERM" = "dumb" ] && sleep $(( ${RANDOM} % 3600 ))
+    freebsd-update -b ${ezjail_jailbase} fetch install
   else
     # Bump the user for some of the most common errors
     [ -d "${ezjail_sourcetree}" ] || exerr "Error: Cannot find your copy of the FreeBSD source tree in ${ezjail_sourcetree}.\n  Consider using '${ezjail_admin} install' to create the base jail from an ftp server."
