@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.208 2008/07/17 11:43:56 erdgeist Exp $
+# $Id: ezjail-admin,v 1.209 2008/07/18 18:15:41 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -660,7 +660,7 @@ setup|update)
   unset ezjail_provideports ezjail_installaction
 
   shift; while getopts :biupPs: arg; do case ${arg} in
-    b) ezjail_installaction="buildworld installword";;
+    b) ezjail_installaction="buildworld installworld";;
     i) ezjail_installaction="installworld";;
     u) ezjail_installaction="freebsd-update";;
     s) ezjail_sourcetree=${OPTARG};;
