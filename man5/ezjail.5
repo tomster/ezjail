@@ -17,17 +17,17 @@ then mounted read only into a number of stripped down jails via
 .SH INVOCATION
 The ezjail script \fBEZJAIL_PREFIX/etc/rc.d/ezjail.sh\fR takes parameters \fIstart,
 startcrypto, restart\fR and \fIstop\fR. It may be passed an additional list of
-jails. If no jail name is specified (usually when the script is being called by
-rc.local at boot and shutdown time), all jails in ezjails scope, except crypto
-image jails (or jails marked as blocking), are being started/stopped. To start
+jails. If no jail name is specified (usually when the script is called by
+rc.local at boot and shutdown time), all jails in ezjail's scope, except crypto
+image jails (or jails marked as blocking), are started/stopped. To start
 all crytpo image jails (or those depending on them), use the \fIstartcrypto\fR parameter.
 
-The script examines its config, attaches and mounts images, sets
+The script examines its config, attaches and mounts images, and sets
 variables for each jail in the jail_list before passing its command on
 to the \fB/etc/rc.d/jail\fR script.
 .SH NOTES
 .B ezjail.sh\fR enforces the execution of \fB/etc/rc.d/jail\fR, by
-prepending \fI"one"\fR to the start, restart and stop commands so it is
+prepending \fI"one"\fR to the start, restart, and stop commands so it is
 .B NOT NECESSARY\fR to set \fIjail_enable\fR in the \fB/etc/rc.conf\fR
 config file.
 .SH FILES

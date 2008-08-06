@@ -34,123 +34,123 @@ ezjail-admin \- Administrate ezjail
 The \fBezjail-admin\fR tool is used to manage the ezjail environment
 and jails inside the ezjail scope.
 
-It can also be used to start or stop and to get a console in ezjails
+It can also be used to start or stop and to get a console in ezjail's
 jails by proxying everything looking like
 \fBezjail-admin start\fR, \fBstop\fR or \fBrestart\fR to the ezjail rc.d script.
 .SH ezjail-admin install
 fetches everything needed to setup an ezjail environment from an FTP server and 
 installs it.
 
-Default location for ezjails base jail is \fI/usr/jails\fR, so be sure you
+The default location for ezjail's base jail is \fI/usr/jails\fR, so be sure you
 have enough space there (a FreeBSD base without man pages, sources and ports
 is around 120MB).
 
 The -m and -s option will fetch and install man pages (ca. 10MB) and
 sources packages (ca. 450MB) respectively. The -p option invokes the
 portsnap utility to fetch and extract a FreeBSD ports tree (ca. 475MB).
-Parameters -M, -P or -S behave like their lower case pendants, plus they
+Options -M, -P or -S behave like their lower case pendants, but they
 disable (re)installing your basejail.
 
-Default OS version is, whatever uname -r returns. If this does not match
+The default OS version is whatever uname -r returns. If this does not match
 "*-RELEASE", you will be prompted for a better guess. (Normally
 ftp-servers do not provide release candidates or CURRENT builds). You can
-use the -r option to specify a release from command line.
+use the -r option to specify a release on the command line.
 
-Default host to fetch packages from is ftp.freebsd.org, you may want to
+The default host to fetch packages from is ftp.freebsd.org; you may want to
 change this via the -h option or in ezjail.conf(5).
 
 If the specified location begins with file://, your local copy of the
-release is used. That way you can do some modifications to install.sh
-scripts before executing them.
+release is used. That way you can modify the install.sh scripts before
+executing them.
 
-You can later update your world from CVS or update ports by \fIezjail-admin
+You can later update your world from CVS or update ports with \fIezjail-admin
 update\fR or rerun this subcommand with another OS version.
 .SH ezjail-admin create
-installs a new jail inside ezjails scope. It either copies the template
+installs a new jail inside ezjail's scope. It either copies the template
 jail or an ezjail archive to the root of that new jail, whose name and IP
 address are provided as mandatory parameters.
 
-A new entry in ezjails config directory is created, a corresponding new
-\Fi/etc/fstab.hostname\fR allowes the jail to be brought up by next
+A new entry in ezjail's config directory is created, a corresponding new
+\Fi/etc/fstab.hostname\fR allows the jail to be brought up by next
 reboot (or) via the EZJAIL_PREFIX/etc/rc.d/ezjail.sh script.
 
 If no jail root is specified via the -r option, it is derived from
-the jails name. In this case or, if a jail root is given and does not
-start with a '/', it is interpreted relative to ezjails root dir
-(default: \fI/usr/jails\fR). If a specified jail root lies outside
+the jail's name. In this case or, if a jail root is given and does not
+start with a '/', it is interpreted relative to ezjail's root dir
+(default: \fI/usr/jails\fR). If a specified jail root lies outside the
 ezjail root dir, a soft link is created inside this root dir pointing
-to the newly created jails location.
+to the newly created jail's location.
 
-The -i and the -c option both require a size passed via the -s option
-and create a file based jail image; gbde or geli encrypted for the -c 
+The -i and the -c options both require a size passed via the -s option
+and create a file-based jail image; gbde or geli encrypted for the -c 
 case. The image file is named after the jail root suffixed with \fI.img\fR.
 
 To install an ezjail archive instead of a vanilla copy of newjail use
--a with the backups location. Note, that you will propably need to tidy
-up things inside an ezjail if you migrate them between different ezjail
+-a with the backup's location. Note that you will probably need to tidy
+up things inside an ezjail if you migrate it between different ezjail
 environments. This may include (but is not limited to) reinstalling ports
 or packages for different CPUs or library versions. You may also need to
 copy some libraries from the source host's basejail. Also consider using
-\fIezjail-admin restore\fR, if you only want to revert to an old jails
+\fIezjail-admin restore\fR, if you only want to revert to an old jail's
 state from a backup on the same host.
 
-The -x option indicates, that an ezjail already exists at the jail root.
+The -x option indicates that an ezjail already exists at the jail root.
 .B In this case nothing is copied. ezjail only updates its config.
 This is useful in situations where you just want to alter some of a
-jail properties and called ezjail-admin delete without the -w option
-before. However, sanity checks are being performed.
+jail's properties and called ezjail-admin delete without the -w option
+before. However, sanity checks are performed.
 
 Using the -f \fIflavour\fR option you can apply an ezjail \fBFLAVOUR\fR
-to your ezjail (e.g. preinstall packages, add users configure rc).
-\fIflavour\fR is a directory tree under ezjails root dir (default:
-\fI/usr/jails/flavours\fR). See section \fBFLAVOURS\fR below for more
-details.
+to your ezjail (e.g. preinstall packages, add users, configure rc).
+\fIflavour\fR is a directory tree under ezjail's root dir (default:
+\fI/usr/jails/flavours\fR). See \fBFLAVOURS\fR below for more details.
 
-Options for newly created jails are read from \fBezjail.conf\fR, refer to
+Options for newly created jails are read from \fBezjail.conf\fR; refer to
 ezjail.conf(5) for more information.
 .SH ezjail-admin console
 Attaches your console to a jail by executing a jexec with its jid.
 
 The command executed in that jail defaults to \fI/usr/bin/login -f root\fR
- but can be set with the -e modifier or by the ezjail_default_execute
+but can be set with the -e modifier or by setting the ezjail_default_execute
 config variable. A non-running jail is not started by default. If you want
 that, force it with -f.
 .SH ezjail-admin list
-lists all jails inside ezjails scope. They are sorted by the order they 
-start up, as defined by rcorder. The list format is straight forward.
+lists all jails inside ezjail's scope. They are sorted by the order they 
+start up, as defined by rcorder. The list format is straightforward.
 
 A status flag consisting of 2 or 3 letters, the first meaning \fB(D)irectory\fR
 based, \fB(I)mage\fR based, \fB(B)de\fR crypto image based, \fB(E)li\fR crypto
-image based. The second one meaning \fB(R)unning\fR, \fB(A)ttached\fR but not
+image based, and the second one meaning \fB(R)unning\fR, \fB(A)ttached\fR but not
 running, \fB(S)topped\fR. An optional \fB(N)orun\fR stands for disabled jails (see
 \fIezjail-admin config\fR).
 
-Rest of the row is jails jid (if available), its IP, hostname and root directory.
+The rest of the row is the jail's jid (if available), its IP address, hostname and
+root directory.
 .SH ezjail-admin config
 manages specific ezjails.
 
-You can prevent an ezjail from being run at system start by the -r norun
-option and reenable it by -r run.
+You can prevent an ezjail from being run at system start with the -r norun
+option and reenable it with -r run.
 
 You can rename an ezjail by using the -n newname option. If the specified
-ezjail is an image jail and the image has its default name, it is being
+ezjail is an image jail and the image has its default name, the image is
 renamed as well.
 
-You can attach image jails for administrative purposes by the -i attach
-option and detach them with -i detach. It is not possible to run or delete
+You can attach image jails for administrative purposes with the -i attach
+option, and detach them with -i detach. It is not possible to run or delete
 an attached jail. You can force fscking a jail image with the -i fsck command.
 .SH ezjail-admin delete
-removes a jail from ezjails config and the corresponding \fI/etc/fstab.hostname\fR
+removes a jail from ezjail's config and the corresponding \fI/etc/fstab.hostname\fR
 file, thus preventing the jail from being brought up on next reboot.
 
 If the -w (wipe) option is given, the directory pointed to by the jail
-root entry is removed as well as the soft link in ezjails root dir.
+root entry is removed as well as the soft link in ezjail's root dir.
 .SH ezjail-admin archive
 creates a backup of one, multiple or all ezjails.
 
 Unless an archive name is given via -a switch, its file name is derived from
-jailname, date and time. It is being saved to a directory provided by -d switch
-or the \fIezjail_archivedir\fR variable in \fBezjail.conf\fR and defaults to
+jailname, date and time. It is saved to a directory provided by -d switch
+or the \fIezjail_archivedir\fR variable in \fBezjail.conf\fR, and defaults to
 \fI.\fR .
 
 Use -A with no further parameters to archive all jails \fBor\fR specify one or more
@@ -163,58 +163,58 @@ creates new ezjails from archived versions. It tries to collect all information
 necessary to do that without user interaction from the archives, thus allowing
 it to be run from a script.
 
-Pass one or more archives or jail names. For jail names ezjail-admin will try to
-find the newest backup in its archive directory, as given in ezjail.conf(5) which
-defaults to . and can be overridden via -d.
+Pass one or more archives or jail names. For jail names, ezjail-admin will try to
+find the newest backup in its archive directory, as given in ezjail.conf(5), which
+defaults to \fI.\fR and can be overridden via -d.
 
 By default \fBezjail-admin restore\R refuses to restore on a host different from
 where it was archived. Use -f to force that.
 .SH ezjail-admin update
-creates or updates ezjails environment (aka basejail) from source. To install it
+creates or updates ezjail's environment (aka basejail) from source. To install it
 from ftp servers, use ezjail-admin install.
 
-Depending on the parameters given it will install the basejail from a source
+Depending on the parameters given, it will install the basejail from a source
 tree whose location is either provided in the \fBezjail.conf\fR config file or
 via the -s option.
 
-If the -p or -P options are given, the base jail also is given a copy of
+If the -p or -P option is given, the base jail also is given a copy of
 FreeBSDs ports tree, which is in turn linked into all newly created
 ezjails. The portsnap utility is invoked to do the actual work.
 
-If the -P option is given, \fBonly the ports tree will be updated,\fR this can
-be done, while jails are running.
+If the -P option is given, \fBonly the ports tree will be updated,\fR so this can
+be done while jails are running.
 
-If the -i (install only) option is given, \fBezjail-admin update\fR only
-performes a \fImake installworld,\fR otherwise \fImake world\fR is invoked.
+If the -i (install only) option is given, \fBezjail-admin update\fR performs a
+\fImake installworld,\fR otherwise \fImake world\fR is invoked.
 
 .SH NOTES
 .B ezjail-admin update\fR uses a temporary directory to install its world to,
 thus leaving intact all installed libraries, if a base jail already exists.
 
 When using the \fBezjail-admin update\fR option, be careful to use the same
-FreeBSD source tree used to build the  host systems world, or at least its
+FreeBSD source tree used to build the host system's world, or at least its
 kernel. Combining a make world in the host system with \fBezjail-admin update\fR
 is considered a good idea.
 
-When a ports tree exists in base jail, a make.conf containing reasonable
+When a ports tree exists in basejail, a make.conf containing reasonable
 values for having ports in jails is created in the template jail.
 .SH FLAVOURS
 .B ezjail-admin\fR provides an easy way to create many jails with similar or
 identical properties.
 
 A sample flavour config directory resides under
-.I EZJAIL_PREFIX/share/examples/ezjail/default/.\fR Some typical Jail
-initialization actions are demonstrated and you are encouraged to use it as a
-template for your flavours.
+.I EZJAIL_PREFIX/share/examples/ezjail/default/.\fR Some typical jail
+initialization actions are demonstrated, and you are encouraged to use it as
+a template for your flavours.
 
-If a flavour is selected on jail creation, the flavour root is being
-copied to the new Jails root, mostly containing an \fI/ezjail.flavour\fR.
-If the Jail starts up for the first time this script is run.
+If a flavour is selected on jail creation, the flavour root is
+copied to the new jail's root, mostly containing an \fI/ezjail.flavour\fR.
+When the jail starts up for the first time, this script is run and deleted.
 
 In its default form it will create some groups and users, change the
-ownership of some files and installs all packages residing under /pkg.
+ownership of some files and install all packages residing under /pkg.
 
-It allows you to add some post install actions.
+It allows you to add some post-install actions.
 .SH EXAMPLES
 ezjail-admin update -p
 .br
@@ -228,7 +228,7 @@ ezjail-admin delete ns.test.org
 .br
 ezjail-admin create -x -r /jails/ns ns.test.org 10.0.2.1
 .SH BUGS
-Due to the way ezjail handles jail config files it is not possible to
+Due to the way ezjail handles jail config files, it is not possible to
 create multiple jails if their names are identical when piped through
 .B tr -C [:alnum:] _
 

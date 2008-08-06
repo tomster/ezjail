@@ -38,7 +38,7 @@ Cvs root to use when checking out or updating the ports tree in base jail
 .I default: :pserver:anoncvs@anoncvs.at.FreeBSD.org:/home/ncvs
 .TP
 .B ezjail_ftphost (str)
-This is where the install sub command defaults to fetch its packages from
+This is where the install subcommand defaults to fetch its packages from
 .br
 .I default: ftp.freebsd.org
 .TP
@@ -60,13 +60,13 @@ utility. Be careful about disabling ezjail_mount_enable. (Refer to
 for more information).
 .TP
 .B ezjail_mount_enable (bool)
-Controls, whether /etc/fstab.hostname should be executed at jail startup 
+Controls whether /etc/fstab.hostname should be executed at jail startup 
 time.
 .br
 .I default: "YES"
 .TP
 .B ezjail_devfs_enable (bool)
-Controls, whether newly created jails will be given a working
+Controls whether newly created jails are given a working
 .I /dev
 directory. (Refer to
 .B devfs(5)
@@ -77,7 +77,7 @@ for more information).
 .I default: "YES"
 .TP
 .B ezjail_devfs_ruleset (str)
-Specifies, which devfs ruleset should apply for newly created jails. 
+Specifies which devfs ruleset should apply for newly created jails. 
 (Refer to
 .B devfs(5)
 and
@@ -87,7 +87,7 @@ for more information).
 .I default: "devfsrules_jail"
 .TP
 .B ezjail_procfs_enable (bool)
-Controls, whether newly created jails will be given a working
+Controls whether newly created jails are given a working
 .I /proc
 directory. (Refer to
 .B procfs(5)
@@ -98,7 +98,7 @@ for more information).
 .I default: "YES"
 .TP
 .B ezjail_fdescfs_enable (bool)
-Controls, whether newly created jails will be given a working
+Controls whether newly created jails are given a working
 .I /dev/fd/
 directory. (Refer to
 .B fdescfs(5)
