@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.209 2008/07/18 18:15:41 erdgeist Exp $
+# $Id: ezjail-admin,v 1.210 2008/09/26 12:16:12 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -33,11 +33,11 @@ ezjail_fdescfs_enable=${ezjail_fdescfs_enable:-"YES"}
 ezjail_dirlist="bin boot lib libexec rescue sbin usr/bin usr/games usr/include usr/lib usr/libdata usr/libexec usr/sbin usr/src usr/share"
 ezjail_basesystem="base"
 
-# amd64 is a really strange platform
+# amd64 needs some extra libs
 case `uname -p` in amd64) ezjail_dirlist="${ezjail_dirlist} usr/lib32"; ezjail_basesystem="${ezjail_basesystem} lib32";; esac
 
 # Synopsis messages
-ezjail_usage_ezjailadmin="${ezjail_admin} v3.0b\nUsage: ${ezjail_admin} [archive|config|console|create|delete|install|list|restore|update] {params}"
+ezjail_usage_ezjailadmin="${ezjail_admin} v3.0\nUsage: ${ezjail_admin} [archive|config|console|create|delete|install|list|restore|update] {params}"
 ezjail_usage_install="Usage: ${ezjail_admin} install [-mMpPsS] [-h host] [-r release]"
 ezjail_usage_create="Usage: ${ezjail_admin} create [-xbi] [-f flavour] [-r jailroot] [-s size] [-c bde|eli] [-C args] [-a archive] jailname jailip"
 ezjail_usage_delete="Usage: ${ezjail_admin} delete [-w] jailname"
