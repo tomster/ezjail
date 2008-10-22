@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.210 2008/09/26 12:16:12 erdgeist Exp $
+# $Id: ezjail-admin,v 1.211 2008/10/22 15:54:15 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -13,22 +13,22 @@ ezjail_jailcfgs="${ezjail_etc}/ezjail"
 [ -f "${ezjail_etc}/ezjail.conf" ] && . "${ezjail_etc}/ezjail.conf"
 
 # set defaults
-ezjail_jaildir=${ezjail_jaildir:-"/usr/jails"}
-ezjail_jailtemplate=${ezjail_jailtemplate:-"${ezjail_jaildir}/newjail"}
-ezjail_jailbase=${ezjail_jailbase:-"${ezjail_jaildir}/basejail"}
-ezjail_jailfull=${ezjail_jailfull:-"${ezjail_jaildir}/fulljail"}
-ezjail_jailtemp=${ezjail_jailtemp:-"${ezjail_jaildir}/ezjailtemp"}
-ezjail_flavours=${ezjail_flavours:-"${ezjail_jaildir}/flavours"}
-ezjail_portscvsroot=${ezjail_portscvsroot:-"freebsdanoncvs@anoncvs.FreeBSD.org:/home/ncvs"}
-ezjail_sourcetree=${ezjail_sourcetree:-"/usr/src"}
-ezjail_uglyperlhack=${ezjail_uglyperlhack:-"YES"}
-ezjail_default_execute=${ezjail_default_execute:-"/usr/bin/login -f root"}
+: ${ezjail_jaildir="/usr/jails"}
+: ${ezjail_jailtemplate="${ezjail_jaildir}/newjail"}
+: ${ezjail_jailbase="${ezjail_jaildir}/basejail"}
+: ${ezjail_jailfull="${ezjail_jaildir}/fulljail"}
+: ${ezjail_jailtemp="${ezjail_jaildir}/ezjailtemp"}
+: ${ezjail_flavours="${ezjail_jaildir}/flavours"}
+: ${ezjail_portscvsroot="freebsdanoncvs@anoncvs.FreeBSD.org:/home/ncvs"}
+: ${ezjail_sourcetree="/usr/src"}
+: ${ezjail_uglyperlhack="YES"}
+: ${ezjail_default_execute="/usr/bin/login -f root"}
 
-ezjail_mount_enable=${ezjail_mount_enable:-"YES"}
-ezjail_devfs_enable=${ezjail_devfs_enable:-"YES"}
-ezjail_devfs_ruleset=${ezjail_devfs_ruleset:-"devfsrules_jail"}
-ezjail_procfs_enable=${ezjail_procfs_enable:-"YES"}
-ezjail_fdescfs_enable=${ezjail_fdescfs_enable:-"YES"}
+: ${ezjail_mount_enable="YES"}
+: ${ezjail_devfs_enable="YES"}
+: ${ezjail_devfs_ruleset="devfsrules_jail"}
+: ${ezjail_procfs_enable="YES"}
+: ${ezjail_fdescfs_enable="YES"}
 
 ezjail_dirlist="bin boot lib libexec rescue sbin usr/bin usr/games usr/include usr/lib usr/libdata usr/libexec usr/sbin usr/src usr/share"
 ezjail_basesystem="base"
@@ -334,7 +334,7 @@ create)
     c) ezjail_imagetype=${OPTARG};;
     C) ezjail_imageparams=${OPTARG};;
     b) ezjail_forceblocking="YES";;
-    i) ezjail_imagetype=${ezjail_imagetype:-"simple"};;
+    i) : ${ezjail_imagetype="simple"};;
     s) ezjail_imagesize=${OPTARG};;
     ?) exerr ${ezjail_usage_create};;
   esac; done; shift $(( ${OPTIND} - 1 ))
@@ -371,7 +371,7 @@ create)
 
   ezjail_hostname=`echo -n "${ezjail_name}" | tr '/~' '__'`
   ezjail_safename=`echo -n "${ezjail_name}" | tr -c '[:alnum:]' _`
-  ezjail_rootdir=${ezjail_rootdir:-"${ezjail_jaildir}/${ezjail_hostname}"}
+  : ${ezjail_rootdir="${ezjail_jaildir}/${ezjail_hostname}"}
   ezjail_config="${ezjail_jailcfgs}/${ezjail_safename}"
 
   # This scenario really will only lead to real troubles in the 'fulljail'
@@ -726,7 +726,7 @@ install)
   [ $# -eq 0 ] || exerr ${ezjail_usage_install}
 
   ezjail_installarch=`uname -p`
-  ezjail_ftphost=${ezjail_ftphost:-"ftp.freebsd.org"}
+  : ${ezjail_ftphost="ftp.freebsd.org"}
   ezjail_ftphost=${ezjail_ftphost#ftp://}
   ezjail_dir=${ezjail_ftphost#file://}
   [ "${ezjail_dir%%[!/]*}" ] || ezjail_reldir=`pwd -P`
@@ -857,7 +857,7 @@ archive)
   [ $# -lt 1 -a -z "${ezjail_archivealljails}" ] && exerr ${ezjail_usage_archive}
 
   # Default archive directory to .
-  ezjail_archivedir=${ezjail_archivedir:-`pwd -P`}
+  : ${ezjail_archivedir=`pwd -P`}
 
   # Will not backup more than one jail per archive
   [ "${ezjail_archive}" -a "${ezjail_archivealljails}" ] && exerr "Error: Must not specify an archive location for multiple archives.\n  Can not archive multiple jails into one archive."
@@ -962,7 +962,7 @@ restore)
   [ $# -eq 0 ] && exerr ${ezjail_usage_restore}
 
   # Default archive directory to .
-  ezjail_archivedir=${ezjail_archivedir:-`pwd -P`}
+  : ${ezjail_archivedir=`pwd -P`}
 
   for ezjail_fromarchive in $@; do
     unset ezjail_safename ezjail_imagedata ezjail_nameprop
