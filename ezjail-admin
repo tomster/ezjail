@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.211 2008/10/22 15:54:15 erdgeist Exp $
+# $Id: ezjail-admin,v 1.212 2009/02/02 17:39:27 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -927,7 +927,7 @@ archive)
     [ -f "/etc/fstab.${ezjail_safename}" ] && ezjail_addfiles=/etc/fstab.${ezjail_safename}
 
     cd "${ezjail_rootdir}" || exerr "Error: Can't cd to ${ezjail_root}."
-    pax -wzXt -x ustar ${ezjail_archive_opt} \
+    pax -wzXt -x posix ${ezjail_archive_opt} \
       -s:"^[^\\.].*/${ezjail_safename}\$":prop.ezjail-${ezjail_archive_tag}: \
       -s:"^[^\\.].*/${ezjail_safename}.norun\$":prop.ezjail-${ezjail_archive_tag}.norun: \
       -s:"etc/fstab.${ezjail_safename}\$":fstab.ezjail: \
