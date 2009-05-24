@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.213 2009/05/23 13:09:52 cryx Exp $
+# $Id: ezjail-admin,v 1.214 2009/05/24 13:53:42 cryx Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -327,13 +327,26 @@ parse_gbde_attach_args () {
   return ${_exit}
 }
 
-check_for_zfs () {
- . "/etc/rc.conf"
- if [ "${ezjail_use_zfs}" = "YES" ] && [ "${zfs_enable}" != "YES" ]; then
-   echo "You have to enable ZFS in /etc/rc.conf"
+check_for_zfs () { 
+ # check the ZFS version
+ _zfs_version=`sysctl -nq vfs.zfs.version.spa`
+ [ "${_zfs_version}" ] || _zfs_version=0
+ if [ "${_zfs_version}" -lt "13" ]; then
+   echo "ERROR: ZFS is not loaded or your ZFS version is not supported."
    exit
  fi
+ 
+ # check if ZFS is enabled when managing basejail/newjail in ZFS
+ . /etc/rc.subr
+ load_rc_config_var zfs zfs_enable
+ if [ "${ezjail_use_zfs}" = "YES" ] && [ "${zfs_enable}" != "YES" ]; then
+   echo "WARNING: You should enable ZFS in /etc/rc.conf"
+ fi
+}
 
+check_for_zpool () {
+ # check for the ZFS zpool to be online
+ check_for_zfs
  _zpoolstatus=`/sbin/zpool list -H -o health ${ezjail_jailzfs%%/*} 2> /dev/null`
  if [ ! "${_zpoolstatus}" = "ONLINE" ]; then
    echo "Your zpool does not exist or is not online."
@@ -347,8 +360,6 @@ check_for_zfs () {
 
 # check for command
 [ $# -gt 0 ] || exerr ${ezjail_usage_ezjailadmin}
-
-check_for_zfs
 
 case "$1" in
 ######################## ezjail-admin CREATE ########################
@@ -376,6 +387,11 @@ create)
   
   # show the user the type of image used
   echo "TYPE: $ezjail_imagetype"
+  
+  # check for an active ZFS zpool
+  if [ "${ezjail_imagetype}" = "zfs" ]; then
+    check_for_zpool
+  fi
 
   # check for sanity of settings concerning the image feature
   if [ "${ezjail_imagetype}" != "zfs" ]; then
@@ -567,7 +583,7 @@ create)
   # if the automount feature is not disabled, this fstab entry for new jail
   # will be obeyed
   echo -n > /etc/fstab.${ezjail_safename}
-  if [ "${ezjail_imagetype}" ] && [ ! "${ezjail_imagetype}" = "zfs" ] ; then
+  if [ "${ezjail_imagetype}" -a "${ezjail_imagetype}" != "zfs" ] ; then
     echo ${ezjail_devicelink} ${ezjail_rootdir} ufs rw 0 0 >> "/etc/fstab.${ezjail_safename}"
   fi
   echo ${ezjail_jailbase} ${ezjail_rootdir}/basejail nullfs ro 0 0 >> "/etc/fstab.${ezjail_safename}"
@@ -655,6 +671,11 @@ delete)
 
   # check for existence of jail in our records
   [ "${ezjail_config}" ] || exerr "Error: Nothing known about jail ${ezjail_name}."
+  
+  # check for an active ZFS zpool
+  if [ "${ezjail_imagetype}" = "zfs" ]; then
+    check_for_zpool
+  fi
 
   if [ "${ezjail_id}" ]; then
     # if jail is still running, refuse to go any further
@@ -741,6 +762,7 @@ setup|update)
   [ "${ezjail_installaction}" ] || exerr "Error: No install action has been chosen.\n  Please note that ezjails behaviour changed. Rebuilding the world no longer is default.\n  Run '${ezjail_admin} update -b' to build and install a world from source or '${ezjail_admin} update -i' to install an already built world."
 
   if [ "${ezjail_use_zfs}" = "YES" ]; then
+    check_for_zpool
     zfs create -p -o mountpoint=${ezjail_jaildir} ${ezjail_jailzfs}
   fi
 
@@ -831,6 +853,7 @@ install)
   # Normally fulljail should be renamed by past ezjail-admin commands.
   # However those may have failed
   if [ "${ezjail_use_zfs}" = "YES" ]; then
+    check_for_zpool
     echo "ZFS: manage basejail and newjail"
     [ -d "${ezjail_jailfull}" ] && /sbin/zfs destroy -R "${ezjail_jailzfs}/fulljail"  && rm -rf "${ezjail_jailfull}"
     /sbin/zfs create -p "${ezjail_jailzfs}/fulljail" || exerr "Error: Cannot create temporary Jail directory."
