@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.214 2009/05/24 13:53:42 cryx Exp $
+# $Id: ezjail-admin,v 1.215 2009/05/24 14:11:23 cryx Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -339,7 +339,7 @@ check_for_zfs () {
  # check if ZFS is enabled when managing basejail/newjail in ZFS
  . /etc/rc.subr
  load_rc_config_var zfs zfs_enable
- if [ "${ezjail_use_zfs}" = "YES" ] && [ "${zfs_enable}" != "YES" ]; then
+ if [ "${ezjail_use_zfs}" = "YES" -a "${zfs_enable}" != "YES" ]; then
    echo "WARNING: You should enable ZFS in /etc/rc.conf"
  fi
 }
@@ -483,7 +483,7 @@ create)
     case ${ezjail_imagetype} in bde|eli) ezjail_sourcedevice="/dev/random";; simple) ezjail_sourcedevice="/dev/zero";; esac
 
     # If NOT exist and imagetype not ZFS, create image
-    if [ -z "${ezjail_exists}" ] && [ ! ${ezjail_imagetype} = "zfs" ]; then
+    if [ -z "${ezjail_exists}" -a ${ezjail_imagetype} != "zfs" ]; then
       [ -e "${ezjail_image}" ] && exerr "Error: A file exists at ${ezjail_image}.\n  Won't overwrite an existing image."
 
       # Now create jail disc image
@@ -541,7 +541,7 @@ create)
 
     esac
 
-    if [ -z "${ezjail_exists}" ] && [ ! ${ezjail_imagetype} = "zfs" ]; then
+    if [ -z "${ezjail_exists}" -a ${ezjail_imagetype} != "zfs" ]; then
       # Format memory image
       newfs -U "/dev/${ezjail_device}" || detach_images || exerr "Error: Could not newfs /dev/${ezjail_device}."
       # Create mount point and mount
@@ -564,7 +564,7 @@ create)
     [ $? -eq 0 ] || detach_images || exerr "Error: Could not extract archive from ${ezjail_fromarchive}."
   elif [ -z "${ezjail_exists}" ]; then
     # now take a copy of our template jail
-    if [ "${ezjail_imagetype}" = "zfs" ] && [ "${ezjail_use_zfs}" = "YES" ]; then
+    if [ "${ezjail_imagetype}" = "zfs" -a "${ezjail_use_zfs}" = "YES" ]; then
       # create ZFS filesystem first when using ZFS
       /sbin/zfs snapshot ${ezjail_jailzfs}/newjail@_createnewjailtmp
       /sbin/zfs send ${ezjail_jailzfs}/newjail@_createnewjailtmp | zfs receive -F ${ezjail_jailzfs}/${ezjail_hostname}
@@ -650,7 +650,7 @@ create)
   [ $? -eq 0 ] && echo -e "Warning: Some services already seem to be listening on all IP, (including ${ezjail_ip})\n  This may cause some confusion, here they are:\n${ezjail_listener}"
   IFS=${TIFS}
 
-  [ "${ezjail_imagetype}" ] && [ "${ezjail_imagetype}" != "zfs" ] && echo "Note: To administrate your image jail, attach it using the '${ezjail_admin} config -i attach ${ezjail_hostname}' command."
+  [ "${ezjail_imagetype}" -a "${ezjail_imagetype}" != "zfs" ] && echo "Note: To administrate your image jail, attach it using the '${ezjail_admin} config -i attach ${ezjail_hostname}' command."
   ;;
 ######################## ezjail-admin DELETE ########################
 delete)
