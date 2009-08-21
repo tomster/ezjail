@@ -7,7 +7,7 @@ ezjail-admin \- Administrate ezjail
 
 .T
 .B ezjail-admin create
-[-f flavour] [-r jailroot] [-s imagesize] [-ibx] [-c bde|eli] [-C attachargs] [-a archive]\fI hostname jailip
+[-f flavour] [-r jailroot] [-s imagesize] [-ibx] [-c bde|eli|zfs] [-C attachargs] [-a archive]\fI hostname jailip
 
 .T
 .B ezjail-admin console\fR [-f] [-e command]\fI jailname
@@ -81,9 +81,17 @@ start with a '/', it is interpreted relative to ezjail's root dir
 ezjail root dir, a soft link is created inside this root dir pointing
 to the newly created jail's location.
 
-The -i and the -c options both require a size passed via the -s option
-and create a file-based jail image; gbde or geli encrypted for the -c 
-case. The image file is named after the jail root suffixed with \fI.img\fR.
+The -i option requires a size passed via the -s option and creates a
+file-backed jail image using md(4). 
+The image file is named after the jail root suffixed with \fI.img\fR.
+
+The -c options allows to generate a file-backed jail image encrypted 
+via gbde or geli, it requires a size passed via the -s option. 
+The image file is named after the jail root suffixed with \fI.img\fR.
+
+Starting with ZFS version 13 in FreeBSD, the -c option allows to 
+create a ZFS-backed jail with an optional ZFS filesystem-quota passed
+via the -s option. The filesystem is named after the jailname.
 
 To install an ezjail archive instead of a vanilla copy of newjail use
 -a with the backup's location. Note that you will probably need to tidy
