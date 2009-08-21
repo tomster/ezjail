@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.217 2009/08/21 12:03:19 erdgeist Exp $
+# $Id: ezjail-admin,v 1.218 2009/08/21 13:18:53 cryx Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -29,6 +29,10 @@ ezjail_jailcfgs="${ezjail_etc}/ezjail"
 : ${ezjail_devfs_ruleset="devfsrules_jail"}
 : ${ezjail_procfs_enable="YES"}
 : ${ezjail_fdescfs_enable="YES"}
+
+: ${ezjail_use_zfs="NO"}
+: ${ezjail_jailzfs=""}
+: ${ezjail_zfs_properties=""}
 
 ezjail_dirlist="bin boot lib libexec rescue sbin usr/bin usr/games usr/include usr/lib usr/libdata usr/libexec usr/sbin usr/src usr/share"
 ezjail_basesystem="base"
