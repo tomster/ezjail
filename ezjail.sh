@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.46 2008/01/08 03:34:49 erdgeist Exp $
+# $Id: ezjail.sh,v 1.47 2009/12/28 22:09:17 cryx Exp $
 #
 # $FreeBSD$
 #
@@ -65,6 +65,8 @@ do_cmd()
     eval ezjail_attachparams=\"\$jail_${ezjail}_attachparams\"
     eval ezjail_attachblocking=\"\$jail_${ezjail}_attachblocking\"
     eval ezjail_forceblocking=\"\$jail_${ezjail}_forceblocking\"
+    eval ezjail_zfs_datasets=\"\$jail_${ezjail}_zfs_datasets\"
+    eval ezjail_cpuset=\"\$jail_${ezjail}_cpuset\"
 
     # Do we still have a root to run in?
     [ ! -d "${ezjail_rootdir}" ] && echo " Warning: root directory ${ezjail_rootdir} of ${ezjail} does not exist." && continue
@@ -87,6 +89,20 @@ do_cmd()
 
   # Pass control to jail script which does the actual work
   [ "${ezjail_pass}" ] && sh /etc/rc.d/jail one${action%crypto} ${ezjail_pass}
+
+  if [ "${action}" = "start" ]; then
+    ezjail_safename=`echo -n "${ezjail}" | tr -c '[:alnum:]' _`
+    # Get the JID of the jail
+    [ -f "/var/run/jail_${ezjail_safename}.id" ] && ezjail_id=`cat /var/run/jail_${ezjail_safename}.id` || return
+
+    # Attach ZFS-datasets to the jail
+    for zfs in ${ezjail_zfs_datasets}; do
+      /sbin/zfs jail ${ezjail_id} ${zfs} ||Êecho -n "Error: ${zfs} could not be configured"
+    done
+
+    # Configure processor sets for the jail via cpuset(1)
+    [ "${ezjail_cpuset}" ] && /usr/bin/cpuset -l ${ezjail_cpuset} -j ${ezjail_id} || echo -n "Error: The defined cpuset is malformed"
+  fi
 
   # Can only detach after unmounting (from fstab.JAILNAME in /etc/rc.d/jail)
   attach_detach_post
