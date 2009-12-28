@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.218 2009/08/21 13:18:53 cryx Exp $
+# $Id: ezjail-admin,v 1.219 2009/12/28 16:39:20 cryx Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -628,7 +628,7 @@ create)
 
     # If a config is found, make it auto run on jails startup
     if [ -f "${ezjail_rootdir}/ezjail.flavour" ]; then
-      ln -s /ezjail.flavour "${ezjail_rootdir}/etc/rc.d/ezjail-config.sh"
+      ln -s /ezjail.flavour "${ezjail_rootdir}/etc/rc.d/ezjail-config"
       chmod 0700 "${ezjail_rootdir}/ezjail.flavour"
       echo "Note: Shell scripts installed, flavourizing on jails first startup."
     fi
