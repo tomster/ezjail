@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.47 2009/12/28 22:09:17 cryx Exp $
+# $Id: ezjail.sh,v 1.48 2009/12/29 12:26:00 cryx Exp $
 #
 # $FreeBSD$
 #
@@ -95,13 +95,14 @@ do_cmd()
     # Get the JID of the jail
     [ -f "/var/run/jail_${ezjail_safename}.id" ] && ezjail_id=`cat /var/run/jail_${ezjail_safename}.id` || return
 
+    echo ${ezjail_id}
     # Attach ZFS-datasets to the jail
     for zfs in ${ezjail_zfs_datasets}; do
       /sbin/zfs jail ${ezjail_id} ${zfs} ||Êecho -n "Error: ${zfs} could not be configured"
     done
 
     # Configure processor sets for the jail via cpuset(1)
-    [ "${ezjail_cpuset}" ] && /usr/bin/cpuset -l ${ezjail_cpuset} -j ${ezjail_id} || echo -n "Error: The defined cpuset is malformed"
+    [ -z "${ezjail_cpuset}" ] || /usr/bin/cpuset -l ${ezjail_cpuset} -j ${ezjail_id} || echo -n "Error: The defined cpuset is malformed"
   fi
 
   # Can only detach after unmounting (from fstab.JAILNAME in /etc/rc.d/jail)
