@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.220 2009/12/28 22:09:17 cryx Exp $
+# $Id: ezjail-admin,v 1.221 2009/12/29 12:16:09 cryx Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -1355,7 +1355,7 @@ config)
   if [ "${ezjail_new_fib}" ]; then
     # if jail is still running, refuse to go any further
     [ "${ezjail_id}" ] && exerr "Error: Jail appears to be still running.\n  '${ezjail_admin} stop ${ezjail_name}' it first ."
-    [ "${ezjail_new_fib}" -ge "0" ] && exerr "Error: fib number has to be an integer."
+    [ "${ezjail_new_fib}" -ge "0" ] || exerr "Error: fib number has to be an integer."
 
     # write new config file, preserve comments
     (
