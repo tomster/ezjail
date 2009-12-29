@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.221 2009/12/29 12:16:09 cryx Exp $
+# $Id: ezjail-admin,v 1.222 2009/12/29 13:02:56 cryx Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -953,11 +953,18 @@ console)
     # This one will also exerr on failure
     start_stop_jail_by_script start
   fi
+  
+  # use the jails FIB if there is one
+  if [ -n "${ezjail_fib}" ]; then
+     _setfib="setfib -F ${ezjail_fib}"
+  else
+    _setfib=""
+  fi
 
   # Try to attach to jail
-  [ "${ezjail_execute}" ] && exec jexec ${ezjail_id} ${ezjail_execute}
+  [ "${ezjail_execute}" ] && exec ${_setfib} jexec ${ezjail_id} ${ezjail_execute}
 
-  exec jexec ${ezjail_id} ${ezjail_default_execute}
+  exec ${_setfib} jexec ${ezjail_id} ${ezjail_default_execute}
   ;;
 ######################## ezjail-admin ARCHIVE ########################
 archive)
