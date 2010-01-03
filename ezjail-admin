@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.223 2010/01/03 20:48:44 cryx Exp $
+# $Id: ezjail-admin,v 1.224 2010/01/03 20:51:09 cryx Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -867,7 +867,7 @@ install)
     check_for_zpool
     echo "ZFS: manage basejail and newjail"
     [ -d "${ezjail_jailfull}" ] && /sbin/zfs destroy -R "${ezjail_jailzfs}/fulljail"  && rm -rf "${ezjail_jailfull}"
-    /sbin/zfs create -p -o mountpoint=${ezjail_jaildir} ${ezjail_jailzfs}
+    [ ! -d " ${ezjail_jaildir}" ] && /sbin/zfs create -p -o mountpoint=${ezjail_jaildir} ${ezjail_jailzfs}
     /sbin/zfs create -p "${ezjail_jailzfs}/fulljail" || exerr "Error: Cannot create temporary Jail directory."
   else
     [ -d "${ezjail_jailfull}" ] && chflags -R noschg "${ezjail_jailfull}" && rm -rf "${ezjail_jailfull}"
