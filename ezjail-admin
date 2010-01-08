@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.227 2010/01/08 22:18:31 erdgeist Exp $
+# $Id: ezjail-admin,v 1.228 2010/01/08 22:33:08 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -730,8 +730,8 @@ list)
 
   [ -d "${ezjail_prefix}/etc/ezjail/" ] && cd "${ezjail_prefix}/etc/ezjail/" && ezjail_list=`ls | xargs rcorder`
 
-  printf "%-3s %-5s %-15s %-28s %s\\n" STA JID IP Hostname "Root Directory"
-  echo   "--- ----- --------------- ---------------------------- -------------------------"
+  printf "%-3s %-4s %-15s %-30s %s\\n" STA JID IP Hostname "Root Directory"
+  echo   "--- ---- --------------- ---------------------------- -------------------------"
   for ezjail in ${ezjail_list}; do
     fetchjailinfo ${ezjail%.norun}
     case ${ezjail_imagetype} in simple) ezjail_state="I";; bde) ezjail_state="B";; eli) ezjail_state="E";; *) ezjail_state="D";; esac
@@ -745,7 +745,7 @@ list)
     TIFS=${IFS}; IFS=,; unset _multiline
     for ezjail_ip in ${ezjail_ips}; do
       if [ -z "${_multiline}" ]; then
-        printf "%-3s %-5s %-15s %-28s %s\\n" "${ezjail_state}" "${ezjail_id:-N/A}" "${ezjail_ip}" "${ezjail_hostname}" "${ezjail_rootdir}"
+        printf "%-3s %-4s %-15s %-30s %s\\n" "${ezjail_state}" "${ezjail_id:-N/A}" "${ezjail_ip}" "${ezjail_hostname}" "${ezjail_rootdir}"
         _multiline=yes
       else
         echo "          ${ezjail_ip}"
@@ -1391,7 +1391,6 @@ config)
     mv "${ezjail_config}_" "${ezjail_config}"
 
   fi
-
 
   case "${ezjail_setrunnable}" in
     run)   [ "${ezjail_config}" = "${ezjail_config%.norun}" ] || mv "${ezjail_config}" "${ezjail_config%.norun}";;
