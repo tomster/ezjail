@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.230 2010/01/08 22:48:10 erdgeist Exp $
+# $Id: ezjail-admin,v 1.231 2010/01/08 23:45:42 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -1435,3 +1435,4 @@ config)
   exerr "${ezjail_usage_ezjailadmin}"
   ;;
 esac
+exit 0
