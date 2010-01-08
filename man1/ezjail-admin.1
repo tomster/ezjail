@@ -16,7 +16,7 @@ ezjail-admin \- Administrate ezjail
 .B ezjail-admin list
 
 .T
-.B ezjail-admin config\fR [-r run|norun] [-n newname] [-i attach|detach|fsck]\fI jailname
+.B ezjail-admin config\fR [-r run|norun] [-n newname] [-c cpu-list] [-z zfs-dataset] [-f fib-number] [-i attach|detach|fsck]\fI jailname
 
 .T
 .B ezjail-admin delete \fR[-w] \fI hostname
@@ -144,6 +144,17 @@ You can rename an ezjail by using the -n newname option. If the specified
 ezjail is an image jail and the image has its default name, the image is
 renamed as well.
 
+You can configure a cpuset(1) for the jail to use with the -c option. The setting
+will be configured and, if the jail is running, appliedto the running jail. The specification
+may include numbers separated by '-' for ranges and commas separating individual numbers.
+
+With the -z option, one or more zfs-datasets can be configured to be attached to the jail.
+You need to configure the sysctl security.jail.mount_allowed=1 and security.jail.enforce_statfs=0
+as well as "add path zfs unhide" in the devfs ruleset for the jail.
+
+You can configure an altered network view (FIB) for the jail with the -f option. For setting up FIBs, see
+setfib(1). The jail needs to be restarted after the option has been applied to take effect.
+
 You can attach image jails for administrative purposes with the -i attach
 option, and detach them with -i detach. It is not possible to run or delete
 an attached jail. You can force fscking a jail image with the -i fsck command.
@@ -249,6 +260,6 @@ EZJAIL_PREFIX/etc/rc.d/ezjail.sh
 .br
 EZJAIL_PREFIX/share/examples/ezjail/
 .SH "SEE ALSO"
-ezjail(5), ezjail.conf(5), jail(8), devfs(5), fdescfs(5), procfs(5), pw(8)
+ezjail(5), ezjail.conf(5), jail(8), devfs(5), fdescfs(5), procfs(5), pw(8), cpuset(1), setfib(1)
 .SH AUTHOR
 Dirk Engling <erdgeist@erdgeist.org>

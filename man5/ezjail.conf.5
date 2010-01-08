@@ -112,6 +112,22 @@ for more information).
 Set to YES, if ezjail should provide a soft link from /usr/bin/perl to /usr/local/bin/perl in base jail.
 .br
 .I default: YES
+.SH ZFS OPTIONS
+.TP
+.B ezjail_use_zfs (bool)
+Set to YES, if ezjail should manage basejail and newjail in a seperate ZFS-datasets.
+.br
+.I default: NO
+.TP
+.B ezjail_jailzfs (str)
+The name of the parent ZFS-dataset which ezjail will use to create jails on. It will be mounted at the ezjail_jaildir. Setting this will automaticly enable ezjail managing jails in seperate ZFS-datasets.
+.br
+.I default: none
+.TP
+.B ezjail_zfs_properties (str)
+Default properties ZFS will use for creating datasets. See zfs(1m) for details. ADVANCED, be very careful!
+.br
+.I default: none
 .SH FILES
 EZJAIL_PREFIX/etc/ezjail.conf
 .br
