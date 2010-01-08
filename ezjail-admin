@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.224 2010/01/03 20:51:09 cryx Exp $
+# $Id: ezjail-admin,v 1.225 2010/01/08 22:07:30 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -149,7 +149,7 @@ fetchjailinfo () {
   ezjail_name=$1
 
   # Clean variables, prevent polution
-  unset ezjail_config ezjail_running ezjail_hostname ezjail_rootdir ezjail_image ezjail_imagetype ezjail_imagedevice ezjail_devicelink ezjail_ip ezjail_id ezjail_attached ezjail_device ezjail_device_geom
+  unset ezjail_config ezjail_running ezjail_hostname ezjail_rootdir ezjail_image ezjail_imagetype ezjail_imagedevice ezjail_devicelink ezjail_ips ezjail_id ezjail_attached ezjail_device ezjail_device_geom
 
   ezjail_safename=`echo -n "${ezjail_name}" | tr -c '[:alnum:]' _`
 
@@ -164,7 +164,7 @@ fetchjailinfo () {
   . "${ezjail_config}"
   eval ezjail_hostname=\"\$jail_${ezjail_safename}_hostname\"
   eval ezjail_rootdir=\"\$jail_${ezjail_safename}_rootdir\"
-  eval ezjail_ip=\"\$jail_${ezjail_safename}_ip\"
+  eval ezjail_ips=\"\$jail_${ezjail_safename}_ip\"
   eval ezjail_image=\"\$jail_${ezjail_safename}_image\"
   eval ezjail_imagetype=\"\$jail_${ezjail_safename}_imagetype\"
   eval ezjail_attachparams=\"\$jail_${ezjail_safename}_attachparams\"
@@ -334,31 +334,22 @@ parse_gbde_attach_args () {
   return ${_exit}
 }
 
-check_for_zfs () { 
- # check the ZFS version
- _zfs_version=`sysctl -nq vfs.zfs.version.spa`
- [ "${_zfs_version}" ] || _zfs_version=0
- if [ "${_zfs_version}" -lt "13" ]; then
-   echo "ERROR: ZFS is not loaded or your ZFS version is not supported."
-   exit
- fi
- 
- # check if ZFS is enabled when managing basejail/newjail in ZFS
- . /etc/rc.subr
- load_rc_config_var zfs zfs_enable
- if [ "${ezjail_use_zfs}" = "YES" -a "${zfs_enable}" != "YES" ]; then
-   echo "WARNING: You should enable ZFS in /etc/rc.conf"
- fi
+check_for_zfs () {
+  # check the ZFS version
+  _zfs_version=`sysctl -nq vfs.zfs.version.spa`
+  [ -z "${_zfs_version}" -o "${_zfs_version}" -lt 13 ] && exerr "Error: ZFS is not loaded or your ZFS version is not supported."
+
+  # check if ZFS is enabled when managing basejail/newjail in ZFS
+  . /etc/rc.subr
+  load_rc_config_var zfs zfs_enable
+  checkyesno ezjail_use_zfs && checkyesno zfs_enable && echo "Warning: You should enable ZFS in /etc/rc.conf"
 }
 
 check_for_zpool () {
- # check for the ZFS zpool to be online
- check_for_zfs
- _zpoolstatus=`/sbin/zpool list -H -o health ${ezjail_jailzfs%%/*} 2> /dev/null`
- if [ ! "${_zpoolstatus}" = "ONLINE" ]; then
-   echo "Your zpool does not exist or is not online."
-   exit
- fi
+  # check for the ZFS zpool to be online
+  check_for_zfs
+  _zpoolstatus=`/sbin/zpool list -H -o health ${ezjail_jailzfs%%/*} 2> /dev/null`
+  [ "${_zpoolstatus}" = "ONLINE" ] || exerr "Error: Your zpool does not exist or is not online."
 }
 
 #############################
@@ -387,14 +378,14 @@ create)
     ?) exerr ${ezjail_usage_create};;
   esac; done; shift $(( ${OPTIND} - 1 ))
 
-  ezjail_name=$1; ezjail_ip=$2
+  ezjail_name=$1; ezjail_ips=$2
 
   # we need at least a name and an ip for new jail
-  [ "${ezjail_name}" -a "${ezjail_ip}" -a $# -eq 2 ] || exerr ${ezjail_usage_create}
-  
+  [ "${ezjail_name}" -a "${ezjail_ips}" -a $# -eq 2 ] || exerr ${ezjail_usage_create}
+
   # show the user the type of image used
   echo "TYPE: $ezjail_imagetype"
-  
+
   # check for an active ZFS zpool
   if [ "${ezjail_imagetype}" = "zfs" ]; then
     check_for_zpool
@@ -481,7 +472,7 @@ create)
 
     # Location of our image file
     ezjail_image="${ezjail_image}.img"
-    
+
     # zfs does not use image files
     [ "${ezjail_imagetype}" = "zfs" ] && unset ezjail_image
 
@@ -556,7 +547,7 @@ create)
       mount "/dev/${ezjail_device}" "${ezjail_rootdir}" || detach_images || exerr "Error: Could not mount /dev/${ezjail_device} to ${ezjail_root}."
     else
       if [ -e "${ezjail_rootdir}" -a ! -d "${ezjail_rootdir}" ]; then
-        [ "${ezjail_rootdir%%*.img}" ] || exerr "Error: Could not create mount point for your jails image.\n  A file exists at its location.\n  Try '${ezjail_admin} create -x -r ${ezjail_rootdir%%.img} ${ezjail_name} ${ezjail_ip}' instead."
+        [ "${ezjail_rootdir%%*.img}" ] || exerr "Error: Could not create mount point for your jails image.\n  A file exists at its location.\n  Try '${ezjail_admin} create -x -r ${ezjail_rootdir%%.img} ${ezjail_name} ${ezjail_ips}' instead."
         exerr "Error: Could not create mount point for your jails image.\n  A file exists at its location."
       fi
       [ -d "${ezjail_rootdir}" ] || mkdir -p "${ezjail_rootdir}"
@@ -605,7 +596,7 @@ create)
     echo -e "#\n# PROVIDE: standard_ezjail\n# REQUIRE: \n# BEFORE: \n#\n"
   fi
   echo export jail_${ezjail_safename}_hostname=\"${ezjail_hostname}\"
-  echo export jail_${ezjail_safename}_ip=\"${ezjail_ip}\"
+  echo export jail_${ezjail_safename}_ip=\"${ezjail_ips}\"
   echo export jail_${ezjail_safename}_rootdir=\"${ezjail_rootdir}\"
   echo export jail_${ezjail_safename}_exec=\"/bin/sh /etc/rc\"
   echo export jail_${ezjail_safename}_mount_enable=\"${ezjail_mount_enable}\"
@@ -647,17 +638,21 @@ create)
   # For user convenience some scenarios commonly causing headaches are checked
   #
 
-  # check, whether IP is configured on a local interface, warn if it isnt
-  ping -c 1 -m 1 -t 1 -q ${ezjail_ip} > /dev/null
-  [ $? -eq 0 ] || echo "Warning: IP ${ezjail_ip} not configured on a local interface."
+  TIFS=${IFS}; IFS=,
+  for ezjail_ip in ${ezjail_ips}; do
+    # check, whether IP is configured on a local interface, warn if it isnt
+    ping -c 1 -m 1 -t 1 -q ${ezjail_ip} > /dev/null
+    [ $? -eq 0 ] || echo "Warning: IP ${ezjail_ip} not configured on a local interface."
 
-  # check, whether some host system services do listen on the Jails IP
-  TIFS=${IFS}; IFS=_
-  ezjail_listener=`sockstat -4 -l | grep "${ezjail_ip}:[[:digit:]]"`
-  [ $? -eq 0 ] && echo -e "Warning: Some services already seem to be listening on IP ${ezjail_ip}\n  This may cause some confusion, here they are:\n${ezjail_listener}"
+    # check, whether some host system services do listen on the Jails IP
+    IFS=_
+    ezjail_listener=`sockstat -4 -l | grep "${ezjail_ip}:[[:digit:]]"`
+    [ $? -eq 0 ] && echo -e "Warning: Some services already seem to be listening on IP ${ezjail_ip}\n  This may cause some confusion, here they are:\n${ezjail_listener}"
 
-  ezjail_listener=`sockstat -4 -l | grep "*:[[:digit:]]"`
-  [ $? -eq 0 ] && echo -e "Warning: Some services already seem to be listening on all IP, (including ${ezjail_ip})\n  This may cause some confusion, here they are:\n${ezjail_listener}"
+    ezjail_listener=`sockstat -4 -l | grep "*:[[:digit:]]"`
+    [ $? -eq 0 ] && echo -e "Warning: Some services already seem to be listening on all IP, (including ${ezjail_ip})\n  This may cause some confusion, here they are:\n${ezjail_listener}"
+    IFS=,
+  done
   IFS=${TIFS}
 
   [ "${ezjail_imagetype}" -a "${ezjail_imagetype}" != "zfs" ] && echo "Note: To administrate your image jail, attach it using the '${ezjail_admin} config -i attach ${ezjail_hostname}' command."
@@ -681,7 +676,7 @@ delete)
 
   # check for existence of jail in our records
   [ "${ezjail_config}" ] || exerr "Error: Nothing known about jail ${ezjail_name}."
-  
+
   # check for an active ZFS zpool
   if [ "${ezjail_imagetype}" = "zfs" ]; then
     check_for_zpool
@@ -717,7 +712,7 @@ delete)
   if [ "${ezjail_wipeme}" ]; then
     case ${ezjail_imagetype} in
     simple|bde|eli)
-     [ "${ezjail_image}" ] && rm -f "${ezjail_image}" "${ezjail_image%.img}.device" 
+     [ "${ezjail_image}" ] && rm -f "${ezjail_image}" "${ezjail_image%.img}.device"
     ;;
     zfs)
       echo "ZFS: delete the jails ZFS"
@@ -747,7 +742,16 @@ list)
     fi
     [ "${ezjail_safename}" != "${ezjail}" ] && ezjail_state="${ezjail_state}N"
 
-    printf "%-3s %-5s %-15s %-28s %s\\n" "${ezjail_state}" "${ezjail_id:-N/A}" "${ezjail_ip}" "${ezjail_hostname}" "${ezjail_rootdir}"
+    TIFS=${IFS}; IFS=,; unset _multiline
+    for ezjail_ip in ${ezjail_ips}; do
+      if[ -z "${_multiline}" ]; then
+        printf "%-3s %-5s %-15s %-28s %s\\n" "${ezjail_state}" "${ezjail_id:-N/A}" "${ezjail_ip}" "${ezjail_hostname}" "${ezjail_rootdir}"
+      else
+        echo "         ${ezjail_ip}"
+        _multiline=yes
+      fi
+    done
+    IFS=${TIFS}
   done
 
   ;;
@@ -782,7 +786,7 @@ setup|update)
     [ -d "${ezjail_jailbase}" ] || exerr "Error: base jail does not exist.\n  You cannot fill base jails ports tree before creating it.\n  Please run '${ezjail_admin} update' or '${ezjail_admin} install' first."
   elif [ "${ezjail_installaction}" = "freebsd-update" ]; then
     [ -d "${ezjail_jailbase}" ] || exerr "Error: base jail does not exist.\n  You cannot update a base jail until it is created.\n  Please run '${ezjail_admin} update' or '${ezjail_admin} install' first."
-    
+
     # If ran from cron be kind to freebsds update servers and sleep first
     [ -z "$TERM" -o "$TERM" = "dumb" ] && sleep $(( ${RANDOM} % 3600 ))
     if [ "${ezjail_use_zfs}" = "YES" ]; then
@@ -954,7 +958,7 @@ console)
     # This one will also exerr on failure
     start_stop_jail_by_script start
   fi
-  
+
   # use the jails FIB if there is one
   if [ -n "${ezjail_fib}" ]; then
      _setfib="setfib -F ${ezjail_fib}"
@@ -1145,10 +1149,10 @@ restore)
     fetchjailinfo ${ezjail_safename} ${ezjail_config}
 
     # Now all parameters are here, invoke ezjail-admin create
-    [ "${ezjail_rootdir}" -a "${ezjail_ip}" -a "${ezjail_hostname}" ] || exerr "Error: Archive does not contain a valid ezjail properties file.\n  Some jails properties are missing."
+    [ "${ezjail_rootdir}" -a "${ezjail_ips}" -a "${ezjail_hostname}" ] || exerr "Error: Archive does not contain a valid ezjail properties file.\n  Some jails properties are missing."
     [ "${ezjail_imagetype}" ] && ezjail_imagedata="-c ${ezjail_imagetype} -C '${ezjail_attachparams}' -s ${ezjail_nameprop_imgagesize}"
 
-    $0 create -a "${ezjail_fromarchive}" -A "${ezjail_config}" ${ezjail_imagedata} -r "${ezjail_rootdir}" "${ezjail_hostname}" "${ezjail_ip}" || exerr "Error: Create failed."
+    $0 create -a "${ezjail_fromarchive}" -A "${ezjail_config}" ${ezjail_imagedata} -r "${ezjail_rootdir}" "${ezjail_hostname}" "${ezjail_ips}" || exerr "Error: Create failed."
     rm -f "${ezjail_config}"
 
   done
@@ -1241,12 +1245,9 @@ config)
     else
       unset ezjail_new_image
     fi
-    
-    if [ "${ezjail_imagetype}" = "zfs" ]; then
-      # ZFS: using the zfs rename feature to rename the filesystem, remounting is done by ZFS
-      zfs rename ${ezjail_jailzfs}/${ezjail_hostname} ${ezjail_jailzfs}/${ezjail_new_hostname}
-    fi
 
+    # ZFS: using the zfs rename feature to rename the filesystem, remounting is done by ZFS
+    [ "${ezjail_imagetype}" = "zfs" ] && zfs rename ${ezjail_jailzfs}/${ezjail_hostname} ${ezjail_jailzfs}/${ezjail_new_hostname}
 
     # adjust softlink
     if [ -L "${ezjail_softlink}" ]; then
@@ -1310,7 +1311,7 @@ config)
     grep -e ^\# "${ezjail_config}"
     echo
     echo export jail_${ezjail_safename}_hostname=\"${ezjail_hostname}\"
-    echo export jail_${ezjail_safename}_ip=\"${ezjail_ip}\"
+    echo export jail_${ezjail_safename}_ip=\"${ezjail_ips}\"
     echo export jail_${ezjail_safename}_rootdir=\"${ezjail_rootdir}\"
     echo export jail_${ezjail_safename}_exec=\"${ezjail_exec}\"
     echo export jail_${ezjail_safename}_mount_enable=\"${ezjail_mount_enable}\"
@@ -1339,7 +1340,7 @@ config)
     grep -e ^\# "${ezjail_config}"
     echo
     echo export jail_${ezjail_safename}_hostname=\"${ezjail_hostname}\"
-    echo export jail_${ezjail_safename}_ip=\"${ezjail_ip}\"
+    echo export jail_${ezjail_safename}_ip=\"${ezjail_ips}\"
     echo export jail_${ezjail_safename}_rootdir=\"${ezjail_rootdir}\"
     echo export jail_${ezjail_safename}_exec=\"${ezjail_exec}\"
     echo export jail_${ezjail_safename}_mount_enable=\"${ezjail_mount_enable}\"
@@ -1370,7 +1371,7 @@ config)
     grep -e ^\# "${ezjail_config}"
     echo
     echo export jail_${ezjail_safename}_hostname=\"${ezjail_hostname}\"
-    echo export jail_${ezjail_safename}_ip=\"${ezjail_ip}\"
+    echo export jail_${ezjail_safename}_ip=\"${ezjail_ips}\"
     echo export jail_${ezjail_safename}_rootdir=\"${ezjail_rootdir}\"
     echo export jail_${ezjail_safename}_exec=\"${ezjail_exec}\"
     echo export jail_${ezjail_safename}_mount_enable=\"${ezjail_mount_enable}\"
