@@ -149,8 +149,8 @@ will be configured and, if the jail is running, appliedto the running jail. The 
 may include numbers separated by '-' for ranges and commas separating individual numbers.
 
 With the -z option, one or more zfs-datasets can be configured to be attached to the jail.
-You need to configure the sysctl security.jail.mount_allowed=1 and security.jail.enforce_statfs=0
-as well as "add path zfs unhide" in the devfs ruleset for the jail.
+You need to configure the sysctl security.jail.mount_allowed=1 and security.jail.enforce_statfs=0,
+set the jailed zfs property to on  as well as "add path zfs unhide" in the devfs ruleset for the jail.
 
 You can configure an altered network view (FIB) for the jail with the -f option. For setting up FIBs, see
 setfib(1). The jail needs to be restarted after the option has been applied to take effect.
