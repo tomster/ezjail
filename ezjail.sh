@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.51 2010/01/11 03:23:23 erdgeist Exp $
+# $Id: ezjail.sh,v 1.52 2010/01/11 03:57:13 erdgeist Exp $
 #
 # $FreeBSD$
 #
@@ -35,8 +35,11 @@ stopcrypto_cmd="do_cmd stopcrypto _"
 do_cmd()
 {
   action=$1; message=$2; shift 2;
-  unset ezjail_list ezjail_pass ezjail_mds
+  unset ezjail_list ezjail_pass ezjail_mds ezjail_stop
+  ezjail_cfgs=${ezjail_prefix}/etc/ezjail/
   ezjail_fromrc="YES"
+
+  case "${action}" in *stop) ezjail_stop="YES";; esac
 
   # If a jail list is given on command line, process it
   # If not, fetch it from our config directory
@@ -44,21 +47,26 @@ do_cmd()
     ezjail_list=`echo -n $* | tr -c '[:alnum:] ' '_'` 
     unset ezjail_fromrc
   else
-    case "${action}" in *stop) reverse_command="tail -r";; *) reverse_command="cat";; esac
-    [ -d "${ezjail_prefix}/etc/ezjail/" ] && cd "${ezjail_prefix}/etc/ezjail/" && ezjail_list=`ls | xargs rcorder | ${reverse_command}`
+    [ "${ezjail_stop}" ] && reverse_command="tail -r" || reverse_command="cat"
+    [ -d "${ezjail_cfgs}" ] && cd "${ezjail_cfgs}" && ezjail_list=`ls | xargs rcorder | ${reverse_command}`
     echo -n "${message##_}"
   fi
 
   for ezjail in ${ezjail_list}; do
-    # If jail is temporary disabled (dot in name), skip it for starts
-    case "${action}" in *stop) ezjail=${ezjail%%.*};; esac
-    [ "${ezjail%.*}" != "${ezjail}" ] && echo -n " skipping ${ezjail}" && continue
+    unset ezjail_config
+
+    [ -e "${ezjail_jailcfgs}/${ezjail}"       ] && ezjail_config="${ezjail_jailcfgs}/${ezjail}"
+    [ -e "${ezjail_jailcfgs}/${ezjail}.norun" ] && ezjail_config="${ezjail_jailcfgs}/${ezjail}.norun"
 
     # Check for jails config
-    [ ! -r "${ezjail_prefix}/etc/ezjail/${ezjail}" ] && echo " Warning: Jail ${ezjail} not found." && continue
+    [ -f "${ezjail_config}" ] || echo " Warning: Jail ${ezjail} not found." && continue
+
+    # If jail is temporary disabled (dot in name), skip it for starts
+    [ "${ezjail_stop}" ] && ezjail="${ezjail%%.*}"
+    [ "${ezjail%.*}" != "${ezjail}" ] && echo -n " skipping ${ezjail}" && continue
 
     # Read config file
-    . "${ezjail_prefix}/etc/ezjail/${ezjail}"
+    . ${ezjail_config}
 
     eval ezjail_rootdir=\"\$jail_${ezjail}_rootdir\"
     eval ezjail_image=\"\$jail_${ezjail}_image\"
