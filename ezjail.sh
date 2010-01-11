@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.53 2010/01/11 04:01:30 erdgeist Exp $
+# $Id: ezjail.sh,v 1.54 2010/01/11 04:06:54 erdgeist Exp $
 #
 # $FreeBSD$
 #
@@ -53,17 +53,17 @@ do_cmd()
   fi
 
   for ezjail in ${ezjail_list}; do
-    unset ezjail_config
+    unset ezjail_config ezjail_norun
 
     [ -e "${ezjail_cfgs}/${ezjail}"       ] && ezjail_config="${ezjail_cfgs}/${ezjail}"
-    [ -e "${ezjail_cfgs}/${ezjail}.norun" ] && ezjail_config="${ezjail_cfgs}/${ezjail}.norun"
+    [ -e "${ezjail_cfgs}/${ezjail}.norun" ] && ezjail_config="${ezjail_cfgs}/${ezjail}.norun" && ezjail_norun="YES"
 
     # Check for jails config
     [ ! -f "${ezjail_config}" ] && echo " Warning: Jail ${ezjail} not found." && continue
 
     # If jail is temporary disabled (dot in name), skip it for starts
     [ "${ezjail_stop}" ] && ezjail="${ezjail%%.*}"
-    [ "${ezjail%.*}" != "${ezjail}" ] && echo -n " skipping ${ezjail}" && continue
+    [ "${ezjail%.*}" != "${ezjail}" -o "${ezjail_norun}" ] && echo -n " skipping ${ezjail}" && continue
 
     # Read config file
     . ${ezjail_config}
