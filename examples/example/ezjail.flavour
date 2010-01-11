@@ -9,7 +9,7 @@
 #
 # Prevent this script from being called over and over if something fails.
 
-rm -f /etc/rc.d/ezjail-config.sh /ezjail.flavour
+rm -f /etc/rc.d/ezjail-config /ezjail.flavour
 
 # Groups
 #########
@@ -22,7 +22,7 @@ rm -f /etc/rc.d/ezjail-config.sh /ezjail.flavour
 # Users
 ########
 #
-# You might want to add some users. The password is to be provided in the 
+# You might want to add some users. The password is to be provided in the
 # encrypted form as found in /etc/master.passwd.
 # The example password here is "admin"
 # Refer to crypt(3) and pw(8) for more information
@@ -54,7 +54,7 @@ rm -rf /pkg
 # Postinstall
 ##############
 #
-# Your own stuff here, for example set login shells that were only 
+# Your own stuff here, for example set login shells that were only
 # installed just before.
 
 # Please note, that for all network related stuff like ports,
