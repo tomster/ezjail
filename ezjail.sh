@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.50 2010/01/09 19:10:54 erdgeist Exp $
+# $Id: ezjail.sh,v 1.51 2010/01/11 03:23:23 erdgeist Exp $
 #
 # $FreeBSD$
 #
@@ -50,8 +50,9 @@ do_cmd()
   fi
 
   for ezjail in ${ezjail_list}; do
-    # If jail is temporary disabled (dot in name), skip it
-    [ -f "${ezjail_prefix}/etc/ezjail/${ezjail}.norun" -o "${ezjail%.*}" != "${ezjail}" ] && echo -n " skipping ${ezjail}" && continue
+    # If jail is temporary disabled (dot in name), skip it for starts
+    case "${action}" in *stop) ezjail=${ezjail%%.*};; esac
+    [ "${ezjail%.*}" != "${ezjail}" ] && echo -n " skipping ${ezjail}" && continue
 
     # Check for jails config
     [ ! -r "${ezjail_prefix}/etc/ezjail/${ezjail}" ] && echo " Warning: Jail ${ezjail} not found." && continue
