@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.232 2010/01/11 03:06:27 erdgeist Exp $
+# $Id: ezjail-admin,v 1.233 2010/01/11 17:04:44 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -793,11 +793,9 @@ setup|update)
     [ -d "${ezjail_jailbase}" ] || exerr "Error: base jail does not exist.\n  You cannot update a base jail until it is created.\n  Please run '${ezjail_admin} update' or '${ezjail_admin} install' first."
 
     # If ran from cron be kind to freebsds update servers and sleep first
-    [ -z "$TERM" -o "$TERM" = "dumb" ] && sleep $(( ${RANDOM} % 3600 ))
-    if [ "${ezjail_use_zfs}" = "YES" ]; then
-      zfs snapshot ${ezjail_jailzfs}/basejail@`date -v -7d +"%C%y%m%d_%H:%M:%S"`
-    fi
-    freebsd-update -b ${ezjail_jailbase} fetch install
+    [ -z "$TERM" -o "$TERM" = "dumb" ] && ezjail_urgency="cron" || ezjail_urgency="fetch"
+    [ "${ezjail_use_zfs}" = "YES" ] && zfs snapshot ${ezjail_jailzfs}/basejail@`date -v -7d +"%C%y%m%d_%H:%M:%S"`
+    freebsd-update -b ${ezjail_jailbase} ${ezjail_urgency} install
   else
     # Bump the user for some of the most common errors
     [ -d "${ezjail_sourcetree}" ] || exerr "Error: Cannot find your copy of the FreeBSD source tree in ${ezjail_sourcetree}.\n  Consider using '${ezjail_admin} install' to create the base jail from an ftp server."
