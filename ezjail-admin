@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.231 2010/01/08 23:45:42 erdgeist Exp $
+# $Id: ezjail-admin,v 1.232 2010/01/11 03:06:27 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -142,6 +142,41 @@ start_stop_jail_by_script () {
   # Check for success of our operation
   fetchjailinfo ${ezjail_name}
   [ ${ezjail_success_check} "${ezjail_id}" ] || exerr "Error: Could not ${ezjail_action} ${ezjail_name}.\n  You need to ${ezjail_action} it by hand."
+}
+
+# write everything we know about an ezjail to config
+writejailinfo () {
+  ezjail_destconf=$1
+  ezjail_sourceconf=$2
+
+  (
+  if [ "${ezjail_sourceconf}" ]; then
+    grep -E ^\# ${ezjail_sourceconf}; echo
+  else
+    echo -e "# To specify the start up order of your ezjails, use these lines to\n# create a Jail dependency tree. See rcorder(8) for more details."
+    echo -e "#\n# PROVIDE: standard_ezjail\n# REQUIRE: \n# BEFORE: \n#\n"
+  fi
+
+  echo export jail_${ezjail_safename}_hostname=\"${ezjail_hostname}\"
+  echo export jail_${ezjail_safename}_ip=\"${ezjail_ips}\"
+  echo export jail_${ezjail_safename}_rootdir=\"${ezjail_rootdir}\"
+  echo export jail_${ezjail_safename}_exec=\"/bin/sh /etc/rc\"
+  echo export jail_${ezjail_safename}_mount_enable=\"${ezjail_mount_enable}\"
+  echo export jail_${ezjail_safename}_devfs_enable=\"${ezjail_devfs_enable}\"
+  echo export jail_${ezjail_safename}_devfs_ruleset=\"devfsrules_jail\"
+  echo export jail_${ezjail_safename}_procfs_enable=\"${ezjail_procfs_enable}\"
+  echo export jail_${ezjail_safename}_fdescfs_enable=\"${ezjail_fdescfs_enable}\"
+  echo export jail_${ezjail_safename}_image=\"${ezjail_image}\"
+  echo export jail_${ezjail_safename}_imagetype=\"${ezjail_imagetype}\"
+  echo export jail_${ezjail_safename}_attachparams=\"${ezjail_attachparams}\"
+  echo export jail_${ezjail_safename}_attachblocking=\"${ezjail_attachblocking}\"
+  echo export jail_${ezjail_safename}_forceblocking=\"${ezjail_forceblocking}\"
+  echo export jail_${ezjail_safename}_zfs_datasets=\"${ezjail_zfs_datasets}\"
+  echo export jail_${ezjail_safename}_cpuset=\"${ezjail_cpuset}\"
+  echo export jail_${ezjail_safename}_fib=\"${ezjail_fib}\"
+
+  ) > "${ezjail_destconf}"
+
 }
 
 # fetch everything we need to know about an ezjail from config
@@ -383,19 +418,13 @@ create)
   # we need at least a name and an ip for new jail
   [ "${ezjail_name}" -a "${ezjail_ips}" -a $# -eq 2 ] || exerr ${ezjail_usage_create}
 
-  # show the user the type of image used
-  echo "TYPE: $ezjail_imagetype"
-
   # check for an active ZFS zpool
-  if [ "${ezjail_imagetype}" = "zfs" ]; then
-    check_for_zpool
-  fi
+  [ "${ezjail_imagetype}" = "zfs" ] && check_for_zpool
 
   # check for sanity of settings concerning the image feature
   if [ "${ezjail_imagetype}" != "zfs" ]; then
     [ -z "${ezjail_imagetype}" -o "${ezjail_exists}" -o "${ezjail_imagesize}" ] || exerr "Error: Image jails need an image size."
   fi
-
 
   # check for a sane image type
   case ${ezjail_imagetype} in ""|simple|bde|eli|zfs) ;; *) exerr ${ezjail_usage_create};; esac
@@ -447,7 +476,7 @@ create)
   # directory, we need to create a softlink
   if [ "${ezjail_rootdir##${ezjail_jaildir}}" = "${ezjail_rootdir}" ]; then
     ezjail_softlink=${ezjail_jaildir}/`basename -- "${ezjail_rootdir}"`
-    [ -e "${ezjail_softlink}" ] && exerr "Error: An ezjail already exists at ${ezjail_softlink}.\n  Please specify another jail root with the -r switch."
+    [ -e "${ezjail_softlink}" ] && ezjail_softlink=`mktemp -u "${ezjail_softlink}.XXXXXX"`
   fi
 
   # do some sanity checks on the selected flavour (if any)
@@ -576,7 +605,7 @@ create)
   fi
 
   # if a soft link is necessary, create it now
-  [ "${ezjail_softlink}" ] && ln -s "${ezjail_rootdir}" "${ezjail_softlink}"
+  [ "${ezjail_softlink}" ] && ln -fs "${ezjail_rootdir}" "${ezjail_softlink}"
 
   # if the automount feature is not disabled, this fstab entry for new jail
   # will be obeyed
@@ -588,31 +617,7 @@ create)
 
   # now, where everything seems to have gone right, create control file in
   # ezjails config dir
-  (
-  if [ "${ezjail_fromarchive_config}" ]; then
-    grep -E ^\# ${ezjail_fromarchive_config}; echo
-  else
-    echo -e "# To specify the start up order of your ezjails, use these lines to\n# create a Jail dependency tree. See rcorder(8) for more details."
-    echo -e "#\n# PROVIDE: standard_ezjail\n# REQUIRE: \n# BEFORE: \n#\n"
-  fi
-  echo export jail_${ezjail_safename}_hostname=\"${ezjail_hostname}\"
-  echo export jail_${ezjail_safename}_ip=\"${ezjail_ips}\"
-  echo export jail_${ezjail_safename}_rootdir=\"${ezjail_rootdir}\"
-  echo export jail_${ezjail_safename}_exec=\"/bin/sh /etc/rc\"
-  echo export jail_${ezjail_safename}_mount_enable=\"${ezjail_mount_enable}\"
-  echo export jail_${ezjail_safename}_devfs_enable=\"${ezjail_devfs_enable}\"
-  echo export jail_${ezjail_safename}_devfs_ruleset=\"devfsrules_jail\"
-  echo export jail_${ezjail_safename}_procfs_enable=\"${ezjail_procfs_enable}\"
-  echo export jail_${ezjail_safename}_fdescfs_enable=\"${ezjail_fdescfs_enable}\"
-  echo export jail_${ezjail_safename}_image=\"${ezjail_image}\"
-  echo export jail_${ezjail_safename}_imagetype=\"${ezjail_imagetype}\"
-  echo export jail_${ezjail_safename}_attachparams=\"${ezjail_attachparams}\"
-  echo export jail_${ezjail_safename}_attachblocking=\"${ezjail_attachblocking}\"
-  echo export jail_${ezjail_safename}_forceblocking=\"${ezjail_forceblocking}\"
-  echo export jail_${ezjail_safename}_zfs_datasets=\"${ezjail_zfs_datasets}\"
-  echo export jail_${ezjail_safename}_cpuset=\"${ezjail_cpuset}\"
-  echo export jail_${ezjail_safename}_fib=\"${ezjail_fib}\"
-  ) > "${ezjail_config}"
+  writejailinfo "${ezjail_config}" "${ezjail_fromarchive_config}"
 
   # Final steps for flavour installation
   if [ -z "${ezjail_exists}" -a "${ezjail_flavour}" ]; then
@@ -1160,7 +1165,7 @@ restore)
 ######################## ezjail-admin CONFIG ########################
 config)
   # Clean variables, prevent polution
-  unset ezjail_setrunnable ezjail_imageaction ezjail_new_name ezjail_new_zfs_datasets ezjail_new_cpuset ezjail_new_fib
+  unset ezjail_setrunnable ezjail_imageaction ezjail_new_name ezjail_new_zfs_datasets ezjail_new_cpuset ezjail_new_fib ezjail_old_config
 
   shift; while getopts :r:i:n:z:c:f: arg; do case ${arg} in
     i) ezjail_imageaction=${OPTARG};;
@@ -1168,7 +1173,8 @@ config)
     n) ezjail_new_name=${OPTARG};;
     z) ezjail_new_zfs_datasets=${OPTARG};;
     c) ezjail_new_cpuset=${OPTARG};;
-    f) ezjail_new_fib=${OPTARG};;
+    f) ezjail_new_fib=${OPTARG}
+       [ "${ezjail_new_fib}" -ge 0 ] || exerr "Error: fib number has to be an integer.";;
     ?) exerr ${ezjail_usage_config};;
   esac; done; shift $(( ${OPTIND} - 1 ))
 
@@ -1177,224 +1183,102 @@ config)
   # Jail name mandatory
   fetchjailinfo $1
 
-  # check for existence of jail in our records
+  # Check for existence of jail in our records
   [ "${ezjail_config}" ] || exerr "Error: Nothing known about jail ${ezjail_name}."
 
   # Nothing to be configured?
-  [ "${ezjail_setrunnable}" -o "${ezjail_new_name}" -o "${ezjail_imageaction}" -o "${ezjail_new_zfs_datasets}" -o "${ezjail_new_cpuset}" -o "${ezjail_new_fib}" ] || echo "Warning: No config option specified."
+  [ -n "${ezjail_setrunnable}" -o -n "${ezjail_new_name}" -o -n "${ezjail_imageaction}" -o -n "${ezjail_new_zfs_datasets}" -o -n "${ezjail_new_cpuset}" -o -n "${ezjail_new_fib}" ] || exerr ${ezjail_usage_config}
+
+  [ -n "${ezjail_id}" -a -n "${ezjail_new_name}" ] && exerr "Error: Jail ${ezjail_name} appears to be still running.\n  '${ezjail_admin} stop ${ezjail_name}' it first."
+  [ -n "${ezjail_id}" ] && [ -n "${ezjail_new_zfs_datasets}" -o -n "${ezjail_new_fib}" ] && echo "Warning: New settings for running jail ${ezjail_name} will only take effect when next restarting it."
+
+  # Mark old config as source for new config written later
+  [ -n "${ezjail_new_name}" -o -n "${ezjail_new_zfs_datasets}" -o -n "${ezjail_new_cpuset}" -o -n "${ezjail_new_fib}" ] && ezjail_old_config="${ezjail_config}"
+
+  [ "${ezjail_new_zfs_datasets}" ] && ezjail_zfs_datasets="${ezjail_new_zfs_datasets}"
+  [ "${ezjail_new_fib}" ] && ezjail_fib="${ezjail_new_fib}"
+  if [ "${ezjail_new_cpuset}" ]; then
+    # Configure the new cpuset if the jail is currently running
+    [ "${ezjail_id}" ] && /usr/bin/cpuset -l ${ezjail_new_cpuset} -j ${ezjail_id} || exerr "Error: The defined cpuset is malformed."
+    ezjail_cpuset="${ezjail_new_cpuset}"
+  fi
 
   # Do we want a new name for our jail?
-  if [ "${ezjail_new_name}" ]; then
-    # if jail is still running, refuse to go any further
-    [ "${ezjail_id}" ] && exerr "Error: Jail appears to be still running.\n  '${ezjail_admin} stop ${ezjail_name}' it first ."
-
+  if [ "${ezjail_new_name}" -a "${ezjail_new_name}" != "${ezjail_name}" ]; then
     # Cannot rename an attached jail
     [ "${ezjail_attached}" ] && exerr "Error: Jail image file ${ezjail_image} is attached as ${ezjail_device}.\n  '${ezjail_admin} config -i detach ${ezjail_name}' it first."
 
-    # The new values for the jail
-    ezjail_new_hostname=`echo -n ${ezjail_new_name} | tr '/~' '__'`
-    ezjail_new_safename=`echo -n "${ezjail_new_name}" | tr -c '[:alnum:]' _`
-    ezjail_new_rootdir=`dirname -- ${ezjail_rootdir}`/${ezjail_new_hostname}
-    ezjail_new_config="${ezjail_jailcfgs}/${ezjail_new_safename}"
-    [ "${ezjail_config}" = "${ezjail_config%.norun}" ] || ezjail_new_config="${ezjail_jailcfgs}/${ezjail_new_safename}.norun"
-    ezjail_new_softlink=${ezjail_jaildir}/`basename -- "${ezjail_new_rootdir}"`
+    # Save some old values
+    ezjail_old_hostname="${ezjail_hostname}"
+    ezjail_old_safename="${ezjail_safename}"
+    ezjail_old_rootdir="${ezjail_rootdir}"
+    ezjail_old_image="${ezjail_image}"
 
-    # those are just copied
-    eval ezjail_new_ip=\"\$jail_${ezjail_safename}_ip\"
-    eval ezjail_new_exec=\"\$jail_${ezjail_safename}_exec\"
-    eval ezjail_new_mount_enable=\"\$jail_${ezjail_safename}_mount_enable\"
-    eval ezjail_new_devfs_enable=\"\$jail_${ezjail_safename}_devfs_enable\"
-    eval ezjail_new_devfs_ruleset=\"\$jail_${ezjail_safename}_devfs_ruleset\"
-    eval ezjail_new_procfs_enable=\"\$jail_${ezjail_safename}_devfs_enable\"
-    eval ezjail_new_fdescfs_enable=\"\$jail_${ezjail_safename}_fdescfs_enable\"
-    eval ezjail_new_attachparams=\"\$jail_${ezjail_safename}_attachparams\"
-    eval ezjail_new_attachblocking=\"\$jail_${ezjail_safename}_attachblocking\"
-    eval ezjail_new_forceblocking=\"\$jail_${ezjail_safename}_forceblocking\"
-    eval ezjail_new_imagetype=\"\$jail_${ezjail_safename}_imagetype\"
-    eval ezjail_new_zfs_datasets=\"\$jail_${ezjail_safename}_zfs_datasets\"
-    eval ezjail_new_cpuset=\"\$jail_${ezjail_safename}_cpuset\"
-    eval ezjail_new_fib=\"\$jail_${ezjail_safename}_fib\"
+    # The new values for the jail
+    ezjail_hostname=`echo -n ${ezjail_new_name} | tr '/~' '__'`
+    ezjail_safename=`echo -n "${ezjail_new_name}" | tr -c '[:alnum:]' _`
+    ezjail_config="${ezjail_jailcfgs}/${ezjail_safename}"
+    [ "${ezjail_old_config}" = "${ezjail_old_config%.norun}" ] || ezjail_config="${ezjail_jailcfgs}/${ezjail_safename}.norun"
+
+    # If rootdir is in our jails directory, and was auto generated, also rename the root
+    if [ "${ezjail_old_rootdir}" = "${ezjail_jaildir}/${ezjail_old_hostname}" ]; then
+      ezjail_rootdir=`dirname -- ${ezjail_rootdir}`/${ezjail_hostname}
+
+      # since we just used the old rootdir prefix and added the new hostname,
+      # we might end up at an existing directory
+      [ -e "${ezjail_rootdir}" ] && exerr "Error: An object already exists at ${ezjail_rootdir}, cant rename."
+
+      mv "${ezjail_old_rootdir}" "${ezjail_rootdir}"
+    fi
 
     # This scenario really will only lead to real troubles in the 'fulljail'
     # case, but I should still explain this to the user and not claim that
     # "an ezjail would already exist"
-    case ${ezjail_new_hostname} in basejail|newjail|fulljail|flavours|ezjailtemp) exerr "Error: ezjail needs the ${ezjail_new_hostname} directory for its own administrative purposes.\n  Please chose another name.";; esac
+    case ${ezjail_hostname} in basejail|newjail|fulljail|flavours|ezjailtemp) exerr "Error: ezjail needs the ${ezjail_hostname} directory for its own administrative purposes.\n  Please chose another name.";; esac
 
     # jail names may lead to identical configs, eg. foo.bar.com == foo-bar.com
     # so check, whether we might be running into problems
-    [ -e "${ezjail_new_config}" -o -e "${ezjail_new_config}.norun" ] && exerr "Error: An ezjail config already exists at ${ezjail_new_config}.\n  Please chose another name."
-
-    # since we just used the old rootdir prefix and added the new hostname,
-    # we might end up at an existing directory
-    [ -e "${ezjail_new_rootdir}" ] && exerr "Error: An object already exists at ${ezjail_new_rootdir}, cant rename."
-
-    # prevent trouble with creating our softlink
-    [ -L "${ezjail_softlink}" -a -e "${ezjail_new_softlink}" ] && exerr "Error: An object already exists at ${ezjail_new_softlink}, cant create softlink there."
+    [ -e "${ezjail_config}" -o -e "${ezjail_config}.norun" ] && exerr "Error: An ezjail config already exists at ${ezjail_config}.\n  Please chose another name."
 
     # need to rename the image?
-    if [ "${ezjail_image}" ]; then
-      # Do we have an auto generated image name?
-      if [ "${ezjail_rootdir}.img" = "${ezjail_image}" ]; then
-        ezjail_new_image="${ezjail_new_rootdir}.img"
-        [ -e "${ezjail_new_image}" ] && exerr "Error: An object already exists at ${ezjail_new_image}, cant rename image."
-        mv "${ezjail_image}" "${ezjail_new_image}"
+    if [ "${ezjail_old_image}" ]; then
+      # Do we have an auto generated image name? Then auto generate the new one
+      if [ "${ezjail_old_rootdir}.img" = "${ezjail_old_image}" ]; then
+        ezjail_image="${ezjail_rootdir}.img"
+        [ -e "${ezjail_image}" ] && exerr "Error: An object already exists at ${ezjail_image}, cant rename image."
+        mv "${ezjail_old_image}" "${ezjail_image}"
       else
-        ezjail_new_image=${ezjail_image}
-        echo "Warning: Image file for jail ${ezjail_name} remains ${ezjail_image}, as it was not auto generated"
+        echo "Warning: Image file for jail ${ezjail_new_name} remains ${ezjail_image}, as it was not auto generated"
       fi
-    else
-      unset ezjail_new_image
     fi
 
-    # ZFS: using the zfs rename feature to rename the filesystem, remounting is done by ZFS
-    [ "${ezjail_imagetype}" = "zfs" ] && zfs rename ${ezjail_jailzfs}/${ezjail_hostname} ${ezjail_jailzfs}/${ezjail_new_hostname}
-
-    # adjust softlink
-    if [ -L "${ezjail_softlink}" ]; then
-      rm -f "${ezjail_softlink}"
-      ln -s "${ezjail_new_rootdir}" "${ezjail_new_softlink}"
-    fi
-
-    # rename rootdir
-    if [ ! "${ezjail_imagetype}" = "zfs" ]; then
-      mv "${ezjail_rootdir}" "${ezjail_new_rootdir}"
-    fi
+    # rename the filesystem, remounting is done by ZFS
+    [ "${ezjail_imagetype}" = "zfs" ] && zfs rename ${ezjail_jailzfs}/${ezjail_old_hostname} ${ezjail_jailzfs}/${ezjail_hostname}
 
     # rename fstab
-    echo -n > "/etc/fstab.${ezjail_new_safename}"
-    [ "${ezjail_new_imagetype}" ] && \
-    echo ${ezjail_new_rootdir}.device ${ezjail_new_rootdir} ufs rw 0 0 >> "/etc/fstab.${ezjail_new_safename}"
-    echo ${ezjail_jailbase} ${ezjail_new_rootdir}/basejail nullfs ro 0 0 >> "/etc/fstab.${ezjail_new_safename}"
-    rm -f "/etc/fstab.${ezjail_safename}"
-
-    # rename config file, preserve comments
-    (
-    grep -e ^\# "${ezjail_config}"
-    echo
-    echo export jail_${ezjail_new_safename}_hostname=\"${ezjail_new_hostname}\"
-    echo export jail_${ezjail_new_safename}_ip=\"${ezjail_new_ip}\"
-    echo export jail_${ezjail_new_safename}_rootdir=\"${ezjail_new_rootdir}\"
-    echo export jail_${ezjail_new_safename}_exec=\"${ezjail_new_exec}\"
-    echo export jail_${ezjail_new_safename}_mount_enable=\"${ezjail_new_mount_enable}\"
-    echo export jail_${ezjail_new_safename}_devfs_enable=\"${ezjail_new_devfs_enable}\"
-    echo export jail_${ezjail_new_safename}_devfs_ruleset=\"${ezjail_new_devfs_ruleset}\"
-    echo export jail_${ezjail_new_safename}_procfs_enable=\"${ezjail_new_procfs_enable}\"
-    echo export jail_${ezjail_new_safename}_fdescfs_enable=\"${ezjail_new_fdescfs_enable}\"
-    echo export jail_${ezjail_new_safename}_image=\"${ezjail_new_image}\"
-    echo export jail_${ezjail_new_safename}_imagetype=\"${ezjail_new_imagetype}\"
-    echo export jail_${ezjail_new_safename}_attachparams=\"${ezjail_new_attachparams}\"
-    echo export jail_${ezjail_new_safename}_attachblocking=\"${ezjail_new_attachblocking}\"
-    echo export jail_${ezjail_new_safename}_forceblocking=\"${ezjail_new_forceblocking}\"
-    echo export jail_${ezjail_new_safename}_zfs_datasets=\"${ezjail_new_zfs_datasets}\"
-    echo export jail_${ezjail_new_safename}_cpuset=\"${ezjail_new_cpuset}\"
-    echo export jail_${ezjail_new_safename}_fib=\"${ezjail_new_fib}\"
-    ) > "${ezjail_new_config}"
-
-    # remove old config
-    rm -f "${ezjail_config}"
+    rm -f "/etc/fstab.${ezjail_old_safename}"
+    echo -n > "/etc/fstab.${ezjail_safename}"
+    [ "${ezjail_imagetype}" ] && \
+    echo ${ezjail_rootdir}.device ${ezjail_rootdir} ufs rw 0 0 >> "/etc/fstab.${ezjail_safename}"
+    echo ${ezjail_jailbase} ${ezjail_rootdir}/basejail nullfs ro 0 0 >> "/etc/fstab.${ezjail_safename}"
 
     # usually that doesnt go smoothly, but the user wanted it
     # that way ;)
-    echo "Jail has been renamed. You might want to check ${ezjail_new_config} and /etc/fstab.${ezjail_new_safename} to ensure everything has gone smoothly."
+    echo "Jail has been renamed. You might want to check ${ezjail_config} and /etc/fstab.${ezjail_safename} to ensure everything has gone smoothly."
     echo "Also check settings in your Jail's /etc/ directory (especially /etc/rc.conf)."
-
-    # reread config
-    fetchjailinfo ${ezjail_new_safename}
   fi
 
-  if [ "${ezjail_new_zfs_datasets}" ]; then
-    # if jail is still running, refuse to go any further
-    [ "${ezjail_id}" ] && exerr "Error: Jail appears to be still running.\n  '${ezjail_admin} stop ${ezjail_name}' it first ."
+  if [ "${ezjail_old_config}" ]; then
+    ezjail_tmpconfig=`mktemp -u "${ezjail_config}".XXXXXX` || exerr "Error: Could not write new config.\n  You will have to manually fix ${ezjail_old_config}. Sorry."
 
-    # write new config file, preserve comments
-    (
-    grep -e ^\# "${ezjail_config}"
-    echo
-    echo export jail_${ezjail_safename}_hostname=\"${ezjail_hostname}\"
-    echo export jail_${ezjail_safename}_ip=\"${ezjail_ips}\"
-    echo export jail_${ezjail_safename}_rootdir=\"${ezjail_rootdir}\"
-    echo export jail_${ezjail_safename}_exec=\"${ezjail_exec}\"
-    echo export jail_${ezjail_safename}_mount_enable=\"${ezjail_mount_enable}\"
-    echo export jail_${ezjail_safename}_devfs_enable=\"${ezjail_devfs_enable}\"
-    echo export jail_${ezjail_safename}_devfs_ruleset=\"${ezjail_devfs_ruleset}\"
-    echo export jail_${ezjail_safename}_procfs_enable=\"${ezjail_procfs_enable}\"
-    echo export jail_${ezjail_safename}_fdescfs_enable=\"${ezjail_fdescfs_enable}\"
-    echo export jail_${ezjail_safename}_image=\"${ezjail_image}\"
-    echo export jail_${ezjail_safename}_imagetype=\"${ezjail_imagetype}\"
-    echo export jail_${ezjail_safename}_attachparams=\"${ezjail_attachparams}\"
-    echo export jail_${ezjail_safename}_attachblocking=\"${ezjail_attachblocking}\"
-    echo export jail_${ezjail_safename}_forceblocking=\"${ezjail_forceblocking}\"
-    echo export jail_${ezjail_safename}_zfs_datasets=\"${ezjail_new_zfs_datasets}\"
-    echo export jail_${ezjail_safename}_cpuset=\"${ezjail_cpuset}\"
-    echo export jail_${ezjail_safename}_fib=\"${ezjail_fib}\"
-    ) > "${ezjail_config}_" 
-    mv "${ezjail_config}_" "${ezjail_config}"
-  fi
-
-  if [ "${ezjail_new_cpuset}" ]; then
-    # configure the new cpuset if the jail is currently running
-    [ "${ezjail_id}" ] && /usr/bin/cpuset -l ${ezjail_new_cpuset} -j ${ezjail_id} || exerr "Error: The defined cpuset is malformed"
-
-    # write new config file, preserve comments
-    (
-    grep -e ^\# "${ezjail_config}"
-    echo
-    echo export jail_${ezjail_safename}_hostname=\"${ezjail_hostname}\"
-    echo export jail_${ezjail_safename}_ip=\"${ezjail_ips}\"
-    echo export jail_${ezjail_safename}_rootdir=\"${ezjail_rootdir}\"
-    echo export jail_${ezjail_safename}_exec=\"${ezjail_exec}\"
-    echo export jail_${ezjail_safename}_mount_enable=\"${ezjail_mount_enable}\"
-    echo export jail_${ezjail_safename}_devfs_enable=\"${ezjail_devfs_enable}\"
-    echo export jail_${ezjail_safename}_devfs_ruleset=\"${ezjail_devfs_ruleset}\"
-    echo export jail_${ezjail_safename}_procfs_enable=\"${ezjail_procfs_enable}\"
-    echo export jail_${ezjail_safename}_fdescfs_enable=\"${ezjail_fdescfs_enable}\"
-    echo export jail_${ezjail_safename}_image=\"${ezjail_image}\"
-    echo export jail_${ezjail_safename}_imagetype=\"${ezjail_imagetype}\"
-    echo export jail_${ezjail_safename}_attachparams=\"${ezjail_attachparams}\"
-    echo export jail_${ezjail_safename}_attachblocking=\"${ezjail_attachblocking}\"
-    echo export jail_${ezjail_safename}_forceblocking=\"${ezjail_forceblocking}\"
-    echo export jail_${ezjail_safename}_zfs_datasets=\"${ezjail_zfs_datasets}\"
-    echo export jail_${ezjail_safename}_cpuset=\"${ezjail_new_cpuset}\"
-    echo export jail_${ezjail_safename}_fib=\"${ezjail_fib}\"
-    ) > "${ezjail_config}_"
-    mv "${ezjail_config}_" "${ezjail_config}"
-
-  fi
-
-  if [ "${ezjail_new_fib}" ]; then
-    # if jail is still running, refuse to go any further
-    [ "${ezjail_id}" ] && exerr "Error: Jail appears to be still running.\n  '${ezjail_admin} stop ${ezjail_name}' it first ."
-    [ "${ezjail_new_fib}" -ge "0" ] || exerr "Error: fib number has to be an integer."
-
-    # write new config file, preserve comments
-    (
-    grep -e ^\# "${ezjail_config}"
-    echo
-    echo export jail_${ezjail_safename}_hostname=\"${ezjail_hostname}\"
-    echo export jail_${ezjail_safename}_ip=\"${ezjail_ips}\"
-    echo export jail_${ezjail_safename}_rootdir=\"${ezjail_rootdir}\"
-    echo export jail_${ezjail_safename}_exec=\"${ezjail_exec}\"
-    echo export jail_${ezjail_safename}_mount_enable=\"${ezjail_mount_enable}\"
-    echo export jail_${ezjail_safename}_devfs_enable=\"${ezjail_devfs_enable}\"
-    echo export jail_${ezjail_safename}_devfs_ruleset=\"${ezjail_devfs_ruleset}\"
-    echo export jail_${ezjail_safename}_procfs_enable=\"${ezjail_procfs_enable}\"
-    echo export jail_${ezjail_safename}_fdescfs_enable=\"${ezjail_fdescfs_enable}\"
-    echo export jail_${ezjail_safename}_image=\"${ezjail_image}\"
-    echo export jail_${ezjail_safename}_imagetype=\"${ezjail_imagetype}\"
-    echo export jail_${ezjail_safename}_attachparams=\"${ezjail_attachparams}\"
-    echo export jail_${ezjail_safename}_attachblocking=\"${ezjail_attachblocking}\"
-    echo export jail_${ezjail_safename}_forceblocking=\"${ezjail_forceblocking}\"
-    echo export jail_${ezjail_safename}_zfs_datasets=\"${ezjail_zfs_datasets}\"
-    echo export jail_${ezjail_safename}_cpuset=\"${ezjail_cpuset}\"
-    echo export jail_${ezjail_safename}_fib=\"${ezjail_new_fib}\"
-    ) > "${ezjail_config}_"
-    mv "${ezjail_config}_" "${ezjail_config}"
-
+    writejailinfo "${ezjail_tmpconfig}" "${ezjail_old_config}"
+    mv "${ezjail_tmpconfig}" "${ezjail_config}"
+    [ "${ezjail_config}" != "${ezjail_old_config}" ] && rm -f "${ezjail_old_config}"
   fi
 
   case "${ezjail_setrunnable}" in
     run)   [ "${ezjail_config}" = "${ezjail_config%.norun}" ] || mv "${ezjail_config}" "${ezjail_config%.norun}";;
-    norun) [ "${ezjail_config}" = "${ezjail_config%.norun}" ] && mv "${ezjail_config}" "${ezjail_config}.norun" ;;
+    norun) [ "${ezjail_config}" = "${ezjail_config%.norun}" ] && mv "${ezjail_config}" "${ezjail_config}.norun";;
   esac
 
   [ "${ezjail_imageaction}" -a -z "${ezjail_image}" ] && exerr "Error: Jail ${ezjail_name} not an image jail."
