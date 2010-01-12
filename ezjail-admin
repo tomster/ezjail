@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.233 2010/01/11 17:04:44 erdgeist Exp $
+# $Id: ezjail-admin,v 1.234 2010/01/12 12:55:01 cryx Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -384,7 +384,8 @@ check_for_zpool () {
   # check for the ZFS zpool to be online
   check_for_zfs
   _zpoolstatus=`/sbin/zpool list -H -o health ${ezjail_jailzfs%%/*} 2> /dev/null`
-  [ "${_zpoolstatus}" = "ONLINE" ] || exerr "Error: Your zpool does not exist or is not online."
+  [ "${_zpoolstatus}" = "DEGRADED" ] && echo "Warning: Your zpool is in a DEGRADED state."
+  [ "${_zpoolstatus}" = "ONLINE" -o "${_zpoolstatus}" = "DEGRADED" ] || exerr "Error: Your zpool does not exist or is not online."
 }
 
 #############################
