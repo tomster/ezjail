@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.234 2010/01/12 12:55:01 cryx Exp $
+# $Id: ezjail-admin,v 1.235 2010/01/14 02:11:02 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -268,15 +268,15 @@ ezjail_splitworld() {
   fi
 
   # If the default flavour example has not yet been copied, do it now
-  [ -d "${ezjail_flavours}/default" ] || mkdir -p "${ezjail_flavours}" && cp -p -R "${ezjail_examples}/default" "${ezjail_flavours}"
+  [ -d "${ezjail_flavours}/example" ] || mkdir -p "${ezjail_flavours}" && cp -p -R "${ezjail_examples}/example" "${ezjail_flavours}"
 
   # no /usr/ports? link to /basejail/usr/ports
   [ -e "${ezjail_jailtemplate}/usr/ports" ] || ln -s /basejail/usr/ports "${ezjail_jailtemplate}/usr/ports"
 
   # A ports collection inside jails is hardly useful w/o an appropriate
   # /etc/make.conf.
-  if [ -f "${ezjail_examples}/default/etc/make.conf" -a ! -f "${ezjail_jailtemplate}/etc/make.conf" ]; then
-    cp -p "${ezjail_examples}/default/etc/make.conf" "${ezjail_jailtemplate}/etc/"
+  if [ -f "${ezjail_examples}/example/etc/make.conf" -a ! -f "${ezjail_jailtemplate}/etc/make.conf" ]; then
+    cp -p "${ezjail_examples}/example/etc/make.conf" "${ezjail_jailtemplate}/etc/"
     echo "Note: a non-standard /etc/make.conf was copied to the template jail in order to get the ports collection running inside jails."
   fi
 
@@ -479,6 +479,9 @@ create)
     ezjail_softlink=${ezjail_jaildir}/`basename -- "${ezjail_rootdir}"`
     [ -e "${ezjail_softlink}" ] && ezjail_softlink=`mktemp -u "${ezjail_softlink}.XXXXXX"`
   fi
+
+  # if no flavour specified on command line, use default flavour
+  : ${ezjail_flavour=${ezjail_default_flavour}}
 
   # do some sanity checks on the selected flavour (if any)
   [ "${ezjail_flavour}" -a ! -d "${ezjail_flavours}/${ezjail_flavour}" ] && exerr "Error: Flavour config directory ${ezjail_flavours}/${ezjail_flavour} not found.\n  Refer to ${ezjail_admin}s man page for details on flavours."

@@ -17,4 +17,4 @@ install:
 	sed s:EZJAIL_PREFIX:${PREFIX}: man5/ezjail.5 > ${PREFIX}/man/man5/ezjail.5
 	chmod 755 ${PREFIX}/etc/rc.d/ezjail.sh ${PREFIX}/bin/ezjail-admin
 	chown -R root:wheel ${PREFIX}/man/man1/ezjail-admin.1 ${PREFIX}/man/man5/ezjail.conf.5 ${PREFIX}/man/man5/ezjail.5 ${PREFIX}/share/examples/ezjail/
-	chmod 0440 ${PREFIX}/share/examples/ezjail/default/usr/local/etc/sudoers
+	chmod 0440 ${PREFIX}/share/examples/ezjail/example/usr/local/etc/sudoers
