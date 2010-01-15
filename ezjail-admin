@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.237 2010/01/15 13:38:23 cryx Exp $
+# $Id: ezjail-admin,v 1.238 2010/01/15 13:59:38 cryx Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -1242,7 +1242,7 @@ config)
       # we might end up at an existing directory
       [ -e "${ezjail_rootdir}" ] && exerr "Error: An object already exists at ${ezjail_rootdir}, cant rename."
 
-      mv "${ezjail_old_rootdir}" "${ezjail_rootdir}"
+      [ "${ezjail_imagetype}" = "zfs" ] || mv "${ezjail_old_rootdir}" "${ezjail_rootdir}"
     fi
 
     # This scenario really will only lead to real troubles in the 'fulljail'
