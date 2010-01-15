@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.236 2010/01/15 12:59:44 cryx Exp $
+# $Id: ezjail-admin,v 1.237 2010/01/15 13:38:23 cryx Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -388,6 +388,14 @@ check_for_zpool () {
   [ "${_zpoolstatus}" = "ONLINE" -o "${_zpoolstatus}" = "DEGRADED" ] || exerr "Error: Your zpool does not exist or is not online."
 }
 
+check_for_zfs_exist () {
+  # check if the zfs we want to use already exists or not, return 0 if it does and 1 if not
+  _exit=1
+  _zfs_status=`/sbin/zfs list -H -o name ${ezjail_jailzfs}/${ezjail_hostname} 2> /dev/null`
+  [ "${_zfs_status}" = "${ezjail_jailzfs}/${ezjail_hostname}" ] && _exit=0
+  return ${_exit}
+}
+
 #############################
 # End of function definitions
 #
@@ -561,13 +569,17 @@ create)
     simple)
       ezjail_device=${ezjail_imagedevice}
       ;;
-    zfs) 
-      echo "ZFS: create the jail filesystem"
-      if [ ${ezjail_imagesize} ]; then
-        ezjail_zfs_jail_properies="-o quota=${ezjail_imagesize} -o compression=lzjb"
+    zfs)
+      if [ -z "${ezjail_exists}" ]; then
+        echo "ZFS: create the jail filesystem"
+        if [ ${ezjail_imagesize} ]; then
+          ezjail_zfs_jail_properies="-o quota=${ezjail_imagesize} -o compression=lzjb"
+        fi
+        [ -d "${ezjail_jaildir}/${ezjail_hostname}" ] && exerr "Error: Could not create jail root mount point ${ezjail_rootdir}"
+        /sbin/zfs create -p -o mountpoint=${ezjail_rootdir} ${ezjail_zfs_jail_properies} ${ezjail_jailzfs}/${ezjail_hostname}
+      else
+        check_for_zfs_exist || exerr "Error: The existing destination is not a ZFS filesystem."
       fi
-      [ -d "${ezjail_jaildir}/${ezjail_hostname}" ] && exerr "Error: Could not create jail root mount point ${ezjail_rootdir}"
-      /sbin/zfs create -p -o mountpoint=${ezjail_rootdir} ${ezjail_zfs_jail_properies} ${ezjail_jailzfs}/${ezjail_hostname}
       ;;
 
     esac
