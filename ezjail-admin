@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.238 2010/01/15 13:59:38 cryx Exp $
+# $Id: ezjail-admin,v 1.239 2010/01/15 14:23:10 cryx Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -1267,7 +1267,7 @@ config)
     fi
 
     # rename the filesystem, remounting is done by ZFS
-    [ "${ezjail_imagetype}" = "zfs" ] && zfs rename ${ezjail_jailzfs}/${ezjail_old_hostname} ${ezjail_jailzfs}/${ezjail_hostname}
+    [ "${ezjail_imagetype}" = "zfs" ] && /sbin/zfs rename ${ezjail_jailzfs}/${ezjail_old_hostname} ${ezjail_jailzfs}/${ezjail_hostname} && /sbin/zfs set mountpoint=${ezjail_rootdir} ${ezjail_jailzfs}/${ezjail_hostname} && rmdir ${ezjail_old_rootdir}
 
     # rename fstab
     rm -f "/etc/fstab.${ezjail_old_safename}"
