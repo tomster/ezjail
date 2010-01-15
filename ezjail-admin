@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.241 2010/01/15 15:06:24 cryx Exp $
+# $Id: ezjail-admin,v 1.242 2010/01/15 15:15:27 cryx Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -1172,7 +1172,7 @@ restore)
     # Setup the ezjail_imagedata.
     [ "${ezjail_imagetype}" ] && ezjail_imagedata="-c ${ezjail_imagetype} -C '${ezjail_attachparams}'"
     # Only use the imagesize if we really have one, ZFS imagejails don't necessarily have a size.
-    [ "${ezjail_imagetype}" -a ${ezjail_nameprop_imgagesize} ] && ezjail_imagedata="-c ${ezjail_imagetype} -C '${ezjail_attachparams}' -s ${ezjail_nameprop_imgagesize}"
+    [ "${ezjail_imagetype}" -a "${ezjail_nameprop_imgagesize}" ] && ezjail_imagedata="-c ${ezjail_imagetype} -C '${ezjail_attachparams}' -s ${ezjail_nameprop_imgagesize}"
     $0 create -a "${ezjail_fromarchive}" -A "${ezjail_config}" ${ezjail_imagedata} -r "${ezjail_rootdir}" "${ezjail_hostname}" "${ezjail_ips}" || exerr "Error: Create failed."
     rm -f "${ezjail_config}"
 
