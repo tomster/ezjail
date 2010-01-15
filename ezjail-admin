@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.235 2010/01/14 02:11:02 erdgeist Exp $
+# $Id: ezjail-admin,v 1.236 2010/01/15 12:59:44 cryx Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -1025,7 +1025,7 @@ archive)
     fi
 
     # Attach non-attached jails, if they can be attached non blocking
-    if [ "${ezjail_imagetype}" -a -z "${ezjail_attached}" ]; then
+    if [ "${ezjail_imagetype}" -a "${ezjail_imagetype}" != "zfs" -a -z "${ezjail_attached}" ]; then
       if [ "${ezjail_attachblocking}" ]; then
         echo "Warning: Jail ${ezjail_name} is an image jail and can not be attached automatically."
         echo "         Use '${ezjail_admin} config -i attach ${ezjail_name}' to attach it first."
