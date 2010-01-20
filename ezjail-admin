@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.242 2010/01/15 15:15:27 cryx Exp $
+# $Id: ezjail-admin,v 1.243 2010/01/20 15:57:27 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -76,7 +76,7 @@ attach_images () {
     ;;
   eli)
     echo "Attaching eli device for image jail ${ezjail}..."
-    echo geli attach ${ezjail_attachparams} "/dev/${ezjail_imagedevice}" | /bin/sh 
+    echo geli attach ${ezjail_attachparams} "/dev/${ezjail_imagedevice}" | /bin/sh
     [ $? -eq 0 ] || detach_images keep || exerr "Error: Attaching eli device failed."
     # Device to mount is not md anymore
     ezjail_device="${ezjail_imagedevice}.eli"
@@ -273,13 +273,6 @@ ezjail_splitworld() {
   # no /usr/ports? link to /basejail/usr/ports
   [ -e "${ezjail_jailtemplate}/usr/ports" ] || ln -s /basejail/usr/ports "${ezjail_jailtemplate}/usr/ports"
 
-  # A ports collection inside jails is hardly useful w/o an appropriate
-  # /etc/make.conf.
-  if [ -f "${ezjail_examples}/example/etc/make.conf" -a ! -f "${ezjail_jailtemplate}/etc/make.conf" ]; then
-    cp -p "${ezjail_examples}/example/etc/make.conf" "${ezjail_jailtemplate}/etc/"
-    echo "Note: a non-standard /etc/make.conf was copied to the template jail in order to get the ports collection running inside jails."
-  fi
-
   # The ugly perl hack[tm]. Note: we wont do such things for any given
   # port :(
   [ "${ezjail_uglyperlhack}" -a ! -L "${ezjail_jailbase}/usr/bin/perl" ] && ln -s /usr/local/bin/perl "${ezjail_jailbase}/usr/bin/perl"
@@ -327,7 +320,7 @@ ezjail_queryftpserver () {
 
 # Make a path absolute, if it isn't already
 ezjail_makeabsolute ( ) {
-  eval [ \"\${$1%%[!/]*}\" -o "\${$1}" = "-" ] && return
+  eval [ \"\${$1%%[!/]*}\" -o \"\${$1}\" = \"-\" ] && return
   [ "${2%%[!/]*}" ] && path=${2} || path=`pwd -P`/${2}
   eval export ${1}="${path}/\${$1}"
 }
@@ -1090,7 +1083,7 @@ archive)
     [ "${ezjail_imagesize}" ] && detach_images keep
 
     # An error on a jail not running is bad
-    [ ${ezjail_paxresult} -eq 0 -o "${ezjail_force}" ] || exerr "Error: Archiving jail failed.\n  You might want to check and remove ${ezjail_archive}."
+    [ ${ezjail_paxresult} -eq 0 -o "${ezjail_force}" ] || echo "Warning: Archiving jail ${ezjail_name} was not completely successful.\n  Please refer to the output above for problems the archiving tool encountered.\n  You may ignore reports concerning setting access and modification times.\n  You might want to check and remove ${ezjail_archive}."
 
     # When archiving a running jail, some errors might occur
     [ ${ezjail_paxresult} -eq 0 ] || echo "Warning: Archiving jail ${ezjail_name} was not completely successful. For a running jail this is not unusual."
