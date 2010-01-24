@@ -1,0 +1,10 @@
+#!/bin/sh
+#
+# BEFORE: DAEMON
+#
+# ezjail flavour example
+
+# install nullmailer port
+cd /usr/ports/mail/nullmailer
+yes | make install
+hostname > /usr/local/etc/nullmailer/me
