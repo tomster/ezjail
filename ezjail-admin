@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.244 2010/01/24 18:33:09 cryx Exp $
+# $Id: ezjail-admin,v 1.245 2010/02/05 11:27:28 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -758,7 +758,7 @@ list)
     [ "${ezjail_safename}" != "${ezjail}" ] && ezjail_state="${ezjail_state}N"
 
     TIFS=${IFS}; IFS=,; unset _multiline
-    for ezjail_ip in ${ezjail_ips}; do
+    for ezjail_ip in ${ezjail_ips:="-"}; do
       if [ -z "${_multiline}" ]; then
         printf "%-3s %-4s %-15s %-30s %s\\n" "${ezjail_state}" "${ezjail_id:-N/A}" "${ezjail_ip}" "${ezjail_hostname}" "${ezjail_rootdir}"
         _multiline=yes
