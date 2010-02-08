@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.247 2010/02/08 04:03:47 erdgeist Exp $
+# $Id: ezjail-admin,v 1.248 2010/02/08 05:05:04 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -128,7 +128,7 @@ detach_images () {
 # Find and execute our rc script
 start_stop_jail_by_script () {
   ezjail_action=$1
-  [ "${ezjail_action}" = "start" ] && ezjail_success_check="-n" || ezjail_success_check="-z"
+  [ "${ezjail_action}" = "onestart" ] && ezjail_success_check="-n" || ezjail_success_check="-z"
 
   # Try to locate and run ezjails rc.d script
   if [ -x "${ezjail_prefix}/etc/rc.d/ezjail" ]; then
@@ -399,7 +399,7 @@ check_for_zfs_exist () {
 
 #############################
 # End of function definitions
-# "
+#
 
 # check for command
 [ $# -gt 0 ] || exerr ${ezjail_usage_ezjailadmin}
@@ -494,7 +494,7 @@ create)
 
   # do some sanity checks on the selected flavour (if any)
   for ezjail_flavour in ${ezjail_flavours}; do
-    [-d "${ezjail_flavours_dir}/${ezjail_flavour}" ] || exerr "Error: Flavour config directory ${ezjail_flavours_dir}/${ezjail_flavour} not found.\n  Refer to ${ezjail_admin}s man page for details on flavours."
+    [ -d "${ezjail_flavours_dir}/${ezjail_flavour}" ] || exerr "Error: Flavour config directory ${ezjail_flavours_dir}/${ezjail_flavour} not found.\n  Refer to ${ezjail_admin}s man page for details on flavours."
   done
 
   # check for restore circumstances, normally this is invoked by the restore command
@@ -640,7 +640,7 @@ create)
 
   # Final steps for flavour installation
   if [ -z "${ezjail_exists}" ]; then
-    _installed_flavours=0
+    installed_flavours=0
     for ezjail_flavour in ${ezjail_flavours}; do
       # install files and config to new jail
       cd "${ezjail_flavours_dir}/${ezjail_flavour}" && find . | cpio -p -u -v "${ezjail_rootdir}" > /dev/null
@@ -652,20 +652,20 @@ create)
       # If a config is found, make it auto run on jails startup
       if [ -f "${ezjail_rootdir}/ezjail.flavour" ]; then
         chmod 0755 "${ezjail_rootdir}/ezjail.flavour"
-        mv "${ezjail_rootdir}/ezjail.flavour" "${ezjail_rootdir}/ezjail.flavour".`printf %04d ${_installed_flavours}`
+        mv "${ezjail_rootdir}/ezjail.flavour" "${ezjail_rootdir}/ezjail.flavour".`printf %04d $(( installed_flavours+=1 ))`
         echo "Note: Shell scripts for flavour ${ezjail_flavour} installed, flavourizing on jails first startup."
       fi
 
-      echo << "EOF"
+      cat > "${ezjail_rootdir}/etc/rc.d/ezjail-config" <<"EOF"
 #!/bin/sh
 #
 # BEFORE: DAEMON
 # PROVIDES: ezjail-config
 #
 case "$1" in
-  start)
+  *start)
     rm -f "${0}"
-    for ezjail_flavour in /ezjail.flavour*; do
+    for ezjail_flavour in /ezjail.flavour.*; do
       [ -x "${ezjail_flavour}" ] && "${ezjail_flavour}"
       rm -f "${ezjail_flavour}"
     done
@@ -673,9 +673,8 @@ case "$1" in
   *)
   ;;
 esac
-
 EOF
-    > "${ezjail_rootdir}/etc/rc.d/ezjail-config"
+    chmod 0755 "${ezjail_rootdir}/etc/rc.d/ezjail-config"
     done
   fi
 
@@ -735,7 +734,7 @@ delete)
     [ "${ezjail_forcestop}" ] || exerr "Error: Jail appears to be still running.\n  '${ezjail_admin} stop ${ezjail_name}' it first or use '${ezjail_admin} delete -f ${ezjail_name}' to force stop."
 
     # This one will also exerr on failure
-    start_stop_jail_by_script stop
+    start_stop_jail_by_script onestop
   fi
 
   if [ "${ezjail_attached}" ]; then
@@ -1002,7 +1001,7 @@ console)
     [ "$ezjail_forcestart}" ] || exerr "Error: Jail ${ezjail_name} appears not to be running\n  Start it first, or use '${ezjail_admin} console -f ${ezjail_name}' to force start."
 
     # This one will also exerr on failure
-    start_stop_jail_by_script start
+    start_stop_jail_by_script onestart
   fi
 
   # use the jails FIB if there is one
