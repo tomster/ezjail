@@ -7,7 +7,7 @@ ezjail-admin \- Administrate ezjail
 
 .T
 .B ezjail-admin create
-[-f flavour] [-r jailroot] [-s imagesize] [-ibx] [-c bde|eli|zfs] [-C attachargs] [-a archive]\fI hostname jailip
+[-f flavours] [-r jailroot] [-s imagesize] [-ibx] [-c bde|eli|zfs] [-C attachargs] [-a archive]\fI hostname jailip
 
 .T
 .B ezjail-admin console\fR [-f] [-e command]\fI jailname
@@ -108,10 +108,13 @@ This is useful in situations where you just want to alter some of a
 jail's properties and called ezjail-admin delete without the -w option
 before. However, sanity checks are performed.
 
-Using the -f \fIflavour\fR option you can apply an ezjail \fBFLAVOUR\fR
-to your ezjail (e.g. preinstall packages, add users, configure rc).
-\fIflavour\fR is a directory tree under ezjail's root dir (default:
-\fI/usr/jails/flavours\fR). See \fBFLAVOURS\fR below for more details.
+Using the -f \fIflavour\fR option you can specify one or multiple space
+separated ezjail \fBFLAVOUR\fRs to be installed in your ezjail (e.g.
+preinstall packages, add users, configure rc). \fIflavours\fR points to
+one or more directory trees under ezjail's root dir (default:
+\fI/usr/jails/flavours\fR). If no flavours are passed, the global
+ezjail_default_flavour (default: \fI""\fR) is used. See \fBFLAVOURS\fR below
+for more details.
 
 Options for newly created jails are read from \fBezjail.conf\fR; refer to
 ezjail.conf(5) for more information.
@@ -226,9 +229,9 @@ A sample flavour config directory resides under
 initialization actions are demonstrated, and you are encouraged to use it as
 a template for your flavours.
 
-If a flavour is selected on jail creation, the flavour root is
-copied to the new jail's root, mostly containing an \fI/ezjail.flavour\fR.
-When the jail starts up for the first time, this script is run and deleted.
+If flavours are selected on jail creation, their root directories are
+copied to the new jail's root, each containing an \fI/ezjail.flavour\fR.
+When the jail starts up for the first time, these scripts are run and deleted.
 
 In its default form it will create some groups and users, change the
 ownership of some files and install all packages residing under /pkg.
