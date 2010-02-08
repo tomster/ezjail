@@ -10,6 +10,7 @@ install:
 	mkdir -p ${PREFIX}/etc/ezjail/ ${PREFIX}/man/man1/ ${PREFIX}/man/man5/ ${PREFIX}/etc/rc.d/ ${PREFIX}/bin/ ${PREFIX}/share/examples/ezjail
 	cp -p ezjail.conf.sample ${PREFIX}/etc/
 	cp -R -p examples/example ${PREFIX}/share/examples/ezjail/
+	cp -R -p examples/nullmailer-example ${PREFIX}/share/examples/ezjail/
 	sed s:EZJAIL_PREFIX:${PREFIX}: ezjail.sh > ${PREFIX}/etc/rc.d/ezjail.sh
 	sed s:EZJAIL_PREFIX:${PREFIX}: ezjail-admin > ${PREFIX}/bin/ezjail-admin
 	sed s:EZJAIL_PREFIX:${PREFIX}: man1/ezjail-admin.1 > ${PREFIX}/man/man1/ezjail-admin.1
