@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.245 2010/02/05 11:27:28 erdgeist Exp $
+# $Id: ezjail-admin,v 1.246 2010/02/08 03:22:37 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -273,6 +273,13 @@ ezjail_splitworld() {
 
   # no /usr/ports? link to /basejail/usr/ports
   [ -e "${ezjail_jailtemplate}/usr/ports" ] || ln -s /basejail/usr/ports "${ezjail_jailtemplate}/usr/ports"
+
+  # A ports collection inside jails is hardly useful w/o an appropriate
+  # /etc/make.conf.
+  if [ -f "${ezjail_examples}/example/etc/make.conf" -a ! -f "${ezjail_jailtemplate}/etc/make.conf" ]; then
+    cp -p "${ezjail_examples}/example/etc/make.conf" "${ezjail_jailtemplate}/etc/"
+    echo "Note: a non-standard /etc/make.conf was copied to the template jail in order to get the ports collection running inside jails."
+  fi
 
   # The ugly perl hack[tm]. Note: we wont do such things for any given
   # port :(
