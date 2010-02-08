@@ -4,13 +4,6 @@
 #
 # ezjail flavour example
 
-# Hide
-#######
-#
-# Prevent this script from being called over and over if something fails.
-
-rm -f /etc/rc.d/ezjail-config /ezjail.flavour
-
 # Groups
 #########
 #
