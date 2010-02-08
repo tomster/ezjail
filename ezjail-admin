@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.246 2010/02/08 03:22:37 erdgeist Exp $
+# $Id: ezjail-admin,v 1.247 2010/02/08 04:03:47 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -18,7 +18,7 @@ ezjail_jailcfgs="${ezjail_etc}/ezjail"
 : ${ezjail_jailbase="${ezjail_jaildir}/basejail"}
 : ${ezjail_jailfull="${ezjail_jaildir}/fulljail"}
 : ${ezjail_jailtemp="${ezjail_jaildir}/ezjailtemp"}
-: ${ezjail_flavours="${ezjail_jaildir}/flavours"}
+: ${ezjail_flavours_dir="${ezjail_jaildir}/flavours"}
 : ${ezjail_portscvsroot="freebsdanoncvs@anoncvs.FreeBSD.org:/home/ncvs"}
 : ${ezjail_sourcetree="/usr/src"}
 : ${ezjail_uglyperlhack="YES"}
@@ -269,7 +269,7 @@ ezjail_splitworld() {
   fi
 
   # If the default flavour example has not yet been copied, do it now
-  [ -d "${ezjail_flavours}/example" ] || mkdir -p "${ezjail_flavours}" && cp -p -R "${ezjail_examples}/example" "${ezjail_flavours}"
+  [ -d "${ezjail_flavours_dir}/example" ] || mkdir -p "${ezjail_flavours_dir}" && cp -p -R "${ezjail_examples}/example" "${ezjail_flavours_dir}"
 
   # no /usr/ports? link to /basejail/usr/ports
   [ -e "${ezjail_jailtemplate}/usr/ports" ] || ln -s /basejail/usr/ports "${ezjail_jailtemplate}/usr/ports"
@@ -399,7 +399,7 @@ check_for_zfs_exist () {
 
 #############################
 # End of function definitions
-#
+# "
 
 # check for command
 [ $# -gt 0 ] || exerr ${ezjail_usage_ezjailadmin}
@@ -408,11 +408,11 @@ case "$1" in
 ######################## ezjail-admin CREATE ########################
 create)
   # Clean variables, prevent polution
-  unset ezjail_rootdir ezjail_flavour ezjail_softlink ezjail_image ezjail_imagetype ezjail_imageparams ezjail_imagesize ezjail_device ezjail_devicelink ezjail_config ezjail_attachparams ezjail_exists ezjail_attachblocking ezjail_forceblocking ezjail_sourcedevice ezjail_rootdirempty ezjail_fromarchive ezjail_fromarchive_config
+  unset ezjail_rootdir ezjail_flavours ezjail_softlink ezjail_image ezjail_imagetype ezjail_imageparams ezjail_imagesize ezjail_device ezjail_devicelink ezjail_config ezjail_attachparams ezjail_exists ezjail_attachblocking ezjail_forceblocking ezjail_sourcedevice ezjail_rootdirempty ezjail_fromarchive ezjail_fromarchive_config
   shift; while getopts :f:r:s:xbic:C:a:A: arg; do case ${arg} in
     x) ezjail_exists="YES";;
     r) ezjail_rootdir=${OPTARG};;
-    f) ezjail_flavour=${OPTARG};;
+    f) ezjail_flavours=${OPTARG};;
     a) ezjail_fromarchive=${OPTARG};;
     A) ezjail_fromarchive_config=${OPTARG};;
     c) ezjail_imagetype=${OPTARG};;
@@ -490,10 +490,12 @@ create)
   fi
 
   # if no flavour specified on command line, use default flavour
-  : ${ezjail_flavour=${ezjail_default_flavour}}
+  : ${ezjail_flavours=${ezjail_default_flavour}}
 
   # do some sanity checks on the selected flavour (if any)
-  [ "${ezjail_flavour}" -a ! -d "${ezjail_flavours}/${ezjail_flavour}" ] && exerr "Error: Flavour config directory ${ezjail_flavours}/${ezjail_flavour} not found.\n  Refer to ${ezjail_admin}s man page for details on flavours."
+  for ezjail_flavour in ${ezjail_flavours}; do
+    [-d "${ezjail_flavours_dir}/${ezjail_flavour}" ] || exerr "Error: Flavour config directory ${ezjail_flavours_dir}/${ezjail_flavour} not found.\n  Refer to ${ezjail_admin}s man page for details on flavours."
+  done
 
   # check for restore circumstances, normally this is invoked by the restore command
   [ "${ezjail_fromarchive}" -a "${ezjail_exists}" ] && exerr "Error: You can not restore an archive over an existing jail.\n  '${ezjail_admin} delete -w ${ezjail_name}' the old version first."
@@ -637,20 +639,44 @@ create)
   writejailinfo "${ezjail_config}" "${ezjail_fromarchive_config}"
 
   # Final steps for flavour installation
-  if [ -z "${ezjail_exists}" -a "${ezjail_flavour}" ]; then
-    # install files and config to new jail
-    cd "${ezjail_flavours}/${ezjail_flavour}" && find . | cpio -p -u -v "${ezjail_rootdir}" > /dev/null
-    [ $? -eq 0 ] || echo "Warning: Could not fully install flavour."
+  if [ -z "${ezjail_exists}" ]; then
+    _installed_flavours=0
+    for ezjail_flavour in ${ezjail_flavours}; do
+      # install files and config to new jail
+      cd "${ezjail_flavours_dir}/${ezjail_flavour}" && find . | cpio -p -u -v "${ezjail_rootdir}" > /dev/null
+      [ $? -eq 0 ] || echo "Warning: Could not fully install flavour ${ezjail_flavour}."
 
-    # if the packages are links and not files we have to copy them now
-    find "${ezjail_rootdir}/pkg/" -type l -exec cp -r -f {} {}.ezjail \; -exec mv {}.ezjail {} \;
+      # if the packages are links and not files we have to copy them now
+      find "${ezjail_rootdir}/pkg/" -type l -exec cp -r -f {} {}.ezjail \; -exec mv {}.ezjail {} \;
 
-    # If a config is found, make it auto run on jails startup
-    if [ -f "${ezjail_rootdir}/ezjail.flavour" ]; then
-      ln -s /ezjail.flavour "${ezjail_rootdir}/etc/rc.d/ezjail-config"
-      chmod 0700 "${ezjail_rootdir}/ezjail.flavour"
-      echo "Note: Shell scripts installed, flavourizing on jails first startup."
-    fi
+      # If a config is found, make it auto run on jails startup
+      if [ -f "${ezjail_rootdir}/ezjail.flavour" ]; then
+        chmod 0755 "${ezjail_rootdir}/ezjail.flavour"
+        mv "${ezjail_rootdir}/ezjail.flavour" "${ezjail_rootdir}/ezjail.flavour".`printf %04d ${_installed_flavours}`
+        echo "Note: Shell scripts for flavour ${ezjail_flavour} installed, flavourizing on jails first startup."
+      fi
+
+      echo << "EOF"
+#!/bin/sh
+#
+# BEFORE: DAEMON
+# PROVIDES: ezjail-config
+#
+case "$1" in
+  start)
+    rm -f "${0}"
+    for ezjail_flavour in /ezjail.flavour*; do
+      [ -x "${ezjail_flavour}" ] && "${ezjail_flavour}"
+      rm -f "${ezjail_flavour}"
+    done
+  ;;
+  *)
+  ;;
+esac
+
+EOF
+    > "${ezjail_rootdir}/etc/rc.d/ezjail-config"
+    done
   fi
 
   # Detach (crypto and) memory discs
