@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.248 2010/02/08 05:05:04 erdgeist Exp $
+# $Id: ezjail-admin,v 1.249 2010/02/11 17:32:25 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -399,7 +399,7 @@ check_for_zfs_exist () {
 
 #############################
 # End of function definitions
-#
+# "
 
 # check for command
 [ $# -gt 0 ] || exerr ${ezjail_usage_ezjailadmin}
@@ -778,7 +778,7 @@ list)
   [ -d "${ezjail_prefix}/etc/ezjail/" ] && cd "${ezjail_prefix}/etc/ezjail/" && ezjail_list=`ls | xargs rcorder`
 
   printf "%-3s %-4s %-15s %-30s %s\\n" STA JID IP Hostname "Root Directory"
-  echo   "--- ---- --------------- ------------------------------ -------------------------"
+  echo   "--- ---- --------------- ------------------------------ ------------------------"
   for ezjail in ${ezjail_list}; do
     fetchjailinfo ${ezjail%.norun}
     case ${ezjail_imagetype} in simple) ezjail_state="I";; bde) ezjail_state="B";; eli) ezjail_state="E";; *) ezjail_state="D";; esac
