@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.249 2010/02/11 17:32:25 erdgeist Exp $
+# $Id: ezjail-admin,v 1.250 2010/02/14 23:34:37 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -29,6 +29,7 @@ ezjail_jailcfgs="${ezjail_etc}/ezjail"
 : ${ezjail_devfs_ruleset="devfsrules_jail"}
 : ${ezjail_procfs_enable="YES"}
 : ${ezjail_fdescfs_enable="YES"}
+: ${ezjail_exec_start="/bin/sh /etc/rc"}
 
 : ${ezjail_use_zfs="NO"}
 : ${ezjail_jailzfs=""}
@@ -160,10 +161,11 @@ writejailinfo () {
   echo export jail_${ezjail_safename}_hostname=\"${ezjail_hostname}\"
   echo export jail_${ezjail_safename}_ip=\"${ezjail_ips}\"
   echo export jail_${ezjail_safename}_rootdir=\"${ezjail_rootdir}\"
-  echo export jail_${ezjail_safename}_exec=\"/bin/sh /etc/rc\"
+  echo export jail_${ezjail_safename}_exec_start=\"${ezjail_exec_start}\"
+  echo export jail_${ezjail_safename}_exec_stop=\"${ezjail_exec_stop}\"
   echo export jail_${ezjail_safename}_mount_enable=\"${ezjail_mount_enable}\"
   echo export jail_${ezjail_safename}_devfs_enable=\"${ezjail_devfs_enable}\"
-  echo export jail_${ezjail_safename}_devfs_ruleset=\"devfsrules_jail\"
+  echo export jail_${ezjail_safename}_devfs_ruleset=\"${ezjail_devfs_ruleset}\"
   echo export jail_${ezjail_safename}_procfs_enable=\"${ezjail_procfs_enable}\"
   echo export jail_${ezjail_safename}_fdescfs_enable=\"${ezjail_fdescfs_enable}\"
   echo export jail_${ezjail_safename}_image=\"${ezjail_image}\"
@@ -184,7 +186,7 @@ fetchjailinfo () {
   ezjail_name=$1
 
   # Clean variables, prevent polution
-  unset ezjail_config ezjail_running ezjail_hostname ezjail_rootdir ezjail_image ezjail_imagetype ezjail_imagedevice ezjail_devicelink ezjail_ips ezjail_id ezjail_attached ezjail_device ezjail_device_geom
+  unset ezjail_config ezjail_running ezjail_hostname ezjail_rootdir ezjail_image ezjail_imagetype ezjail_imagedevice ezjail_devicelink ezjail_ips ezjail_id ezjail_attached ezjail_device ezjail_device_geom ezjail_exec_start ezjail_exec_stop ezjail_mount_enable ezjail_devfs_enable ezjail_devfs_ruleset ezjail_procfs_enable ezjail_fdescfs_enable
 
   ezjail_safename=`echo -n "${ezjail_name}" | tr -c '[:alnum:]' _`
 
@@ -198,8 +200,21 @@ fetchjailinfo () {
 
   . "${ezjail_config}"
   eval ezjail_hostname=\"\$jail_${ezjail_safename}_hostname\"
-  eval ezjail_rootdir=\"\$jail_${ezjail_safename}_rootdir\"
   eval ezjail_ips=\"\$jail_${ezjail_safename}_ip\"
+  eval ezjail_rootdir=\"\$jail_${ezjail_safename}_rootdir\"
+
+  eval ezjail_exec_start=\"\$jail_${ezjail_safename}_exec_start\"
+  eval ezjail_exec_stop=\"\$jail_${ezjail_safename}_exec_stop\"
+  # fix backward compatibility issue
+  eval ezjail_exec=\"\$jail_${ezjail_safename}_exec\"
+  [ "${ezjail_exec}" -a -z "${ezjail_exec_start}" ] ezjail_exec_start=${ezjail_exec}
+
+  eval ezjail_mount_enable=\"\$jail_${ezjail_safename}_mount_enable\"
+  eval ezjail_devfs_enable=\"\$jail_${ezjail_safename}_devfs_enable\"
+  eval ezjail_devfs_ruleset=\"\$jail_${ezjail_safename}_devfs_ruleset\"
+  eval ezjail_procfs_enable=\"\$jail_${ezjail_safename}_procfs_enable\"
+  eval ezjail_fdescfs_enable=\"\$jail_${ezjail_safename}_fdescfs_enable\"
+
   eval ezjail_image=\"\$jail_${ezjail_safename}_image\"
   eval ezjail_imagetype=\"\$jail_${ezjail_safename}_imagetype\"
   eval ezjail_attachparams=\"\$jail_${ezjail_safename}_attachparams\"
