@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.250 2010/02/14 23:34:37 erdgeist Exp $
+# $Id: ezjail-admin,v 1.251 2010/02/16 22:19:49 cryx Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -679,7 +679,7 @@ create)
 #
 case "$1" in
   *start)
-    rm -f "${0}"
+    rm -f "/etc/rc.d/ezjail-config"
     for ezjail_flavour in /ezjail.flavour.*; do
       [ -x "${ezjail_flavour}" ] && "${ezjail_flavour}"
       rm -f "${ezjail_flavour}"
