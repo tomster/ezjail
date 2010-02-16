@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.56 2010/02/16 22:02:10 cryx Exp $
+# $Id: ezjail.sh,v 1.57 2010/02/16 22:03:37 cryx Exp $
 #
 # $FreeBSD$
 #
@@ -103,7 +103,7 @@ do_cmd()
   done
 
   # Pass control to jail script which does the actual work
-  [ "${ezjail_pass}" ] && sh ${ezjail_rc_jail} one${action%crypto} ${ezjail_pass}
+  [ "${ezjail_pass}" ] && sh /etc/rc.d/jail one${action%crypto} ${ezjail_pass}
 
   if [ "${action}" = "start" ]; then
     ezjail_safename=`echo -n "${ezjail}" | tr -c '[:alnum:]' _`
