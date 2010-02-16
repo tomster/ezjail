@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.251 2010/02/16 22:19:49 cryx Exp $
+# $Id: ezjail-admin,v 1.252 2010/02/16 22:33:52 cryx Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -207,7 +207,7 @@ fetchjailinfo () {
   eval ezjail_exec_stop=\"\$jail_${ezjail_safename}_exec_stop\"
   # fix backward compatibility issue
   eval ezjail_exec=\"\$jail_${ezjail_safename}_exec\"
-  [ "${ezjail_exec}" -a -z "${ezjail_exec_start}" ] ezjail_exec_start=${ezjail_exec}
+  [ "${ezjail_exec}" -a -z "${ezjail_exec_start}" ] && ezjail_exec_start=${ezjail_exec}
 
   eval ezjail_mount_enable=\"\$jail_${ezjail_safename}_mount_enable\"
   eval ezjail_devfs_enable=\"\$jail_${ezjail_safename}_devfs_enable\"
