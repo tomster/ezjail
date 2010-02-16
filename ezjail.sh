@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.55 2010/02/14 23:34:37 erdgeist Exp $
+# $Id: ezjail.sh,v 1.56 2010/02/16 22:02:10 cryx Exp $
 #
 # $FreeBSD$
 #
@@ -80,7 +80,7 @@ do_cmd()
     # Fix backward compatibility issue
     eval ezjail_exec_start=\"\$jail_${ezjail}_exec_start\"
     eval ezjail_exec=\"\$jail_${ezjail}_exec\"
-    eval jail_${ezjail}_exec_start=${ezjail_exec_start:-${ezjail_exec}}
+    eval jail_${ezjail}_exec_start=\"\${ezjail_exec_start:-${ezjail_exec}}\"
     eval unset jail_${ezjail}_exec
 
     # Do we still have a root to run in?
@@ -103,7 +103,7 @@ do_cmd()
   done
 
   # Pass control to jail script which does the actual work
-  [ "${ezjail_pass}" ] && sh /etc/rc.d/jail one${action%crypto} ${ezjail_pass}
+  [ "${ezjail_pass}" ] && sh ${ezjail_rc_jail} one${action%crypto} ${ezjail_pass}
 
   if [ "${action}" = "start" ]; then
     ezjail_safename=`echo -n "${ezjail}" | tr -c '[:alnum:]' _`
