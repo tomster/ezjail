@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail.sh,v 1.57 2010/02/16 22:03:37 cryx Exp $
+# $Id: ezjail.sh,v 1.58 2010/02/18 12:22:26 cryx Exp $
 #
 # $FreeBSD$
 #
@@ -74,8 +74,6 @@ do_cmd()
     eval ezjail_attachparams=\"\$jail_${ezjail}_attachparams\"
     eval ezjail_attachblocking=\"\$jail_${ezjail}_attachblocking\"
     eval ezjail_forceblocking=\"\$jail_${ezjail}_forceblocking\"
-    eval ezjail_zfs_datasets=\"\$jail_${ezjail}_zfs_datasets\"
-    eval ezjail_cpuset=\"\$jail_${ezjail}_cpuset\"
 
     # Fix backward compatibility issue
     eval ezjail_exec_start=\"\$jail_${ezjail}_exec_start\"
@@ -105,18 +103,24 @@ do_cmd()
   # Pass control to jail script which does the actual work
   [ "${ezjail_pass}" ] && sh /etc/rc.d/jail one${action%crypto} ${ezjail_pass}
 
+  # Configure settings that need to be done after the jail has been started
   if [ "${action}" = "start" ]; then
-    ezjail_safename=`echo -n "${ezjail}" | tr -c '[:alnum:]' _`
-    # Get the JID of the jail
-    [ -f "/var/run/jail_${ezjail_safename}.id" ] && ezjail_id=`cat /var/run/jail_${ezjail_safename}.id` || return
+    for ezjail in ${ezjail_list}; do
+      ezjail_safename=`echo -n "${ezjail}" | tr -c '[:alnum:]' _`
+      # Get the JID of the jail
+      [ -f "/var/run/jail_${ezjail_safename}.id" ] && ezjail_id=`cat /var/run/jail_${ezjail_safename}.id` || return
 
-    # Attach ZFS-datasets to the jail
-    for zfs in ${ezjail_zfs_datasets}; do
-      /sbin/zfs jail ${ezjail_id} ${zfs} || echo -n "Error: ${zfs} could not be configured"
+      eval ezjail_zfs_datasets=\"\$jail_${ezjail_safename}_zfs_datasets\"
+      eval ezjail_cpuset=\"\$jail_${ezjail_safename}_cpuset\"
+
+      # Attach ZFS-datasets to the jail
+      for zfs in ${ezjail_zfs_datasets}; do
+        /sbin/zfs jail ${ezjail_id} ${zfs} || echo -n "Error: ${zfs} could not be configured"
+      done
+
+      # Configure processor sets for the jail via cpuset(1)
+      [ -z "${ezjail_cpuset}" ] || /usr/bin/cpuset -l ${ezjail_cpuset} -j ${ezjail_id} || echo -n "Error: The defined cpuset is malformed"
     done
-
-    # Configure processor sets for the jail via cpuset(1)
-    [ -z "${ezjail_cpuset}" ] || /usr/bin/cpuset -l ${ezjail_cpuset} -j ${ezjail_id} || echo -n "Error: The defined cpuset is malformed"
   fi
 
   # Can only detach after unmounting (from fstab.JAILNAME in /etc/rc.d/jail)
