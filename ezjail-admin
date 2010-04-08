@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.254 2010/03/17 10:16:20 erdgeist Exp $
+# $Id: ezjail-admin,v 1.255 2010/04/08 21:03:25 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -325,7 +325,7 @@ ezjail_queryftpserver () {
   unset _ret
   echo -n "Querying your ftp-server... "
   TIFS=${IFS}; IFS=
-  for ezjail_path in pub/FreeBSD/releases pub/FreeBSD/snapshot pub/FreeBSD releases snapshots NO; do
+  for ezjail_path in pub/FreeBSD/releases pub/FreeBSD/snapshot pub/FreeBSD releases snapshots pub/FreeBSD-Archive/old-releases NO; do
     if [ ${ezjail_path} = "NO" ]; then
       echo "Warning: I am having problems querying the ftp server you specified (${ezjail_ftphost})."
       _ret=1; break
