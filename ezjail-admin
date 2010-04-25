@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.255 2010/04/08 21:03:25 erdgeist Exp $
+# $Id: ezjail-admin,v 1.256 2010/04/25 22:05:47 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -796,7 +796,7 @@ list)
   echo   "--- ---- --------------- ------------------------------ ------------------------"
   for ezjail in ${ezjail_list}; do
     fetchjailinfo ${ezjail%.norun}
-    case ${ezjail_imagetype} in simple) ezjail_state="I";; bde) ezjail_state="B";; eli) ezjail_state="E";; *) ezjail_state="D";; esac
+    case ${ezjail_imagetype} in simple) ezjail_state="I";; bde) ezjail_state="B";; eli) ezjail_state="E";; zfs) ezjail_state="Z";; *) ezjail_state="D";; esac
     if [ "${ezjail_id}" ]; then
       ezjail_state="${ezjail_state}R"
     else
