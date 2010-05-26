@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.257 2010/05/26 00:16:21 erdgeist Exp $
+# $Id: ezjail-admin,v 1.258 2010/05/26 00:53:05 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -949,7 +949,7 @@ install)
       cd "${ezjail_jailtemp}" || exerr "Error: Could not cd to ${ezjail_jailtemp}."
 
       # Try all paths as stolen from sysinstall, break on success.
-      for ezjail_path in pub/FreeBSD/releases pub/FreeBSD/snapshot pub/FreeBSD releases snapshots NO; do
+      for ezjail_path in pub/FreeBSD/releases pub/FreeBSD/snapshot pub/FreeBSD releases snapshots pub/FreeBSD-Archive/old-releases NO; do
         if [ "${ezjail_path}" = "NO" ]; then
           echo -e "\nCould not fetch ${pkg} from ${ezjail_ftphost}.\n  Maybe your release (${ezjail_release}) is specified incorrectly or the host ${ezjail_ftphost} does not provide that release build.\n  Use the -r option to specify an existing release or the -h option to specify an alternative ftp server." >&2
           [ "${ezjail_ftpserverqueried}" ] || ezjail_queryftpserver
