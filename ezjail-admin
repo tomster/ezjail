@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.258 2010/05/26 00:53:05 erdgeist Exp $
+# $Id: ezjail-admin,v 1.259 2010/05/31 18:00:00 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -781,7 +781,7 @@ delete)
       /sbin/zfs destroy -r ${ezjail_jailzfs}/${ezjail_hostname}
     ;;
     esac
-    rm -rf "${ezjail_rootdir}"
+    chflags -R noschg "${ezjail_rootdir}"; rm -rf "${ezjail_rootdir}"
   fi
 
   ;;
