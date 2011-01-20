@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.260 2011/01/20 14:23:59 erdgeist Exp $
+# $Id: ezjail-admin,v 1.261 2011/01/20 21:20:36 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -19,6 +19,7 @@ ezjail_jailcfgs="${ezjail_etc}/ezjail"
 : ${ezjail_jailfull="${ezjail_jaildir}/fulljail"}
 : ${ezjail_jailtemp="${ezjail_jaildir}/ezjailtemp"}
 : ${ezjail_flavours_dir="${ezjail_jaildir}/flavours"}
+: ${ezjail_archivedir="${ezjail_jaildir}/ezjail_archives"}
 : ${ezjail_portscvsroot="freebsdanoncvs@anoncvs.FreeBSD.org:/home/ncvs"}
 : ${ezjail_sourcetree="/usr/src"}
 : ${ezjail_uglyperlhack="YES"}
@@ -45,7 +46,7 @@ case `uname -p` in amd64) ezjail_dirlist="${ezjail_dirlist} usr/lib32"; ezjail_b
 ezjail_usage_ezjailadmin="${ezjail_admin} v3.1.1b\nUsage: ${ezjail_admin} [archive|config|console|create|delete|install|list|restore|update] {params}"
 ezjail_usage_install="Usage: ${ezjail_admin} install [-mMpPsS] [-h host] [-r release]"
 ezjail_usage_create="Usage: ${ezjail_admin} create [-xbi] [-f flavour] [-r jailroot] [-s size] [-c bde|eli|zfs] [-C args] [-a archive] jailname jailip"
-ezjail_usage_delete="Usage: ${ezjail_admin} delete [-w] jailname"
+ezjail_usage_delete="Usage: ${ezjail_admin} delete [-wf] jailname"
 ezjail_usage_update="Usage: ${ezjail_admin} update [-s sourcetree] [-p] (-b|-i|-u|-P)"
 ezjail_usage_config="Usage: ${ezjail_admin} config [-r run|norun] [-n newname] [-c cpuset] [-z zfs-datasets] [-f fib] [-i attach|detach|fsck] jailname"
 ezjail_usage_console="Usage: ${ezjail_admin} console [-f] [-e command] jailname"
@@ -350,8 +351,8 @@ ezjail_makeabsolute ( ) {
 
 parse_geli_attach_args () {
   # create geli(8) attach arguments from geli(8) init arguments:
-  #    -P becomes -p if present, -K newkeyfile becomes -k newkeyfile if present, 
-  #    everything else is dicarded
+  #    -P becomes -p if present, -K newkeyfile becomes -k newkeyfile if present,
+  #    everything else is discarded
   #  exit values: 0->NO PASSWORD SET, 1->PASSWORD SET
   _exit=0
   while getopts :bPva:i:K:l:s: arg; do
@@ -481,7 +482,7 @@ create)
   # This scenario really will only lead to real troubles in the 'fulljail'
   # case, but I should still explain this to the user and not claim that
   # "an ezjail would already exist"
-  case ${ezjail_hostname} in basejail|newjail|fulljail|flavours|ezjailtemp) exerr "Error: Cannot name the jail ${ezjail_hostname}.\n  ezjail needs the ${ezjail_hostname} directory for its own administrative purposes.\n  Please rename the ezjail.";; esac
+  case ${ezjail_hostname} in basejail|newjail|fulljail|flavours|ezjailtemp|ezjail_archives) exerr "Error: Cannot name the jail ${ezjail_hostname}.\n  ezjail needs the ${ezjail_hostname} directory for its own administrative purposes.\n  Please rename the ezjail.";; esac
 
   # jail names may lead to identical configs, eg. foo.bar.com == foo-bar.com
   # so check, whether we might be running into problems
@@ -1050,8 +1051,8 @@ archive)
   # Specifying no jails only is acceptable if archiving all jails
   [ $# -lt 1 -a -z "${ezjail_archivealljails}" ] && exerr ${ezjail_usage_archive}
 
-  # Default archive directory to .
-  : ${ezjail_archivedir=`pwd -P`}
+  # Ensure that archive directory is there
+  [ "${ezjail_archive}" = "-" ] || mkdir -p "${ezjail_archivedir}" || exerr "Error: Can not create archive directory ${ezjail_archivedir}."
 
   # Will not backup more than one jail per archive
   [ "${ezjail_archive}" -a "${ezjail_archivealljails}" ] && exerr "Error: Must not specify an archive location for multiple archives.\n  Can not archive multiple jails into one archive."
@@ -1145,7 +1146,7 @@ archive)
 ####################### ezjail-admin RESTORE ########################
 restore)
   # Clean variables, prevent polution
-  unset ezjail_archivedir ezjail_safename ezjail_forcerestore
+  unset ezjail_safename ezjail_forcerestore
 
   shift; while getopts :d:f arg; do case ${arg} in
     d) ezjail_archivedir=${OPTARG};;
@@ -1154,9 +1155,6 @@ restore)
   esac; done; shift $(( ${OPTIND} - 1 ))
 
   [ $# -eq 0 ] && exerr ${ezjail_usage_restore}
-
-  # Default archive directory to .
-  : ${ezjail_archivedir=`pwd -P`}
 
   for ezjail_fromarchive in $@; do
     unset ezjail_safename ezjail_imagedata ezjail_nameprop
@@ -1294,7 +1292,7 @@ config)
     # This scenario really will only lead to real troubles in the 'fulljail'
     # case, but I should still explain this to the user and not claim that
     # "an ezjail would already exist"
-    case ${ezjail_hostname} in basejail|newjail|fulljail|flavours|ezjailtemp) exerr "Error: ezjail needs the ${ezjail_hostname} directory for its own administrative purposes.\n  Please chose another name.";; esac
+    case ${ezjail_hostname} in basejail|newjail|fulljail|flavours|ezjailtemp|ezjail_archives) exerr "Error: ezjail needs the ${ezjail_hostname} directory for its own administrative purposes.\n  Please chose another name.";; esac
 
     # jail names may lead to identical configs, eg. foo.bar.com == foo-bar.com
     # so check, whether we might be running into problems

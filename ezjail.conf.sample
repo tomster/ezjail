@@ -33,7 +33,7 @@
 # ezjail_default_flavour=""
 
 # This is the default location where ezjail archives its jails to
-# ezjail_archivedir=`pwd -P`
+# ezjail_archivedir="${ezjail_jaildir}/ezjail_archives"
 
 # base jail will provide a soft link from /usr/bin/perl to /usr/local/bin/perl
 # to accomodate all scripts using '#!/usr/bin/perl'...
