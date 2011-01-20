@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.259 2010/05/31 18:00:00 erdgeist Exp $
+# $Id: ezjail-admin,v 1.260 2011/01/20 14:23:59 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -937,7 +937,10 @@ install)
     [ -d "${ezjail_jailfull}" ] && chflags -R noschg "${ezjail_jailfull}" && rm -rf "${ezjail_jailfull}"
     mkdir -p "${ezjail_jailfull}" || exerr "Error: Cannot create temporary Jail directory."
   fi
-  DESTDIR=${ezjail_jailfull}
+
+  # Install into staging directory for full install or into basejail
+  # for post-install man/src installations
+  [ "${ezjail_basesystem}" ] && DESTDIR="${ezjail_jailfull}" || DESTDIR="${ezjail_jailbase}"
 
   rm -rf "${ezjail_jailtemp}"
   for pkg in ${ezjail_basesystem} ${ezjail_installmanpages} ${ezjail_installsources}; do
