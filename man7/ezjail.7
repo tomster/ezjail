@@ -7,7 +7,7 @@
 .Sh SYNOPSIS
 .Nm ezjail-admin Ar command arguments...
 .Sh OVERVIEW
-The ezjail commands provides a simple way to create multiple jails
+The ezjail commands provide a simple way to create multiple jails
 using FreeBSD's jail system. It simplifies jail administration effort
 and minimizes jail system resource usage.
 .Pp
@@ -30,14 +30,14 @@ the world. This eats disk space, inodes, and more importantly,
 prevents the sharing of binaries images between jails, thus increasing
 the memory pressure on the host system. In addition, this causes a
 major administration headache when comes the time to update the host
-system, as each jail need to be updated independently.
+system, as each jail needs to be updated independently.
 .Pp
 Ezjail addresses these problems by creating a single basejail (a read-only
-.Xr nullfs 4 )
-populated with the same running binaries as the host system and them
-shares that basejail with all the other service jails created by
-ezjail. Is is possible to update the base jail (and thus all the
-jails) in a single ezjail command.
+.Xr nullfs 4
+mounted directory) populated with the same binaries as the host
+system which is then shared across all the other service jails created
+by ezjail. Is is possible to update the base jail (and thus all the jails) in
+a single ezjail command.
 .Pp
 Typical usage of jails include separation of services, creating test
 environments, consolidation of different services on a single physical
@@ -50,31 +50,31 @@ jails, archive, restore, delete and update jails, open a jail console,
 and list the status of all the jails. See below for example usage, and
 refer to its man page for complete usage details.
 .Pp
-The configuration is done in the
-.Xr ezjail.conf 5
-file, which see. It will not be necessary to edit this file for most
-users. A sample file is installed as
-.Pa EZJAIL_PREFIX/etc/ezjail.conf .
+Ezjail reads its configuration from its
+.Xr ezjail.conf 5 .
+Normally it will not be necessary to edit this file, as some sane defaults
+are provided. A sample configuration is installed as
+.Pa EZJAIL_PREFIX/etc/ezjail.conf.sample .
 .Pp
-A rc script is also installed to allow the ezjail to be started
-at boot time, as
-.Pa ezjail.sh .
-It is enabled by setting the
+A script is also installed as
+.Pa ezjail.sh
+in the rc.d system to allow jails under ezjails control to be started at boot
+time, given ezjail is enabled by setting the
 .Xr rc.conf 5
 variable
 .Dq Li $ezjail_enable
 to
 .Dq Li YES .
 .Sh WHAT'S IN A JAIL
-.Ss The Life of an Ezjail Installation
+.Ss The life of an ezjail installation
 The base jail is first created by running
 .Nm Cm update
 or
 .Nm Cm install .
 Example usage of this command is section
 .Sx EXAMPLES .
-This will create the base jail, setup a template jail used when
-setting up new jails, install an example flavour (see below),
+This will create the base jail, setup a template jail used to
+setting up new jails, install an example flavour (see below) and
 configure miscellaneous things.
 .Pp
 This step is necessary before using the ezjail system. In particular,
@@ -83,9 +83,9 @@ jail in advance.
 .Pp
 Once the base jail has been created, new jails may be created with
 .Nm Cm create .
-A new jail is defined by its name and its IP address (or addresses).
-Creating a new jail involves copying the template jail to the new
-location, configuring
+A new jail is defined by its name and can have one or multiple IP
+addresses. Creating a new jail involves copying the template jail to the
+new location, configuring
 .Xr nullfs 4
 mounts for giving access to the base jail, and little more. A jail
 that has just be created occupies about 2MB of disk space ; when
