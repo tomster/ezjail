@@ -142,6 +142,34 @@ Image jails may also be encrypted using
 or
 .Xr geli 8 ,
 depending on the options given at creation time.
+.Ss Using ZFS
+To give more precise control over the resources consumed by a jail,
+ezjail allows putting each jail in its own
+.Xr zfs 8
+filesystem. See
+.Sx Jail Creation Examples
+for details.
+.Pp
+Also, ezjail can be configured to install its basejail
+and the accompaning template for all new jails into its own filesystem.
+Set the the
+.Dq Li $ezjail_use_zfs
+variable in your
+.Pa ezjail.conf
+to
+.Dq YES
+before running
+.Nm Cm update
+or
+.Nm Cm install .
+You may also want to configure the destination
+.Xr zpool 8
+using the
+.Dq Li $ezjail_jailzfs
+variable.
+.Pp
+You can use ZFS jails without installing the basejail into its own ZFS
+filesystem and vice versa.
 .Ss Per-Jail options
 As we saw earlier, a jail is described by a file in
 .Pa EZJAIL_PREFIX/etc/ezjail/ .
@@ -416,7 +444,7 @@ It is possible to set this variable to
 if the administrator wants to temporarily ezjail, or if she doesn't
 want the jails to be automatically started on boot.
 .Pp
-The ezjail system may be reset to a printine state by removing all its
+The ezjail system may be reset to a pristine state by removing all its
 files, that is:
 .Bl -item -compact
 .It
@@ -570,7 +598,7 @@ in
 An empty directory,
 .Pa /usr/jails/sandbox2 ,
 will be created, and used as a mount point when starting the jail.
-.It Nm Cm create Fl i Fl c Cm bde Fl s Ar 600M sandbox3 10.0.10.5
+.It Nm Cm create Fl c Cm bde Fl s Ar 600M sandbox3 10.0.10.5
 This creates a new file based image jail, with
 .Xr gbde 4
 encryption. During the gbde creation process you are asked to enter a
@@ -579,6 +607,11 @@ process. Remember this passphrase, you will be asked for the
 passphrase every time sub-command start is used on this jail. As they
 require administrator interaction, jails backed by an encrypted file
 are not automatically started when the system boots.
+.It Nm Cm create Fl c Ar zfs Fl s Ar 1G sandbox4 10.0.10.6
+This creates a new zfs filesystem based jail with a default quota of 1
+gigabyte using lzjb compression. It uses the zpool configured in the
+.Dq Li $ezjail_jailzfs
+variable to create the filesystem in.
 .El
 .Sh FILES
 .Pa EZJAIL_PREFIX/bin/ezjail-admin
@@ -596,7 +629,8 @@ are not automatically started when the system boots.
 .Xr ezjail-admin 8 ,
 .Xr ezjail.conf 5 ,
 .Xr jail 8 ,
-.Xr nullfs 4 .
+.Xr nullfs 4 ,
+.Xr zfs 8 .
 .Pp
 Interesting additional tools include:
 .Dq Li ports-mgmt/jailaudit .
