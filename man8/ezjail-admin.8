@@ -15,7 +15,6 @@
 .Op Fl f Ar flavour
 .Op Fl r Ar jailroot
 .Op Fl a Ar archive
-.Op Fl A Ar options
 .Op Fl c Ar jailtype Fl s Ar imagesize Op Fl C Ar attachargs
 .Bk -words
 .Ar jailname ipaddress Ns Op Ar ,ipaddress2,...
@@ -224,7 +223,7 @@ pointing to the location of the newly created jail.
 Restore a jail from an archive created with
 .Nm Cm archive .
 The archive files are kept in
-.Pa /usr/jails/archive
+.Pa /usr/jails/ezjail_archives
 by default. Use
 .Pa -
 to restore an archive from the standard input.
@@ -238,15 +237,6 @@ See also
 .Nm Cm restore ,
 if you only want to revert to an old jail's state from an archive on the same
 release version.
-.It Fl A Ar jailconf
-Copy the comments, in particular the
-.Dq Li PROVIDE ,
-.Dq Li REQUIRE
-and
-.Dq Li BEFORE
-lines, from this jail.
-.Pp
-XXX: This is my understanding from the code. Is that correct?
 .It Fl x
 This flag indicates that an jail of that name already exists. In this case,
 ezjail will only update the configuration of the jail. Sanity checks are
