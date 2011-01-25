@@ -352,46 +352,50 @@ librairies, you may want to remove the old library versions. It is
 often a good idea to update the jails when a new kernel is installed
 in the host, using the same sources.
 .Ss Starting Jails
-The ezjail script
+Like all
+.Xr rc 8
+scripts, the ezjail script
 .Pa EZJAIL_PREFIX/etc/rc.d/ezjail.sh
-takes parameters
-.Cm start , startcrypto , restart
-and
-.Cm stop .
-It may be passed an additional list of jails. If no jail name is
-specified (usually when the script is called by the rc system at boot
-and shutdown time), all jails in ezjail's scope, except crypto image
-jails (or jails marked as blocking), are started/stopped. To start all
-crypto image jails (or those depending on them), use the
-.Cm startcrypto
-parameter.
+accepts parameters
+.Cm start , restart No and Cm stop, No running, restarting and stopping
+all (non-blocking) jails under ezjail's control by default. When passed an
+additional list of jails, only these jails are acted upon.
 .Pp
-The
-.Nm Cm start
-command provides the same functionnality.
+The order in which jails are started is determined by the
+.Xr rcorder 8
+tool, using cues from the jail configurations in ezjails
+.Pa EZJAIL_PREFIX/etc/ezjail
+control directory.
 .Pp
 The script examines its config, attaches and mounts images, and sets
-variables for each jail in the jail_list before passing its command on
+variables for each jail in the list before passing its command on
 to the
 .Pa /etc/rc.d/jail
 script.
 .Pp
-.Cm ezjail.sh
-enforces the execution of \fB/etc/rc.d/jail\fR, by prepending
-.Em one
-to the start, restart, and stop commands so it is
-.Em NOT NECESSARY
-to set
-.Dq Li $jail_enable
-in the
-.Xr /etc/rc.conf 5
-config file.
+To interactively start all crypto image jails (or those depending on
+them), that were not automatically started during booting, use the
+.Cm startcrypto
+parameter.
 .Pp
-It is possible to set jails as either
+Note that jails configured to be in the
 .Em norun
-(using
+state (using
 .Nm Cm config Fl r Ar norun Ar jailname )
-or as blocking
+are never started by the ezjail.sh script.
+.Pp
+As a convenient shortcut, the
+.Nm Cm
+command invokes the rc.d script and passes the corresponding parameters,
+if they look like valid parameters.
+.Pp
+Even if ezjail is not enabled in the
+.Xr rc.conf 5 ,
+ezjail.sh can be used to start and stop jails by prepending
+.Cm force No or Cm one No to the Cm start, restart No or Cm stop No parameter.
+Refer to
+.Xr rc 8
+for details.
 .Ss Remarks & Tips
 Jails can be either accessed from the network, for instance by using
 .Xr ssh 1 ,
