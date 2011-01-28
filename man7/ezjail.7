@@ -150,9 +150,8 @@ filesystem. See
 .Sx Jail Creation Examples
 for details.
 .Pp
-Also, ezjail can be configured to install its basejail
-and the accompaning template for all new jails into its own filesystem.
-Set the
+Also, ezjail can be configured to install its basejail and the accompaning
+template for all new jails into its own filesystem. Set the
 .Dq Li $ezjail_use_zfs
 variable in your
 .Pa ezjail.conf
@@ -162,9 +161,9 @@ before running
 .Nm Cm update
 or
 .Nm Cm install .
-You may also want to configure the destination
-.Xr zpool 8
-using the
+.Pp
+To use any zfs feature in ezjail, you first need to configure the destination
+ZFS filesystem using the
 .Dq Li $ezjail_jailzfs
 variable.
 .Pp
@@ -266,7 +265,7 @@ If
 .Dq Li YES ,
 start the jail even when it is marked as blocking.
 .It ezjail_JAILNAME_zfs_datasets
-For ZFS jails, additionnal ZFS datasets to attach to the jail when
+For ZFS jails, additional ZFS datasets to attach to the jail when
 starting it. Taken from the
 .Fl z
 option when configuring a jail; the empty string otherwise.
