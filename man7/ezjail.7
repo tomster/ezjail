@@ -605,14 +605,15 @@ will be created, and used as a mount point when starting the jail.
 This creates a new file based image jail, with
 .Xr gbde 4
 encryption. During the gbde creation process you are asked to enter a
-passphrase that is used as the prime seed value of the encryption
-process. Remember this passphrase, you will be asked for the
-passphrase every time sub-command start is used on this jail. As they
-require administrator interaction, jails backed by an encrypted file
-are not automatically started when the system boots.
+passphrase that is used as the prime seed value of the encryption process.
+Remember this passphrase, you will be asked for the passphrase every time
+you want to start this jail. As they require administrator interaction,
+jails backed by an encrypted file are not automatically started when the
+system boots.
 .It Nm Cm create Fl c Ar zfs Fl s Ar 1G sandbox4 10.0.10.6
 This creates a new zfs filesystem based jail with a default quota of 1
-gigabyte using lzjb compression. It uses the zpool configured in the
+gigabyte using lzjb compression. It uses the parent ZFS filesystem configured
+in the
 .Dq Li $ezjail_jailzfs
 variable to create the filesystem in.
 .El
