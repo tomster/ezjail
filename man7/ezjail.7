@@ -566,6 +566,18 @@ Update the base jail to the next release using
 .Xr freebsd-update 8
 (i.e. using binary packages). This may be used only to update an
 existing installation.
+.It Nm Cm update Fl U s Ar 8.0-RELEASE
+Upgrade the base jail to the host system's release using
+.Xr freebsd-update 8 . This may be used only to upgrade an
+existing installation. Tell freebsd-update which OS version to expect
+in the basejail via the
+.Fl s No option.
+.Pp
+Note: Check
+.Xr uname 1
+and especially the
+.Pa UNAME_r
+environment variable to upgrade to different versions.
 .El
 .Ss Jail Creation Examples
 .Bl -tag -width indent

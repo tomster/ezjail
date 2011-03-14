@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ezjail-admin,v 1.263 2011/03/07 04:04:25 erdgeist Exp $
+# $Id: ezjail-admin,v 1.264 2011/03/14 01:31:14 erdgeist Exp $
 
 # ugly: this variable is set during port install time
 ezjail_prefix=EZJAIL_PREFIX
@@ -47,7 +47,7 @@ ezjail_usage_ezjailadmin="${ezjail_admin} v3.1.1b\nUsage: ${ezjail_admin} [archi
 ezjail_usage_install="Usage: ${ezjail_admin} install [-mMpPsS] [-h host] [-r release]"
 ezjail_usage_create="Usage: ${ezjail_admin} create [-xbi] [-f flavour] [-r jailroot] [-s size] [-c bde|eli|zfs] [-C args] [-a archive] jailname jailip"
 ezjail_usage_delete="Usage: ${ezjail_admin} delete [-wf] jailname"
-ezjail_usage_update="Usage: ${ezjail_admin} update [-s sourcetree] [-p] (-b|-i|-u|-P)"
+ezjail_usage_update="Usage: ${ezjail_admin} update [-s sourcetree|sourceosversion] [-p] (-b|-i|-u|-U|-P)"
 ezjail_usage_config="Usage: ${ezjail_admin} config [-r run|norun] [-n newname] [-c cpuset] [-z zfs-datasets] [-f fib] [-i attach|detach|fsck] jailname"
 ezjail_usage_console="Usage: ${ezjail_admin} console [-f] [-e command] jailname"
 ezjail_usage_archive="Usage: ${ezjail_admin} archive [-Af] [-a archive] [-d archivedir] jailname [jailname...]"
@@ -837,12 +837,13 @@ list)
 ######################## ezjail-admin UPDATE ########################
 setup|update)
   # Clean variables, prevent polution
-  unset ezjail_provideports ezjail_installaction
+  unset ezjail_provideports ezjail_installaction ezjail_osversion_source ezjail_osversion_destination
 
   shift; while getopts :biupPs: arg; do case ${arg} in
     b) ezjail_installaction="buildworld installworld";;
     i) ezjail_installaction="installworld";;
     u) ezjail_installaction="freebsd-update";;
+    U) ezjail_installaction="freebsd-upgrade";;
     s) ezjail_sourcetree=${OPTARG};;
     P) ezjail_provideports="YES"; ezjail_installaction="none";;
     p) ezjail_provideports="YES";;
@@ -870,6 +871,22 @@ setup|update)
     [ -z "$TERM" -o "$TERM" = "dumb" ] && ezjail_urgency="cron" || ezjail_urgency="fetch"
     [ "${ezjail_use_zfs}" = "YES" ] && zfs snapshot ${ezjail_jailzfs}/basejail@`date -v -7d +"%C%y%m%d_%H:%M:%S"`
     freebsd-update -b ${ezjail_jailbase} ${ezjail_urgency} install
+  elif [ "${ezjail_installaction}" == "freebsd-upgrade" ]; then
+    [ -d "${ezjail_jailbase}" ] || exerr "Error: base jail does not exist.\n  You cannot update a base jail until it is created.\n  Please run '${ezjail_admin} update' or '${ezjail_admin} install' first."
+
+    [ -z "${ezjail_sourcetree}" ] && exerr "Error: Can not (yet automatically) infer the basejail's osversion.\n  Please run ${ezjail_admin} update -U -s X.X-RELEASE, with X.X-RELEASE being to osversion currently installed in the basejail in need of an upgrade."
+
+    # That would be the part where we try to lookup the osversion from a file in the basejail
+    ezjail_osversion_source="${ezjail_sourcetree}"
+
+    # Make the host systems os version our target version
+    # Users can override this by setting the UNAME_r environment variable
+    ezjail_osversion_target="`uname -r`"
+
+    # Finally run freebsd-update to upgrade our basejail
+    env UNAME_r="${ezjail_osversion_source}" freebsd-update -b ${ezjail_jailbase} -r ${ezjail_osversion_target} upgrade install
+
+    # Here we should write the file with the new osversion in case of success
   else
     # Bump the user for some of the most common errors
     [ -d "${ezjail_sourcetree}" ] || exerr "Error: Cannot find your copy of the FreeBSD source tree in ${ezjail_sourcetree}.\n  Consider using '${ezjail_admin} install' to create the base jail from an ftp server."

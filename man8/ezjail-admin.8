@@ -54,9 +54,9 @@
 .Ar archive | jailname...
 .Nm
 .Cm update
-.Op Fl s Ar sourcetree
+.Op Fl s Ar sourcetree | sourceosversion
 .Op Fl p
-.Fl b | Fl i | Fl P | Fl u
+.Fl b | Fl i | Fl P | Fl u | Fl U
 .Sh DESCRIPTION
 The
 .Nm
@@ -535,6 +535,19 @@ uses
 to determine the currently running system, the base jail and the host
 need to be updated at the same time, without rebooting on the new
 kernel in the meantime.
+.It Fl U
+Use
+.Xr freebsd-update 8
+to upgrade the basejail to the hosts operating system version, or a version
+you may pass freebsd-update's call to
+.Dq uname -r
+via the
+.Pa UNAME_r
+environment variable. Since there currently is no way of infering the
+osversion currently installed in the basejail, you need to remember the
+original osversion and pass it to this script using the
+.Fl s
+option.
 .It Fl P
 Install only the ports tree, assuming the basejail has already been
 created. This can be done while jails are running. The
@@ -548,13 +561,19 @@ The following options are available:
 Give the new basejail a copy of FreeBSD's ports tree. The
 .Xr portsnap 8
 utility is invoked to do the actual work.
-.It Fl s Ar sourcedir
-Use the sources in
+.It Fl s Ar sourcedir | sourceosversion
+In the
+.Fl b No and Fl i No case: Use the sources in
 .Ar sourcedir
 instead of
 .Pa /usr/src .
 Variable:
 .Dq Li $ezjail_sourcetree .
+.Pp
+In the
+.Fl U No case: Pass this release tag to
+.Xr freebsd-update 8
+as the source OS version of the basejail.
 .El
 .Pp
 See the
