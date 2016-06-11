@@ -326,7 +326,7 @@ ezjail_queryftpserver () {
   unset _ret
   echo -n "Querying your ftp-server... "
   TIFS=${IFS}; IFS=
-  for ezjail_path in pub/FreeBSD/releases pub/FreeBSD/snapshot pub/FreeBSD releases snapshots pub/FreeBSD-Archive/old-releases NO; do
+  for ezjail_path in pub/FreeBSD/releases pub/FreeBSD/snapshots pub/FreeBSD releases snapshots pub/FreeBSD-Archive/old-releases NO; do
     if [ ${ezjail_path} = "NO" ]; then
       echo "Warning: I am having problems querying the ftp server you specified (${ezjail_ftphost})."
       _ret=1; break
@@ -986,7 +986,7 @@ install)
       cd "${ezjail_jailtemp}" || exerr "Error: Could not cd to ${ezjail_jailtemp}."
 
       # Try all paths as stolen from sysinstall, break on success.
-      for ezjail_path in pub/FreeBSD/releases pub/FreeBSD/snapshot pub/FreeBSD releases snapshots pub/FreeBSD-Archive/old-releases NO; do
+      for ezjail_path in pub/FreeBSD/releases pub/FreeBSD/snapshots pub/FreeBSD releases snapshots pub/FreeBSD-Archive/old-releases NO; do
         if [ "${ezjail_path}" = "NO" ]; then
           echo -e "\nCould not fetch ${pkg} from ${ezjail_ftphost}.\n  Maybe your release (${ezjail_release}) is specified incorrectly or the host ${ezjail_ftphost} does not provide that release build.\n  Use the -r option to specify an existing release or the -h option to specify an alternative ftp server." >&2
           [ "${ezjail_ftpserverqueried}" ] || ezjail_queryftpserver
